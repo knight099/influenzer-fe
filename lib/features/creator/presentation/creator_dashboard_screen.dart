@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 import 'job_feed_screen.dart';
+import 'profile_screen.dart';
 import '../../chat/presentation/chat_list_screen.dart';
 
 class CreatorDashboardScreen extends StatefulWidget {
@@ -17,7 +18,7 @@ class _CreatorDashboardScreenState extends State<CreatorDashboardScreen> {
     JobFeedScreen(),
     Center(child: Text('My Jobs')), // Placeholder
     ChatListScreen(),
-    Center(child: Text('Profile')), // Placeholder
+    ProfileScreen(),
   ];
 
   void _onItemTapped(int index) {

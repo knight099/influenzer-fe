@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../features/auth/presentation/login_screen.dart';
 import '../../features/auth/presentation/role_selection_screen.dart';
 import '../../features/auth/presentation/social_link_screen.dart';
+import '../../features/auth/presentation/callback_screen.dart';
 import '../../features/brand/presentation/brand_dashboard_screen.dart';
 import '../../features/brand/presentation/create_campaign_screen.dart';
 import '../../features/creator/presentation/creator_dashboard_screen.dart';
@@ -58,6 +59,10 @@ GoRouter goRouter(Ref ref) {
       GoRoute(
         path: '/wallet',
         builder: (context, state) => const TransactionHistoryScreen(),
+      ),
+      GoRoute(
+        path: '/callback',
+        builder: (context, state) => CallbackScreen(queryParams: state.uri.queryParameters),
       ),
     ],
   );

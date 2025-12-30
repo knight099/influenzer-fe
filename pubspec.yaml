@@ -44,6 +44,9 @@ dependencies:
   razorpay_flutter: ^1.4.0
   dio: ^5.9.0
   talker_dio_logger: ^5.1.9
+  google_sign_in: ^6.2.1
+  url_launcher: ^6.1.14
+  shared_preferences: ^2.3.5
 
 dev_dependencies:
   flutter_test:
