@@ -25,19 +25,15 @@ class _CallbackScreenState extends ConsumerState<CallbackScreen> {
   }
 
   Future<void> _handleCallback() async {
-    // Check if we are on the ngrok domain (HTTPS) and redirect back to localhost (HTTP)
-    // This is necessary to avoid "Mixed Content" errors since the backend is on HTTP
+    // Check for ngrok/web environment to decide whether to handle code or redirect
     final currentUri = Uri.base;
-    if (currentUri.host.contains('ngrok') && currentUri.scheme == 'https') {
-      debugPrint('[Callback] Detected ngrok origin. Redirecting to localhost...');
-      
-      final localhostUri = currentUri.replace(
-        scheme: 'http',
-        host: 'localhost',
-        port: 8081,
-      );
-      
-      await launchUrl(localhostUri, webOnlyWindowName: '_self');
+    final isNgrok = currentUri.host.contains('ngrok') && currentUri.scheme == 'https';
+
+    // If on ngrok, we are likely in the browser on mobile after Instagram redirect.
+    // We should try to open the app via deep link.
+    if (isNgrok) {
+      debugPrint('[Callback] Detected ngrok origin. Waiting for user action or auto-redirect...');
+      // We don't auto-redirect immediately to allow user to see the button if auto-launch fails
       return;
     }
 
@@ -50,12 +46,18 @@ class _CallbackScreenState extends ConsumerState<CallbackScreen> {
       
       // Use the correct redirect URI based on provider
       final redirectUri = provider == 'instagram' 
-          ? 'https://c03ca07f4f02.ngrok-free.app/callback'
+          ? 'https://influenzer.onrender.com/callback/'
           : 'http://localhost:8081/callback';
       
       try {
         // Call the controller to connect
         await ref.read(authControllerProvider.notifier).connectSocial(provider, code, redirectUri: redirectUri);
+        
+        // Check for error in state
+        final state = ref.read(authControllerProvider);
+        if (state.hasError) {
+          throw state.error!;
+        }
         
         if (mounted) {
            // Determine where to go next
@@ -101,19 +103,47 @@ class _CallbackScreenState extends ConsumerState<CallbackScreen> {
             const Text('Finalizing connection...'),
             if (isNgrok) ...[
               const SizedBox(height: 24),
-              const Text('Redirecting to local app...', style: TextStyle(color: Colors.grey)),
+              const Text('Successfully authorized!', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () {
-                  final currentUri = Uri.base;
-                  final localhostUri = currentUri.replace(
-                    scheme: 'http',
-                    host: 'localhost',
-                    port: 8081,
+              ElevatedButton.icon(
+                icon: const Icon(Icons.touch_app),
+                label: const Text('Open in App'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                ),
+                onPressed: () async {
+                  // Construct Deep Link: influenzer://callback?code=...&state=...
+                  // We copy the query parameters from the current URL
+                  final deepLink = Uri(
+                    scheme: 'influenzer',
+                    host: 'callback',
+                    queryParameters: widget.queryParams,
                   );
-                  launchUrl(localhostUri, webOnlyWindowName: '_self');
+                  debugPrint('Launching deep link: $deepLink');
+                  
+                  if (await canLaunchUrl(deepLink)) {
+                    await launchUrl(deepLink);
+                  } else {
+                     ScaffoldMessenger.of(context).showSnackBar(
+                       const SnackBar(content: Text('Could not open app. Is it installed?')),
+                     );
+                  }
                 },
-                child: const Text('Click here if not redirected'),
+              ),
+              const SizedBox(height: 16),
+              TextButton(
+                onPressed: () {
+                   final currentUri = Uri.base;
+                   final localhostUri = currentUri.replace(
+                     scheme: 'http',
+                     host: 'localhost',
+                     port: 8081,
+                   );
+                   launchUrl(localhostUri, webOnlyWindowName: '_self');
+                }, 
+                child: const Text('Continue in Browser (Dev Only)'),
               ),
             ],
           ],

@@ -25,8 +25,10 @@ class AuthController extends _$AuthController {
     state = await AsyncValue.guard(() => ref.read(authRepositoryProvider).register(email, password, role));
   }
 
-  Future<void> signInWithGoogle() async {
+  Future<Map<String, dynamic>?> signInWithGoogle() async {
     state = const AsyncValue.loading();
+    
+    Map<String, dynamic>? userData;
     state = await AsyncValue.guard(() async {
       final googleSignIn = GoogleSignIn();
       final googleUser = await googleSignIn.signIn();
@@ -40,7 +42,7 @@ class AuthController extends _$AuthController {
         final photoUrl = googleUser.photoUrl;
         
         if (idToken != null) {
-           await ref.read(authRepositoryProvider).socialLogin(
+           userData = await ref.read(authRepositoryProvider).socialLogin(
              'google', 
              idToken,
              name: displayName,
@@ -48,7 +50,7 @@ class AuthController extends _$AuthController {
            );
         } else if (accessToken != null) {
            // Fallback to access token if idToken is not available (common on Web)
-           await ref.read(authRepositoryProvider).socialLogin(
+           userData = await ref.read(authRepositoryProvider).socialLogin(
              'google', 
              accessToken,
              name: displayName,
@@ -61,6 +63,8 @@ class AuthController extends _$AuthController {
          // User canceled
       }
     });
+    
+    return userData;
   }
   
   Future<void> connectSocial(String provider, String token, {String? redirectUri}) async {
@@ -70,5 +74,38 @@ class AuthController extends _$AuthController {
     if (ref.mounted) {
       state = result;
     }
+  }
+
+  Future<void> connectYouTube() async {
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(() async {
+      final googleSignIn = GoogleSignIn(
+        // Must use Web Client ID as serverClientId to get a valid serverAuthCode
+        serverClientId: '47008398696-bsn5162rp1cl2nie455mmr6vu10fvcog.apps.googleusercontent.com',
+        scopes: ['https://www.googleapis.com/auth/youtube.readonly'],
+        forceCodeForRefreshToken: true,
+      );
+      
+      // Force sign out first to allow user to pick account
+      await googleSignIn.signOut();
+      
+      final googleUser = await googleSignIn.signIn();
+      if (googleUser != null) {
+        // serverAuthCode should now be populated
+        final token = googleUser.serverAuthCode;
+        
+        if (token != null) {
+          // Send empty string for redirectUri as native flow doesn't use one
+          await ref.read(authRepositoryProvider).connectSocial('youtube', token, redirectUri: '');
+        } else {
+           throw Exception('Failed to get server auth code from Google. Check Web Client ID configuration.');
+        }
+      }
+    });
+  }
+
+  Future<void> setRole(String role) async {
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(() => ref.read(authRepositoryProvider).setRole(role));
   }
 }

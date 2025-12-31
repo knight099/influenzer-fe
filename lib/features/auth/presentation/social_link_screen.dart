@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart'; // for kIsWeb
+import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -60,7 +62,11 @@ class SocialLinkScreen extends ConsumerWidget {
                   color: Colors.purple,
                   onTap: authState.isLoading ? () {} : () {
                      const clientId = '816744758013078';
-                     const redirectUri = 'https://c03ca07f4f02.ngrok-free.app/callback';
+                     
+                     // Instagram requires HTTPS redirect. Custom schemes (influenzer://) are often rejected.
+                     // We use the production backend URL which handles redirecting to the app.
+                     final redirectUri = 'https://influenzer.onrender.com/callback/';
+                     
                      const scope = 'instagram_business_basic,instagram_business_manage_messages,instagram_business_manage_comments,instagram_business_content_publish,instagram_business_manage_insights';
                      const state = 'instagram'; // Identify provider on callback
                      
@@ -83,21 +89,27 @@ class SocialLinkScreen extends ConsumerWidget {
                   icon: Icons.play_arrow,
                   color: Colors.red,
                   onTap: authState.isLoading ? () {} : () {
-                     const clientId = '47008398696-bsn5162rp1cl2nie455mmr6vu10fvcog.apps.googleusercontent.com';
-                     const redirectUri = 'http://localhost:8081/callback';
-                     const scope = 'https://www.googleapis.com/auth/youtube.readonly';
-                     const state = 'youtube';
-                     
-                     final uri = Uri.https('accounts.google.com', '/o/oauth2/v2/auth', {
-                       'client_id': clientId,
-                       'redirect_uri': redirectUri,
-                       'response_type': 'code',
-                       'scope': scope,
-                       'access_type': 'offline',
-                       'state': state,
-                     });
-                     
-                     _launchAuth(uri.toString());
+                     if (!kIsWeb) {
+                        // Use Native Google Sign-In on Mobile
+                        ref.read(authControllerProvider.notifier).connectYouTube();
+                     } else {
+                        // Use Manual Web Flow
+                        const clientId = '47008398696-bsn5162rp1cl2nie455mmr6vu10fvcog.apps.googleusercontent.com';
+                        const redirectUri = 'http://localhost:8081/callback';
+                        const scope = 'https://www.googleapis.com/auth/youtube.readonly';
+                        const state = 'youtube';
+                        
+                        final uri = Uri.https('accounts.google.com', '/o/oauth2/v2/auth', {
+                           'client_id': clientId,
+                           'redirect_uri': redirectUri,
+                           'response_type': 'code',
+                           'scope': scope,
+                           'access_type': 'offline',
+                           'state': state,
+                        });
+                        
+                        _launchAuth(uri.toString());
+                     }
                   },
                 ),
                 const Spacer(),

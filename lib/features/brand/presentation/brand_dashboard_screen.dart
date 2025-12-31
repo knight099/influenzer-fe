@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colors.dart';
 import 'creator_search_screen.dart';
 import '../../chat/presentation/chat_list_screen.dart';
+import 'brand_profile_screen.dart';
 
 class BrandDashboardScreen extends StatefulWidget {
   const BrandDashboardScreen({super.key});
@@ -19,33 +20,7 @@ class _BrandDashboardScreenState extends State<BrandDashboardScreen> {
     const CreatorSearchScreen(),
     const Center(child: Text('My Campaigns')), // Placeholder
     const ChatListScreen(),
-    Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Text('Profile', style: TextStyle(fontSize: 24)),
-          const SizedBox(height: 16),
-          ElevatedButton(
-            // using GoRouter to push to avoid context issues in this simplified example if needed
-            // but context is available here.
-            onPressed: () {}, 
-            child: Builder(builder: (context) {
-              return ElevatedButton(
-                onPressed: () => GoRouter.of(context).push('/wallet'),
-                child: const Text('My Wallet'),
-              );
-            }),
-          ),
-          const SizedBox(height: 16),
-           Builder(builder: (context) {
-              return ElevatedButton(
-                onPressed: () => GoRouter.of(context).push('/payment'),
-                child: const Text('Test Payment Trigger'),
-              );
-            }),
-        ],
-      ),
-    ),
+    const BrandProfileScreen(),
   ];
 
   void _onItemTapped(int index) {

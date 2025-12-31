@@ -82,6 +82,46 @@ class ProfileScreen extends ConsumerWidget {
                 const SizedBox(height: 24),
               ],
               
+              // Instagram Stats Section (if connected)
+              if (profile.instagramConnected) ...[
+                _buildSectionTitleWithAction(
+                  'Instagram Stats',
+                  onRefresh: () async {
+                    await ref.read(userProfileRepositoryProvider).refreshStats();
+                    ref.invalidate(userProfileProvider);
+                  },
+                ),
+                const SizedBox(height: 12),
+                if (profile.instagramError != null)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.red.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.red.withOpacity(0.3)),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.error_outline, color: Colors.red),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            'Failed to refresh stats. Please reconnect your account.',
+                            style: TextStyle(color: Colors.red[700]),
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                else if (profile.instagramStats != null)
+                  _buildInstagramStatsCard(profile.instagramStats!)
+                else 
+                   const Center(child: Text('Click refresh to load stats', style: TextStyle(color: Colors.grey))),
+
+                const SizedBox(height: 24),
+              ],
+              
               // Linked Accounts Section
               _buildSectionTitle('Linked Accounts'),
               const SizedBox(height: 12),
@@ -515,6 +555,116 @@ class ProfileScreen extends ConsumerWidget {
           : null,
       trailing: const Icon(Icons.chevron_right, color: AppColors.textSecondary),
       onTap: onTap,
+    );
+  }
+
+  Widget _buildInstagramStatsCard(InstagramStats stats) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          // Profile info row
+          Row(
+            children: [
+              if (stats.profilePictureUrl != null)
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(28),
+                  child: Image.network(
+                    stats.profilePictureUrl!,
+                    width: 56,
+                    height: 56,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Container(
+                      width: 56,
+                      height: 56,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: LinearGradient(
+                          colors: [Colors.purple, Colors.pink, Colors.orange],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                      ),
+                      child: const Icon(Icons.person, color: Colors.white, size: 32),
+                    ),
+                  ),
+                )
+              else
+                Container(
+                  width: 56,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: LinearGradient(
+                      colors: [Colors.purple, Colors.pink, Colors.orange],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                  ),
+                  child: const Icon(Icons.camera_alt, color: Colors.white, size: 28),
+                ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '@${stats.username ?? 'Instagram'}',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                    if (stats.biography != null && stats.biography!.isNotEmpty)
+                      Text(
+                        stats.biography!,
+                        style: const TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 12,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          // Stats row
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildStatItem(
+                label: 'Followers',
+                value: _formatNumber(stats.followersCount),
+                icon: Icons.people,
+              ),
+              _buildStatItem(
+                label: 'Following',
+                value: _formatNumber(stats.followingCount),
+                icon: Icons.person_add,
+              ),
+              _buildStatItem(
+                label: 'Posts',
+                value: _formatNumber(stats.mediaCount),
+                icon: Icons.grid_on,
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }

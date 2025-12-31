@@ -33,6 +33,35 @@ class YouTubeStats {
   }
 }
 
+class InstagramStats {
+  final String? username;
+  final String? profilePictureUrl;
+  final String? followersCount;
+  final String? followingCount;
+  final String? mediaCount;
+  final String? biography;
+
+  InstagramStats({
+    this.username,
+    this.profilePictureUrl,
+    this.followersCount,
+    this.followingCount,
+    this.mediaCount,
+    this.biography,
+  });
+
+  factory InstagramStats.fromJson(Map<String, dynamic> json) {
+    return InstagramStats(
+      username: json['username'],
+      profilePictureUrl: json['profile_picture'], // Backend sends profile_picture
+      followersCount: json['followers_count']?.toString(),
+      followingCount: json['follows_count']?.toString(), // Backend sends follows_count
+      mediaCount: json['media_count']?.toString(),
+      biography: json['biography'],
+    );
+  }
+}
+
 class UserProfile {
   final String id;
   final String email;
@@ -45,6 +74,8 @@ class UserProfile {
   final String? instagramUsername;
   final YouTubeStats? youtubeStats;
   final String? youtubeError;
+  final InstagramStats? instagramStats;
+  final String? instagramError;
 
   UserProfile({
     required this.id,
@@ -58,6 +89,8 @@ class UserProfile {
     this.instagramUsername,
     this.youtubeStats,
     this.youtubeError,
+    this.instagramStats,
+    this.instagramError,
   });
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
@@ -85,9 +118,10 @@ class UserProfile {
     }
 
     // Parse cached_stats
-    // Parse cached_stats
     YouTubeStats? ytStats;
     String? ytError;
+    InstagramStats? igStats;
+    String? igError;
     final cachedStats = json['cached_stats'] as Map<String, dynamic>?;
     print('[Profile] raw cached_stats: $cachedStats');
 
@@ -99,6 +133,15 @@ class UserProfile {
       }
       if (cachedStats['youtube_error'] != null) {
         ytError = cachedStats['youtube_error'].toString();
+      }
+      
+      if (cachedStats['instagram'] != null) {
+        igStats = InstagramStats.fromJson(cachedStats['instagram'] as Map<String, dynamic>);
+        // Use Instagram username as username if not already set
+        igUsername ??= igStats.username;
+      }
+      if (cachedStats['instagram_error'] != null) {
+        igError = cachedStats['instagram_error'].toString();
       }
     }
 
@@ -114,6 +157,8 @@ class UserProfile {
       instagramUsername: igUsername,
       youtubeStats: ytStats,
       youtubeError: ytError,
+      instagramStats: igStats,
+      instagramError: igError,
     );
   }
 }

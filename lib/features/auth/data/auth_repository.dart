@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:influenzer_app/core/network/api_client.dart';
 import 'package:influenzer_app/core/storage/auth_storage.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 part 'auth_repository.g.dart';
 
@@ -43,14 +44,30 @@ class AuthRepository {
     await _handleAuthResponse(response);
   }
 
-  Future<void> socialLogin(String provider, String token, {String? name, String? avatarUrl}) async {
-    final response = await _dio.post('/auth/login/social', data: {
-      'provider': provider,
-      'token': token,
-      if (name != null) 'name': name,
-      if (avatarUrl != null) 'avatar_url': avatarUrl,
-    });
+  Future<Map<String, dynamic>> socialLogin(String provider, String token, {String? name, String? avatarUrl}) async {
+    // Clear any existing auth token first
+    AuthTokenHolder.clear();
+    
+    final response = await _dio.post(
+      '/auth/login/social',
+      data: {
+        'provider': provider,
+        'token': token,
+        if (name != null) 'name': name,
+        if (avatarUrl != null) 'avatar_url': avatarUrl,
+      },
+      options: Options(
+        headers: {'Authorization': null}, // Explicitly remove auth header for login
+      ),
+    );
     await _handleAuthResponse(response);
+    
+    // Return user data from response
+    final data = response.data;
+    if (data != null && data is Map<String, dynamic>) {
+      return data['user'] ?? {};
+    }
+    return {};
   }
   
   Future<void> connectSocial(String provider, String authCode, {String? redirectUri}) async {
@@ -62,8 +79,19 @@ class AuthRepository {
   }
 
   Future<void> logout() async {
+    // Sign out from Google
+    final googleSignIn = GoogleSignIn();
+    await googleSignIn.signOut();
+    
+    // Clear tokens
     AuthTokenHolder.clear();
     await _authStorage.deleteToken();
+  }
+
+  Future<void> setRole(String role) async {
+    await _dio.post('/auth/set-role', data: {
+      'role': role,
+    });
   }
 
   /// Initialize auth from stored token (call on app startup)

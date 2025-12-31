@@ -8,17 +8,6 @@ class LoginScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    ref.listen(authControllerProvider, (previous, next) {
-        if (next is AsyncData && !next.isLoading) {
-             context.go('/role-selection');
-        }
-        if (next is AsyncError) {
-             ScaffoldMessenger.of(context).showSnackBar(
-                 SnackBar(content: Text('Login Failed: ${next.error}')),
-             );
-        }
-    });
-
     return Scaffold(
       body: SafeArea(
         child: SingleChildScrollView(
@@ -28,61 +17,77 @@ class LoginScreen extends ConsumerWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const SizedBox(height: 48), // Spacer replacement
-                // Logo Placeholder
-                const Center(
-                  child: Icon(Icons.flash_on, size: 80, color: Colors.deepPurple),
-                ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 100),
+                // Logo and Title
                 const Text(
                   'Influenzer',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontSize: 32,
+                    fontSize: 40,
                     fontWeight: FontWeight.bold,
-                    color: Colors.black,
                   ),
                 ),
                 const SizedBox(height: 8),
                 const Text(
-                  'Connect Brands with Top Creators',
+                  'Connect. Create. Earn.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 16, color: Colors.grey),
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.grey,
+                  ),
                 ),
-                const SizedBox(height: 48), // Spacer replacement
-                ElevatedButton(
-                  onPressed: () {
-                      ref.read(authControllerProvider.notifier).signInWithGoogle();
+                const SizedBox(height: 100),
+                
+                // Google Sign In Button
+                Consumer(
+                  builder: (context, ref, _) {
+                    final authState = ref.watch(authControllerProvider);
+                    
+                    return ElevatedButton.icon(
+                      onPressed: authState.isLoading ? null : () async {
+                        final userData = await ref.read(authControllerProvider.notifier).signInWithGoogle();
+                        
+                        if (context.mounted && userData != null) {
+                          final role = userData['role']?.toString().toUpperCase();
+                          
+                          // Navigate based on role
+                          if (role == 'BRAND') {
+                            context.go('/brand-dashboard');
+                          } else if (role == 'CREATOR') {
+                            context.go('/creator-dashboard');
+                          } else {
+                            // No role set, go to role selection
+                            context.go('/role-selection');
+                          }
+                        }
+                      },
+                      icon: authState.isLoading
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : Image.asset(
+                              'assets/google_logo.png',
+                              height: 24,
+                              errorBuilder: (_, __, ___) => const Icon(Icons.login),
+                            ),
+                      label: Text(authState.isLoading ? 'Signing in...' : 'Continue with Google'),
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                    );
                   },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    foregroundColor: Colors.black,
-                    elevation: 2,
-                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: const [
-                       Icon(Icons.g_mobiledata, size: 24),
-                       SizedBox(width: 8),
-                       Flexible(
-                         child: FittedBox(
-                           fit: BoxFit.scaleDown,
-                           child: Text(
-                             'Continue with Google',
-                             style: TextStyle(fontSize: 16),
-                           ),
-                         ),
-                       ),
-                    ],
-                  ),
                 ),
-                const SizedBox(height: 12),
-                OutlinedButton(
+                
+                const SizedBox(height: 24),
+                TextButton(
                   onPressed: () => context.go('/role-selection'),
-                  child: const Text('Login with Email'),
+                  child: const Text('Continue as Guest'),
                 ),
-                const SizedBox(height: 24), // Spacer replacement
               ],
             ),
           ),

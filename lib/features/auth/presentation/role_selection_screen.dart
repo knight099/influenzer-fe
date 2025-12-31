@@ -9,6 +9,8 @@ class RoleSelectionScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final authState = ref.watch(authControllerProvider);
+    
     return Scaffold(
       body: SafeArea(
         child: Padding(
@@ -31,8 +33,12 @@ class RoleSelectionScreen extends ConsumerWidget {
                 description: 'Post jobs, find talent, and manage campaigns.',
                 icon: Icons.business,
                 color: AppColors.primary,
-                onTap: () {
-                  context.go('/brand-dashboard');
+                onTap: authState.isLoading ? null : () async {
+                  // Set role to BRAND
+                  await ref.read(authControllerProvider.notifier).setRole('BRAND');
+                  if (context.mounted) {
+                    context.go('/brand-dashboard');
+                  }
                 },
               ),
               const SizedBox(height: 16),
@@ -41,10 +47,19 @@ class RoleSelectionScreen extends ConsumerWidget {
                 description: 'Find work, submit proposals, and get paid.',
                 icon: Icons.video_camera_back,
                 color: AppColors.secondary,
-                onTap: () {
-                  context.push('/social-link');
+                onTap: authState.isLoading ? null : () async {
+                  // Set role to CREATOR
+                  await ref.read(authControllerProvider.notifier).setRole('CREATOR');
+                  if (context.mounted) {
+                    context.push('/social-link');
+                  }
                 },
               ),
+              if (authState.isLoading)
+                const Padding(
+                  padding: EdgeInsets.only(top: 24.0),
+                  child: Center(child: CircularProgressIndicator()),
+                ),
               const Spacer(),
             ],
           ),
@@ -59,7 +74,7 @@ class _RoleCard extends StatelessWidget {
   final String description;
   final IconData icon;
   final Color color;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   const _RoleCard({
     required this.title,
