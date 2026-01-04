@@ -22,7 +22,7 @@ class TransactionHistoryScreen extends StatelessWidget {
                 ),
                 SizedBox(height: 8),
                 Text(
-                  '\$1,250.00',
+                  '₹1,250.00',
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 32,
@@ -52,7 +52,7 @@ class TransactionHistoryScreen extends StatelessWidget {
                     style: const TextStyle(fontSize: 12),
                   ),
                   trailing: Text(
-                    '${isCredit ? '+' : '-'}\$250.00',
+                    '${isCredit ? '+' : '-'}₹250.00',
                     style: TextStyle(
                       color: isCredit ? Colors.green : Colors.red,
                       fontWeight: FontWeight.bold,

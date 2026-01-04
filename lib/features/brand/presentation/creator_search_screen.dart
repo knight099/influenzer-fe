@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../creator/data/creator_repository.dart';
 import 'widgets/creator_card.dart';
 
-class CreatorSearchScreen extends StatelessWidget {
+class CreatorSearchScreen extends ConsumerWidget {
   const CreatorSearchScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Column(
       children: [
         Padding(
@@ -22,6 +24,9 @@ class CreatorSearchScreen extends StatelessWidget {
               filled: true,
               fillColor: Colors.grey[200],
             ),
+            onSubmitted: (value) {
+              // TODO: Implement search with query parameter
+            },
           ),
         ),
         SizedBox(
@@ -39,13 +44,87 @@ class CreatorSearchScreen extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         Expanded(
-          child: ListView.separated(
-            padding: const EdgeInsets.all(16),
-            itemCount: 5,
-            separatorBuilder: (_, __) => const SizedBox(height: 16),
-            itemBuilder: (context, index) {
-              return const CreatorCard();
+          child: ref.watch(cachedCreatorSearchProvider).when(
+            data: (creators) {
+              if (creators.isEmpty) {
+                return RefreshIndicator(
+                  onRefresh: () async {
+                    ref.invalidate(cachedCreatorSearchProvider);
+                    await ref.read(cachedCreatorSearchProvider.future);
+                  },
+                  child: Center(
+                    child: SingleChildScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: const [
+                          Icon(Icons.person_search, size: 64, color: Colors.grey),
+                          SizedBox(height: 16),
+                          Text(
+                            'No creators found',
+                            style: TextStyle(fontSize: 18, color: Colors.grey),
+                          ),
+                          SizedBox(height: 8),
+                          Text(
+                            'Pull down to refresh',
+                            style: TextStyle(fontSize: 12, color: Colors.grey),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              }
+              
+              return RefreshIndicator(
+                onRefresh: () async {
+                  // Invalidate the cache and trigger a new fetch
+                  ref.invalidate(cachedCreatorSearchProvider);
+                  // Wait for the new data to load
+                  await ref.read(cachedCreatorSearchProvider.future);
+                },
+                child: ListView.separated(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: creators.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 16),
+                  itemBuilder: (context, index) {
+                    return CreatorCard(creator: creators[index]);
+                  },
+                ),
+              );
             },
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (err, stack) => RefreshIndicator(
+              onRefresh: () async {
+                ref.invalidate(cachedCreatorSearchProvider);
+                await ref.read(cachedCreatorSearchProvider.future);
+              },
+              child: Center(
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Error loading creators: $err',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(color: Colors.red),
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'Pull down to retry',
+                          style: TextStyle(fontSize: 12, color: Colors.grey),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
           ),
         ),
       ],

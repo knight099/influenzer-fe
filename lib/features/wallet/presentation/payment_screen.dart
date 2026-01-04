@@ -91,7 +91,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: const [
                 Text('Total Amount', style: TextStyle(fontSize: 18)),
-                Text('\$250.00', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                Text('₹250.00', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
               ],
             ),
             const Divider(height: 32),

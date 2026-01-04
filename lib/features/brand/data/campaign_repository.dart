@@ -15,12 +15,22 @@ class CampaignRepository {
 
   CampaignRepository(this._dio);
 
-  Future<void> createCampaign(Map<String, dynamic> campaignData) async {
-    await _dio.post('/campaigns', data: campaignData);
+  /// POST /campaigns - Create a new campaign
+  Future<Map<String, dynamic>> createCampaign(Map<String, dynamic> campaignData) async {
+    final response = await _dio.post('/campaigns', data: campaignData);
+    return response.data as Map<String, dynamic>;
   }
 
+  /// GET /campaigns - List all campaigns for the brand
   Future<List<dynamic>> listCampaigns() async {
     final response = await _dio.get('/campaigns');
     return response.data as List<dynamic>;
   }
+
+  /// GET /campaigns/:id - Get a specific campaign by ID
+  Future<Map<String, dynamic>> getCampaign(String id) async {
+    final response = await _dio.get('/campaigns/$id');
+    return response.data as Map<String, dynamic>;
+  }
 }
+

@@ -55,3 +55,51 @@ final class CreatorRepositoryProvider
 }
 
 String _$creatorRepositoryHash() => r'264b424f15fa4a00826d95ec9da6133d84e65266';
+
+/// Cached creator search results - persists during app session
+/// Automatically refetches when app restarts
+
+@ProviderFor(cachedCreatorSearch)
+const cachedCreatorSearchProvider = CachedCreatorSearchProvider._();
+
+/// Cached creator search results - persists during app session
+/// Automatically refetches when app restarts
+
+final class CachedCreatorSearchProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<dynamic>>,
+          List<dynamic>,
+          FutureOr<List<dynamic>>
+        >
+    with $FutureModifier<List<dynamic>>, $FutureProvider<List<dynamic>> {
+  /// Cached creator search results - persists during app session
+  /// Automatically refetches when app restarts
+  const CachedCreatorSearchProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'cachedCreatorSearchProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$cachedCreatorSearchHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<List<dynamic>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<List<dynamic>> create(Ref ref) {
+    return cachedCreatorSearch(ref);
+  }
+}
+
+String _$cachedCreatorSearchHash() =>
+    r'7af445b1ab2408b03c4e62fd147bb4d7118bc9d4';

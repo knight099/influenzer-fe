@@ -23,7 +23,8 @@ class AuthTokenHolder {
 Dio dio(Ref ref) {
   final dio = Dio(
     BaseOptions(
-      baseUrl: 'https://influenzer.onrender.com', // Production base URL
+      // baseUrl: 'https://influenzer.onrender.com', // Production base URL
+      baseUrl: 'http://localhost:8080', // Development base URL
       connectTimeout: const Duration(seconds: 10),
       receiveTimeout: const Duration(seconds: 10),
       headers: {

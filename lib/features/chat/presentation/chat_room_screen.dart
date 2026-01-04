@@ -157,7 +157,7 @@ class _OfferCard extends StatelessWidget {
             style: TextStyle(fontWeight: FontWeight.bold, color: Colors.green),
           ),
           const SizedBox(height: 4),
-          const Text('Running Shoe Promo • \$250'),
+          const Text('Running Shoe Promo • ₹250'),
           const SizedBox(height: 12),
           ElevatedButton(
             onPressed: () {

@@ -1,15 +1,99 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../auth/data/auth_repository.dart';
 import '../data/user_profile_repository.dart';
+import '../../auth/application/auth_controller.dart';
 
-class ProfileScreen extends ConsumerWidget {
+class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends ConsumerState<ProfileScreen> with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // When app returns from background (e.g., after OAuth), refresh profile
+    if (state == AppLifecycleState.resumed) {
+      debugPrint('[Profile] App resumed, refreshing stats and profile...');
+      // First refresh stats with new tokens, then reload profile
+      ref.read(userProfileRepositoryProvider).refreshStats().then((_) {
+        debugPrint('[Profile] Stats refreshed, now reloading profile...');
+        ref.invalidate(userProfileProvider);
+      }).catchError((error) {
+        debugPrint('[Profile] Error refreshing stats: $error');
+        // Still reload profile even if refresh fails
+        ref.invalidate(userProfileProvider);
+      });
+    }
+  }
+
+  // Helper to launch Instagram OAuth
+  Future<void> _launchInstagramOAuth() async {
+    const clientId = '816744758013078';
+    final redirectUri = 'https://influenzer.onrender.com/callback/';
+    const scope = 'instagram_business_basic,instagram_business_manage_messages,instagram_business_manage_comments,instagram_business_content_publish,instagram_business_manage_insights';
+    const state = 'instagram';
+    
+    final uri = Uri.https('www.instagram.com', '/oauth/authorize', {
+      'client_id': clientId,
+      'redirect_uri': redirectUri,
+      'scope': scope,
+      'response_type': 'code',
+      'state': state,
+      'force_reauth': 'true',
+    });
+    
+    final url = uri.toString();
+    if (await canLaunchUrl(Uri.parse(url))) {
+      await launchUrl(Uri.parse(url), webOnlyWindowName: '_self');
+    }
+  }
+
+  // Helper to launch YouTube OAuth
+  void _launchYouTubeOAuth() {
+    if (!kIsWeb) {
+      // Use Native Google Sign-In on Mobile
+      ref.read(authControllerProvider.notifier).connectYouTube();
+    } else {
+      // Use Manual Web Flow
+      const clientId = '47008398696-bsn5162rp1cl2nie455mmr6vu10fvcog.apps.googleusercontent.com';
+      const redirectUri = 'http://localhost:8081/callback';
+      const scope = 'https://www.googleapis.com/auth/youtube.readonly';
+      const state = 'youtube';
+      
+      final uri = Uri.https('accounts.google.com', '/o/oauth2/v2/auth', {
+        'client_id': clientId,
+        'redirect_uri': redirectUri,
+        'response_type': 'code',
+        'scope': scope,
+        'access_type': 'offline',
+        'state': state,
+      });
+      
+      launchUrl(Uri.parse(uri.toString()), webOnlyWindowName: '_self');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final profileAsync = ref.watch(userProfileProvider);
 
     return Scaffold(
@@ -61,14 +145,30 @@ class ProfileScreen extends ConsumerWidget {
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(color: Colors.red.withOpacity(0.3)),
                     ),
-                    child: Row(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Icon(Icons.error_outline, color: Colors.red),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            'Failed to refresh stats. Please reconnect your account.',
-                            style: TextStyle(color: Colors.red[700]),
+                        Row(
+                          children: [
+                            const Icon(Icons.error_outline, color: Colors.red),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                'Failed to refresh stats. Please reconnect your account.',
+                                style: TextStyle(color: Colors.red[700]),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        ElevatedButton.icon(
+                          onPressed: _launchYouTubeOAuth,
+                          icon: const Icon(Icons.refresh, size: 18),
+                          label: const Text('Reconnect YouTube'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                           ),
                         ),
                       ],
@@ -101,14 +201,30 @@ class ProfileScreen extends ConsumerWidget {
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(color: Colors.red.withOpacity(0.3)),
                     ),
-                    child: Row(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Icon(Icons.error_outline, color: Colors.red),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            'Failed to refresh stats. Please reconnect your account.',
-                            style: TextStyle(color: Colors.red[700]),
+                        Row(
+                          children: [
+                            const Icon(Icons.error_outline, color: Colors.red),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                'Failed to refresh stats. Please reconnect your account.',
+                                style: TextStyle(color: Colors.red[700]),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        ElevatedButton.icon(
+                          onPressed: _launchInstagramOAuth,
+                          icon: const Icon(Icons.refresh, size: 18),
+                          label: const Text('Reconnect Instagram'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFE1306C),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                           ),
                         ),
                       ],

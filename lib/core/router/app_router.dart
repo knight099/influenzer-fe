@@ -7,6 +7,9 @@ import '../../features/auth/presentation/social_link_screen.dart';
 import '../../features/auth/presentation/callback_screen.dart';
 import '../../features/brand/presentation/brand_dashboard_screen.dart';
 import '../../features/brand/presentation/create_campaign_screen.dart';
+import '../../features/brand/presentation/creator_details_screen.dart';
+import '../../features/brand/presentation/campaign_details_screen.dart';
+import '../../features/brand/presentation/submission_details_screen.dart';
 import '../../features/creator/presentation/creator_dashboard_screen.dart';
 import '../../features/creator/presentation/submit_proposal_screen.dart';
 import '../../features/chat/presentation/chat_room_screen.dart';
@@ -41,12 +44,36 @@ GoRouter goRouter(Ref ref) {
         builder: (context, state) => const CreateCampaignScreen(),
       ),
       GoRoute(
+        path: '/creator-details',
+        builder: (context, state) {
+          final creator = state.extra as Map<String, dynamic>;
+          return CreatorDetailsScreen(creator: creator);
+        },
+      ),
+      GoRoute(
+        path: '/campaign-details',
+        builder: (context, state) {
+          final campaign = state.extra as Map<String, dynamic>;
+          return CampaignDetailsScreen(campaign: campaign);
+        },
+      ),
+      GoRoute(
+        path: '/submission-details',
+        builder: (context, state) {
+          final submission = state.extra as Map<String, dynamic>;
+          return SubmissionDetailsScreen(submission: submission);
+        },
+      ),
+      GoRoute(
         path: '/creator-dashboard',
         builder: (context, state) => const CreatorDashboardScreen(),
       ),
       GoRoute(
         path: '/submit-proposal',
-        builder: (context, state) => const SubmitProposalScreen(),
+        builder: (context, state) {
+          final job = state.extra as Map<String, dynamic>?;
+          return SubmitProposalScreen(job: job);
+        },
       ),
       GoRoute(
         path: '/chat-room',

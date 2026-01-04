@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 
 class SubmitProposalScreen extends StatefulWidget {
-  const SubmitProposalScreen({super.key});
+  final Map<String, dynamic>? job;
+  
+  const SubmitProposalScreen({super.key, this.job});
 
   @override
   State<SubmitProposalScreen> createState() => _SubmitProposalScreenState();
@@ -14,6 +16,9 @@ class _SubmitProposalScreenState extends State<SubmitProposalScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final jobTitle = widget.job?['title'] ?? 'Campaign Details';
+    final jobBudget = widget.job?['budget'] ?? 0;
+    
     return Scaffold(
       appBar: AppBar(title: const Text('Submit Proposal')),
       body: SingleChildScrollView(
@@ -21,18 +26,18 @@ class _SubmitProposalScreenState extends State<SubmitProposalScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text(
-              'Running Shoe Promo',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            Text(
+              jobTitle,
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
-            const Text('Nike • \$250 Fixed Price', style: TextStyle(color: Colors.grey)),
+            const Text('Complete the form below to submit your proposal', style: TextStyle(color: Colors.grey)),
             const SizedBox(height: 24),
             _Label('Your Bid Price'),
             TextFormField(
-              initialValue: '250',
+              initialValue: jobBudget.toString(),
               keyboardType: TextInputType.number,
               decoration: const InputDecoration(
-                prefixText: '\$ ',
+                prefixText: '₹ ',
                 border: OutlineInputBorder(),
               ),
             ),
