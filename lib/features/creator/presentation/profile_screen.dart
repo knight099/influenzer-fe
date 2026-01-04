@@ -68,15 +68,22 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with WidgetsBindi
   }
 
   // Helper to launch YouTube OAuth
-  void _launchYouTubeOAuth() {
+  Future<void> _launchYouTubeOAuth() async {
     if (!kIsWeb) {
       // Use Native Google Sign-In on Mobile
-      ref.read(authControllerProvider.notifier).connectYouTube();
+      await ref.read(authControllerProvider.notifier).connectYouTube();
+      // After connection attempt finishes, refresh stats explicitly
+      // This handles the race condition where app resume happens before connection completion
+      if (mounted) {
+         ref.read(userProfileRepositoryProvider).refreshStats().then((_) {
+           ref.invalidate(userProfileProvider);
+         });
+      }
     } else {
       // Use Manual Web Flow
       const clientId = '47008398696-bsn5162rp1cl2nie455mmr6vu10fvcog.apps.googleusercontent.com';
       const redirectUri = 'http://localhost:8081/callback';
-      const scope = 'https://www.googleapis.com/auth/youtube.readonly';
+      const scope = 'email profile https://www.googleapis.com/auth/youtube.readonly';
       const state = 'youtube';
       
       final uri = Uri.https('accounts.google.com', '/o/oauth2/v2/auth', {
@@ -95,6 +102,19 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with WidgetsBindi
   @override
   Widget build(BuildContext context) {
     final profileAsync = ref.watch(userProfileProvider);
+    
+    // Listen for auth errors/success
+    ref.listen(authControllerProvider, (previous, next) {
+      if (next.hasError) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Connection Failed: ${next.error}')),
+        );
+      } else if (next is AsyncData && !next.isLoading && previous?.isLoading == true) {
+         ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Connected Successfully!')),
+        );
+      }
+    });
 
     return Scaffold(
       backgroundColor: AppColors.background,

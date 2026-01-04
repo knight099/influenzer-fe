@@ -8,14 +8,16 @@ import 'creator_search_screen.dart';
 import '../../chat/presentation/chat_list_screen.dart';
 import 'brand_profile_screen.dart';
 
-class BrandDashboardScreen extends StatefulWidget {
+import '../../wallet/presentation/subscription_prompt.dart';
+
+class BrandDashboardScreen extends ConsumerStatefulWidget {
   const BrandDashboardScreen({super.key});
 
   @override
-  State<BrandDashboardScreen> createState() => _BrandDashboardScreenState();
+  ConsumerState<BrandDashboardScreen> createState() => _BrandDashboardScreenState();
 }
 
-class _BrandDashboardScreenState extends State<BrandDashboardScreen> {
+class _BrandDashboardScreenState extends ConsumerState<BrandDashboardScreen> {
   int _selectedIndex = 0;
 
   List<Widget> get _widgetOptions => <Widget>[
@@ -65,7 +67,30 @@ class _BrandDashboardScreenState extends State<BrandDashboardScreen> {
       ),
       floatingActionButton: _selectedIndex == 0 // Only show on Home tab
           ? FloatingActionButton.extended(
-              onPressed: () => context.push('/create-campaign'),
+              onPressed: () {
+                final profileAsync = ref.read(brandProfileProvider);
+                // We access the value directly if available, or assume 'INACTIVE' if loading/error 
+                // (though ideally we should wait, UI is usually unresponsive if crucial data missing)
+                // Actually, accessing .value might be null.
+                // Best practice: Check if data is available.
+                
+                final isSubscribed = profileAsync.valueOrNull?.subscriptionStatus == 'ACTIVE';
+                
+                if (isSubscribed) {
+                  context.push('/create-campaign');
+                } else {
+                  showDialog(
+                    context: context,
+                    builder: (context) => SubscriptionPrompt(
+                      role: 'Brand',
+                      onSuccess: () {
+                        // Refresh logic if needed
+                         ref.invalidate(brandProfileProvider);
+                      },
+                    ),
+                  );
+                }
+              },
               label: const Text('Post Campaign'),
               icon: const Icon(Icons.add),
             )
@@ -147,7 +172,25 @@ class _BrandHomeTab extends ConsumerWidget {
                         const Text('No active campaigns yet'),
                         const SizedBox(height: 8),
                         ElevatedButton.icon(
-                          onPressed: () => context.push('/create-campaign'),
+                          onPressed: () {
+                            final profileAsync = ref.read(brandProfileProvider);
+                
+                            final isSubscribed = profileAsync.valueOrNull?.subscriptionStatus == 'ACTIVE';
+                            
+                            if (isSubscribed) {
+                              context.push('/create-campaign');
+                            } else {
+                              showDialog(
+                                context: context,
+                                builder: (context) => SubscriptionPrompt(
+                                  role: 'Brand',
+                                  onSuccess: () {
+                                     ref.invalidate(brandProfileProvider);
+                                  },
+                                ),
+                              );
+                            }
+                          },
                           icon: const Icon(Icons.add),
                           label: const Text('Create Campaign'),
                         ),

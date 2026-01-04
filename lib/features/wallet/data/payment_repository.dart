@@ -15,13 +15,21 @@ class PaymentRepository {
 
   PaymentRepository(this._dio);
 
-  Future<Map<String, dynamic>> createOrder(Map<String, dynamic> orderData) async {
-    final response = await _dio.post('/payments/create-order', data: orderData);
+  Future<Map<String, dynamic>> createOrder(String proposalId, int amount, String currency) async {
+    final response = await _dio.post('/payments/create-order', data: {
+      'proposal_id': proposalId,
+      'amount': amount,
+      'currency': currency,
+    });
     return response.data as Map<String, dynamic>;
   }
 
-  Future<void> verifyPayment(Map<String, dynamic> paymentData) async {
-    await _dio.post('/payments/verify', data: paymentData);
+  Future<void> verifyPayment(String orderId, String paymentId, String signature) async {
+    await _dio.post('/payments/verify', data: {
+      'order_id': orderId,
+      'payment_id': paymentId,
+      'signature': signature,
+    });
   }
   
   Future<List<dynamic>> getTransactions() async {
@@ -29,7 +37,14 @@ class PaymentRepository {
     return response.data as List<dynamic>;
   }
 
-  Future<void> releaseFunds(Map<String, dynamic> releaseData) async {
-    await _dio.post('/payments/release', data: releaseData);
+  Future<void> releaseFunds(String proposalId) async {
+    await _dio.post('/payments/release', data: {
+      'proposal_id': proposalId,
+    });
+  }
+
+  Future<List<dynamic>> getSubscriptionPlans() async {
+    final response = await _dio.get('/payments/plans');
+    return response.data as List<dynamic>;
   }
 }

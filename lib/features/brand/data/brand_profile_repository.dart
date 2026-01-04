@@ -10,6 +10,7 @@ class BrandProfile {
   final String? phone;
   final String? roleInCompany;
   final double walletBalance;
+  final String subscriptionStatus;
 
   BrandProfile({
     this.companyName,
@@ -17,6 +18,7 @@ class BrandProfile {
     this.phone,
     this.roleInCompany,
     this.walletBalance = 0.0,
+    this.subscriptionStatus = 'INACTIVE',
   });
 
   factory BrandProfile.fromJson(Map<String, dynamic> json) {
@@ -26,6 +28,7 @@ class BrandProfile {
       phone: json['phone'],
       roleInCompany: json['role_in_company'],
       walletBalance: (json['wallet_balance'] ?? 0).toDouble(),
+      subscriptionStatus: json['subscription_status'] ?? 'INACTIVE',
     );
   }
 

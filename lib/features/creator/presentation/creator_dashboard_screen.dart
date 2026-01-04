@@ -3,6 +3,7 @@ import '../../../core/theme/app_colors.dart';
 import 'job_feed_screen.dart';
 import 'profile_screen.dart';
 import '../../chat/presentation/chat_list_screen.dart';
+import 'my_applications_screen.dart';
 
 class CreatorDashboardScreen extends StatefulWidget {
   const CreatorDashboardScreen({super.key});
@@ -16,7 +17,7 @@ class _CreatorDashboardScreenState extends State<CreatorDashboardScreen> {
 
   static const List<Widget> _widgetOptions = <Widget>[
     JobFeedScreen(),
-    Center(child: Text('My Jobs')), // Placeholder
+    MyApplicationsScreen(),
     ChatListScreen(),
     ProfileScreen(),
   ];

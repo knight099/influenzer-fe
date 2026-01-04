@@ -1,23 +1,91 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
+import '../data/job_repository.dart';
 
-class SubmitProposalScreen extends StatefulWidget {
+class SubmitProposalScreen extends ConsumerStatefulWidget {
   final Map<String, dynamic>? job;
   
   const SubmitProposalScreen({super.key, this.job});
 
   @override
-  State<SubmitProposalScreen> createState() => _SubmitProposalScreenState();
+  ConsumerState<SubmitProposalScreen> createState() => _SubmitProposalScreenState();
 }
 
-class _SubmitProposalScreenState extends State<SubmitProposalScreen> {
+class _SubmitProposalScreenState extends ConsumerState<SubmitProposalScreen> {
   bool _isUploading = false;
+  bool _isSubmitting = false;
   bool _isVideoSelected = false;
+  
+  final _bidController = TextEditingController();
+  final _coverLetterController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    // Pre-fill bid with budget if available, otherwise empty
+    if (widget.job != null && widget.job?['budget'] != null) {
+      _bidController.text = widget.job!['budget'].toString();
+    }
+  }
+
+  @override
+  void dispose() {
+    _bidController.dispose();
+    _coverLetterController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submitProposal() async {
+    final jobId = widget.job?['id']?.toString();
+    if (jobId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Error: Invalid Job ID')),
+      );
+      return;
+    }
+
+    if (_bidController.text.isEmpty || _coverLetterController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please fill all fields')),
+      );
+      return;
+    }
+
+    setState(() => _isSubmitting = true);
+
+    try {
+      final bidAmount = double.tryParse(_bidController.text) ?? 0.0;
+      
+      await ref.read(jobRepositoryProvider).apply(jobId, {
+        'bid_amount': bidAmount,
+        'cover_letter': _coverLetterController.text,
+        // TODO: Add video URL once upload is implemented
+        'video_url': null, 
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Proposal Submitted Successfully!')),
+        );
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error submitting proposal: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final jobTitle = widget.job?['title'] ?? 'Campaign Details';
-    final jobBudget = widget.job?['budget'] ?? 0;
     
     return Scaffold(
       appBar: AppBar(title: const Text('Submit Proposal')),
@@ -34,7 +102,7 @@ class _SubmitProposalScreenState extends State<SubmitProposalScreen> {
             const SizedBox(height: 24),
             _Label('Your Bid Price'),
             TextFormField(
-              initialValue: jobBudget.toString(),
+              controller: _bidController,
               keyboardType: TextInputType.number,
               decoration: const InputDecoration(
                 prefixText: '₹ ',
@@ -44,6 +112,7 @@ class _SubmitProposalScreenState extends State<SubmitProposalScreen> {
             const SizedBox(height: 16),
             _Label('Cover Letter'),
             TextFormField(
+              controller: _coverLetterController,
               maxLines: 4,
               decoration: const InputDecoration(
                 hintText: 'Why are you a good fit?',
@@ -51,7 +120,7 @@ class _SubmitProposalScreenState extends State<SubmitProposalScreen> {
               ),
             ),
             const SizedBox(height: 24),
-            _Label('Trial Video'),
+            _Label('Trial Video (Optional for now)'),
             if (!_isVideoSelected)
               GestureDetector(
                 onTap: () {
@@ -112,13 +181,10 @@ class _SubmitProposalScreenState extends State<SubmitProposalScreen> {
               ),
             const SizedBox(height: 32),
             ElevatedButton(
-              onPressed: _isVideoSelected
-                  ? () {
-                      // TODO: Submit proposal logic
-                      Navigator.pop(context);
-                    }
-                  : null,
-              child: const Text('Submit Proposal'),
+              onPressed: _isSubmitting ? null : _submitProposal,
+              child: _isSubmitting 
+                ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                : const Text('Submit Proposal'),
             ),
           ],
         ),

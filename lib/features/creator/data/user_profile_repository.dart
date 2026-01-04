@@ -76,6 +76,8 @@ class UserProfile {
   final String? youtubeError;
   final InstagramStats? instagramStats;
   final String? instagramError;
+  final String subscriptionStatus;
+  final double walletBalance;
 
   UserProfile({
     required this.id,
@@ -91,6 +93,8 @@ class UserProfile {
     this.youtubeError,
     this.instagramStats,
     this.instagramError,
+    this.subscriptionStatus = 'INACTIVE',
+    this.walletBalance = 0.0,
   });
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
@@ -159,6 +163,8 @@ class UserProfile {
       youtubeError: ytError,
       instagramStats: igStats,
       instagramError: igError,
+      subscriptionStatus: json['subscription_status'] ?? 'INACTIVE',
+      walletBalance: (json['wallet_balance'] ?? 0).toDouble(),
     );
   }
 }

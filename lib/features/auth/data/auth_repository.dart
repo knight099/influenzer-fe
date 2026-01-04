@@ -71,11 +71,16 @@ class AuthRepository {
   }
   
   Future<void> connectSocial(String provider, String authCode, {String? redirectUri}) async {
-    await _dio.post('/auth/connect-social', data: {
+    final data = {
       'platform': provider,
       'auth_code': authCode,
-      'redirect_uri': redirectUri ?? 'http://localhost:8081/callback',
-    });
+    };
+    
+    if (redirectUri != null) {
+      data['redirect_uri'] = redirectUri;
+    }
+    
+    await _dio.post('/auth/connect-social', data: data);
   }
 
   Future<void> logout() async {

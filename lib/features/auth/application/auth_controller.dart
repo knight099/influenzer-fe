@@ -82,7 +82,11 @@ class AuthController extends _$AuthController {
       final googleSignIn = GoogleSignIn(
         // Must use Web Client ID as serverClientId to get a valid serverAuthCode
         serverClientId: '47008398696-bsn5162rp1cl2nie455mmr6vu10fvcog.apps.googleusercontent.com',
-        scopes: ['https://www.googleapis.com/auth/youtube.readonly'],
+        scopes: [
+          'email',
+          'profile',
+          'https://www.googleapis.com/auth/youtube.readonly',
+        ],
         forceCodeForRefreshToken: true,
       );
       
@@ -95,8 +99,8 @@ class AuthController extends _$AuthController {
         final token = googleUser.serverAuthCode;
         
         if (token != null) {
-          // Send empty string for redirectUri as native flow doesn't use one
-          await ref.read(authRepositoryProvider).connectSocial('youtube', token, redirectUri: '');
+          // Send null for redirectUri as native flow doesn't use one
+          await ref.read(authRepositoryProvider).connectSocial('youtube', token, redirectUri: null);
         } else {
            throw Exception('Failed to get server auth code from Google. Check Web Client ID configuration.');
         }

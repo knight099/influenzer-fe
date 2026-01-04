@@ -1,20 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../data/user_profile_repository.dart';
+import '../../../wallet/presentation/subscription_prompt.dart';
 
-class JobCard extends StatelessWidget {
+class JobCard extends ConsumerWidget {
   final Map<String, dynamic> job;
   
   const JobCard({super.key, required this.job});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final title = job['title'] ?? 'Untitled Job';
     final brandName = job['brand_name'] ?? 'Unknown Brand';
     final budget = job['budget'] ?? 0;
     final description = job['description'] ?? '';
     final platform = job['platform'] ?? '';
-    final jobId = job['id'];
+    
+    // Watch user profile for subscription status
+    final profileAsync = ref.watch(userProfileProvider);
+    final isSubscribed = profileAsync.valueOrNull?.subscriptionStatus == 'ACTIVE';
 
     return Card(
       elevation: 2,
@@ -80,17 +86,36 @@ class JobCard extends StatelessWidget {
                 if (platform.isNotEmpty)
                   _Tag(
                     label: platform.toUpperCase(),
-                    color: _getPlatformColor(platform).withValues(alpha: 0.1),
+                    color: _getPlatformColor(platform).withOpacity(0.1),
                     textColor: _getPlatformColor(platform),
                   ),
                 const Spacer(),
                 ElevatedButton(
-                  onPressed: () => context.push('/submit-proposal', extra: job),
+                  onPressed: (job['applied'] == true) 
+                      ? null 
+                      : () {
+                          if (isSubscribed) {
+                            context.push('/submit-proposal', extra: job);
+                          } else {
+                            showDialog(
+                              context: context,
+                              builder: (context) => SubscriptionPrompt(
+                                role: 'Creator',
+                                onSuccess: () {
+                                  // In a real app, you might want to refresh profile here
+                                  // ref.refresh(userProfileProvider);
+                                },
+                              ),
+                            );
+                          }
+                        },
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    disabledBackgroundColor: Colors.green.withOpacity(0.1),
+                    disabledForegroundColor: Colors.green,
                   ),
-                  child: const Text('Apply'),
+                  child: Text((job['applied'] == true) ? 'Applied' : 'Apply'),
                 ),
               ],
             ),

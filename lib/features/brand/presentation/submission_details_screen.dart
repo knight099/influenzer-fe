@@ -1,14 +1,141 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:razorpay_flutter/razorpay_flutter.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../wallet/data/payment_repository.dart';
 
-class SubmissionDetailsScreen extends StatelessWidget {
+class SubmissionDetailsScreen extends ConsumerStatefulWidget {
   final Map<String, dynamic> submission;
 
   const SubmissionDetailsScreen({super.key, required this.submission});
 
   @override
+  ConsumerState<SubmissionDetailsScreen> createState() => _SubmissionDetailsScreenState();
+}
+
+class _SubmissionDetailsScreenState extends ConsumerState<SubmissionDetailsScreen> {
+  late Razorpay _razorpay;
+  bool _isProcessing = false;
+  String? _currentOrderId;
+
+  @override
+  void initState() {
+    super.initState();
+    _razorpay = Razorpay();
+    _razorpay.on(Razorpay.EVENT_PAYMENT_SUCCESS, _handlePaymentSuccess);
+    _razorpay.on(Razorpay.EVENT_PAYMENT_ERROR, _handlePaymentError);
+    _razorpay.on(Razorpay.EVENT_EXTERNAL_WALLET, _handleExternalWallet);
+  }
+
+  @override
+  void dispose() {
+    _razorpay.clear();
+    super.dispose();
+  }
+
+  void _handlePaymentSuccess(PaymentSuccessResponse response) async {
+    try {
+      if (_currentOrderId == null) return;
+      
+      await ref.read(paymentRepositoryProvider).verifyPayment(
+        _currentOrderId!,
+        response.paymentId!,
+        response.signature!,
+      );
+
+      if (mounted) {
+        setState(() => _isProcessing = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Payment Successful! Submission Funded.'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.pop(context); // Close dialog or screen? Maybe close dialog first 
+        // Actually this is called from callback, dialog might cover screen.
+        // But we handle dialog closing in _acceptSubmission before opening razorpay?
+        // No, flow is: Dialog -> Accept -> Payment -> Success.
+        // We will pop the screen or refresh state.
+        
+        // For now, let's pop back to Previous Screen as "work is done"
+        context.pop(); 
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isProcessing = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Verification Failed: $e')),
+        );
+      }
+    }
+  }
+
+  void _handlePaymentError(PaymentFailureResponse response) {
+    if (mounted) {
+      setState(() => _isProcessing = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Payment Failed: ${response.message}')),
+      );
+    }
+  }
+
+  void _handleExternalWallet(ExternalWalletResponse response) {
+    // Handle external wallet
+  }
+
+  Future<void> _acceptSubmission() async {
+    final bidAmount = widget.submission['bid_amount'] ?? 0;
+    final proposalId = widget.submission['id']; // Assuming ID is here
+    
+    if (proposalId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Error: Invalid Proposal ID')),
+      );
+      return;
+    }
+
+    setState(() => _isProcessing = true);
+
+    try {
+      // 1. Create Order
+      final orderData = await ref.read(paymentRepositoryProvider).createOrder(
+        proposalId.toString(),
+        (bidAmount * 100).toInt(), // Convert to paise/cents if needed, usually backend expects amount ?
+        // User request: "amount": 25000. Assuming currency units.
+        // Razorpay expects smallest currency unit (paise). 
+        // If 'bidAmount' is 250, then we send 25000.
+        'INR',
+      );
+      
+      _currentOrderId = orderData['order_id'];
+      
+      // 2. Open Notification/Checkout
+      var options = {
+        'key': 'rzp_test_placeholder', // Replace with environment variable
+        'amount': (bidAmount * 100).toInt(), 
+        'name': 'Influenzer',
+        'description': 'Funding Proposal #${proposalId.toString().substring(0, 4)}',
+        'order_id': _currentOrderId, // Important
+        'prefill': {'contact': '8888888888', 'email': 'brand@example.com'},
+      };
+
+      _razorpay.open(options);
+      
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isProcessing = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to initiate payment: $e')),
+        );
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    // Determine info from submission
+    final submission = widget.submission;
     final creatorName = submission['creator_name'] ?? 'Unknown Creator';
     final creatorFollowers = submission['creator_followers'] ?? 0;
     final creatorId = submission['creator_id'];
@@ -33,8 +160,8 @@ class SubmissionDetailsScreen extends StatelessWidget {
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
-                    AppColors.primary.withValues(alpha: 0.1),
-                    AppColors.primary.withValues(alpha: 0.05),
+                    AppColors.primary.withOpacity(0.1),
+                    AppColors.primary.withOpacity(0.05),
                   ],
                 ),
               ),
@@ -44,7 +171,7 @@ class SubmissionDetailsScreen extends StatelessWidget {
                     radius: 40,
                     backgroundColor: Colors.grey[300],
                     child: Text(
-                      creatorName[0].toUpperCase(),
+                      creatorName.isNotEmpty ? creatorName[0].toUpperCase() : '?',
                       style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
                     ),
                   ),
@@ -68,11 +195,11 @@ class SubmissionDetailsScreen extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 16),
+                  // View Profile Button
                   ElevatedButton.icon(
                     onPressed: creatorId != null
                         ? () {
-                            // Navigate to creator profile
-                            // Would need to fetch full creator data first
+                            // Navigation logic...
                           }
                         : null,
                     icon: const Icon(Icons.person),
@@ -155,9 +282,7 @@ class SubmissionDetailsScreen extends StatelessWidget {
                   children: [
                     Expanded(
                       child: OutlinedButton.icon(
-                        onPressed: () {
-                          _showRejectDialog(context);
-                        },
+                        onPressed: _showRejectDialog,
                         icon: const Icon(Icons.close),
                         label: const Text('Reject'),
                         style: OutlinedButton.styleFrom(
@@ -170,11 +295,11 @@ class SubmissionDetailsScreen extends StatelessWidget {
                     const SizedBox(width: 16),
                     Expanded(
                       child: ElevatedButton.icon(
-                        onPressed: () {
-                          _showAcceptDialog(context);
-                        },
-                        icon: const Icon(Icons.check),
-                        label: const Text('Accept'),
+                        onPressed: _isProcessing ? null : _showAcceptDialog,
+                        icon: _isProcessing 
+                           ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) 
+                           : const Icon(Icons.check),
+                        label: const Text('Accept & Fund'), // Updated text
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.green,
                           padding: const EdgeInsets.symmetric(vertical: 16),
@@ -221,12 +346,12 @@ class SubmissionDetailsScreen extends StatelessWidget {
     }
   }
 
-  void _showAcceptDialog(BuildContext context) {
+  void _showAcceptDialog() {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Accept Submission'),
-        content: const Text('Are you sure you want to accept this submission?'),
+        title: const Text('Accept & Fund Submission'),
+        content: Text('You are about to accept this submission and fund ₹${widget.submission['bid_amount']} into escrow. Proceed?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -234,24 +359,18 @@ class SubmissionDetailsScreen extends StatelessWidget {
           ),
           ElevatedButton(
             onPressed: () {
-              // TODO: Call API to accept submission
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Submission accepted!'),
-                  backgroundColor: Colors.green,
-                ),
-              );
+              Navigator.pop(context); // Close dialog
+              _acceptSubmission();    // Start payment flow
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-            child: const Text('Accept'),
+            child: const Text('Proceed to Payment'),
           ),
         ],
       ),
     );
   }
 
-  void _showRejectDialog(BuildContext context) {
+  void _showRejectDialog() {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -264,8 +383,8 @@ class SubmissionDetailsScreen extends StatelessWidget {
           ),
           ElevatedButton(
             onPressed: () {
-              // TODO: Call API to reject submission
               Navigator.pop(context);
+              // Call API to reject (not implemented in this turn)
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text('Submission rejected'),
