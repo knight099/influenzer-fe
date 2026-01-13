@@ -47,4 +47,18 @@ class PaymentRepository {
     final response = await _dio.get('/payments/plans');
     return response.data as List<dynamic>;
   }
+
+  /// Creates a subscription and returns subscription_id and short_url for payment
+  Future<Map<String, dynamic>> subscribe(String planId) async {
+    final response = await _dio.post('/payments/subscribe', data: {
+      'plan_id': planId,
+    });
+    return response.data as Map<String, dynamic>;
+  }
+
+  /// Checks the current user's subscription status
+  Future<Map<String, dynamic>> getSubscriptionStatus() async {
+    final response = await _dio.get('/payments/subscription/status');
+    return response.data as Map<String, dynamic>;
+  }
 }

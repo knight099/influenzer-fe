@@ -78,7 +78,15 @@ GoRouter goRouter(Ref ref) {
       ),
       GoRoute(
         path: '/chat-room',
-        builder: (context, state) => const ChatRoomScreen(),
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>?;
+          return ChatRoomScreen(
+            conversationId: extra?['conversation_id'],
+            recipientId: extra?['recipient_id'],
+            recipientName: extra?['recipient_name'],
+            recipientAvatar: extra?['recipient_avatar'],
+          );
+        },
       ),
       GoRoute(
         path: '/payment',

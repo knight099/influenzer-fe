@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../wallet/data/payment_repository.dart';
 import '../../../core/theme/app_colors.dart';
 
@@ -68,48 +69,51 @@ class _SubscriptionPromptState extends ConsumerState<SubscriptionPrompt> {
               );
             }
 
-            // Filter plan based on role if needed, or select the relevant one
-            // The user requested 10000/yr for Brand, 500/mo for Creator.
-            // We assume the API returns suitable plans.
-            // For now, we'll try to find a matching plan or fallback to the requested defaults if API returns empty
-            // (since we might not have seeded the DB yet).
-            
             final plans = snapshot.data ?? [];
             final roleLower = widget.role.toLowerCase();
             
-            // Heuristic to pick a plan:
-            // If Brand -> Look for 'Pro Annual' or high amount
-            // If Creator -> Look for 'Creator Monthly' or low amount
+            // Filter plans by target_role matching the current user's role
+            final matchingPlans = plans.where((plan) {
+              final targetRole = (plan['target_role'] ?? '').toString().toLowerCase();
+              return targetRole == roleLower;
+            }).toList();
             
             Map<String, dynamic> selectedPlan;
             
-            if (plans.isNotEmpty) {
-               // Simple logic: just take the first one for now, or filter by name if available
-               selectedPlan = plans.first; 
+            if (matchingPlans.isNotEmpty) {
+              selectedPlan = matchingPlans.first;
+            } else if (plans.isNotEmpty) {
+              // Fallback to first plan if no role-specific plan found
+              selectedPlan = plans.first;
             } else {
-               // Fallback defaults matching user request
-               selectedPlan = roleLower == 'brand' 
-                  ? {
-                      'amount': 10000,
-                      'currency': 'INR',
-                      'name': 'Brand Premium',
-                      'description': 'Unlimited Campaigns & Analytics',
-                      'interval': 'Yearly' 
-                    }
-                  : {
-                      'amount': 500,
-                      'currency': 'INR',
-                      'name': 'Creator Pro',
-                      'description': 'Priority Access to Premium Jobs',
-                      'interval': 'Monthly'
-                    };
+              // No plans available
+              return SizedBox(
+                height: 200,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.info_outline, size: 48, color: Colors.grey),
+                    const SizedBox(height: 16),
+                    Text(
+                      'No subscription plans available',
+                      style: TextStyle(color: Colors.grey[600]),
+                    ),
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('Close'),
+                    ),
+                  ],
+                ),
+              );
             }
 
-            final amount = selectedPlan['amount'];
+            final planId = selectedPlan['id'];
+            final amount = selectedPlan['amount'] ?? 0;
             final currency = selectedPlan['currency'] ?? 'INR';
             final name = selectedPlan['name'] ?? 'Premium Plan';
             final description = selectedPlan['description'] ?? 'Unlock all features';
-            final interval = selectedPlan['interval'] ?? (roleLower == 'brand' ? 'Yearly' : 'Monthly');
+            final duration = selectedPlan['duration'] ?? 30;
+            final interval = duration >= 365 ? 'Year' : 'Month';
 
             return Column(
               mainAxisSize: MainAxisSize.min,
@@ -163,7 +167,7 @@ class _SubscriptionPromptState extends ConsumerState<SubscriptionPrompt> {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: _isLoading ? null : () => _handleSubscribe(amount),
+                    onPressed: _isLoading ? null : () => _handleSubscribe(planId),
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
                     ),
@@ -189,26 +193,44 @@ class _SubscriptionPromptState extends ConsumerState<SubscriptionPrompt> {
     );
   }
 
-  Future<void> _handleSubscribe(dynamic amount) async {
+  Future<void> _handleSubscribe(String planId) async {
     setState(() => _isLoading = true);
 
     try {
-      // Mock payment flow for now as we don't have backend subscription endpoints fully ready
-      // In production: await ref.read(paymentRepositoryProvider).createSubscription(...)
+      // 1. Create subscription and get payment URL
+      final subscriptionData = await ref.read(paymentRepositoryProvider).subscribe(planId);
       
-      await Future.delayed(const Duration(seconds: 2)); // Simulate network call
-
-      if (mounted) {
-        widget.onSuccess();
-        Navigator.pop(context); // Close dialog
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Subscription Successful!')),
-        );
+      final shortUrl = subscriptionData['short_url'] as String?;
+      
+      if (shortUrl == null || shortUrl.isEmpty) {
+        throw Exception('No payment URL received');
+      }
+      
+      // 2. Open Razorpay hosted payment page
+      final uri = Uri.parse(shortUrl);
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.inAppBrowserView);
+        
+        // 3. Show instruction to user
+        if (mounted) {
+          Navigator.pop(context); // Close dialog
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Complete payment in browser. Subscription will activate automatically.'),
+              duration: Duration(seconds: 5),
+            ),
+          );
+          
+          // Call onSuccess - the profile will be refreshed when user returns
+          widget.onSuccess();
+        }
+      } else {
+        throw Exception('Could not open payment page');
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Payment Failed: $e')),
+          SnackBar(content: Text('Subscription Failed: $e')),
         );
       }
     } finally {

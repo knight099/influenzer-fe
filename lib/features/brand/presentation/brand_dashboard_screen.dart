@@ -74,7 +74,7 @@ class _BrandDashboardScreenState extends ConsumerState<BrandDashboardScreen> {
                 // Actually, accessing .value might be null.
                 // Best practice: Check if data is available.
                 
-                final isSubscribed = profileAsync.valueOrNull?.subscriptionStatus == 'ACTIVE';
+                final isSubscribed = profileAsync.value?.subscriptionStatus == 'ACTIVE';
                 
                 if (isSubscribed) {
                   context.push('/create-campaign');
@@ -175,7 +175,7 @@ class _BrandHomeTab extends ConsumerWidget {
                           onPressed: () {
                             final profileAsync = ref.read(brandProfileProvider);
                 
-                            final isSubscribed = profileAsync.valueOrNull?.subscriptionStatus == 'ACTIVE';
+                            final isSubscribed = profileAsync.value?.subscriptionStatus == 'ACTIVE';
                             
                             if (isSubscribed) {
                               context.push('/create-campaign');

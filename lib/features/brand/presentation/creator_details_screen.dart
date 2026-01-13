@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/app_colors.dart';
 
@@ -222,18 +223,45 @@ class CreatorDetailsScreen extends StatelessWidget {
       bottomNavigationBar: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
-          child: ElevatedButton.icon(
-            onPressed: () {
-              // TODO: Navigate to campaign creation with pre-selected creator
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Campaign invitation coming soon!')),
-              );
-            },
-            icon: const Icon(Icons.campaign),
-            label: const Text('Invite to Campaign'),
-            style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-            ),
+          child: Row(
+            children: [
+              // Chat Button
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    // Navigate to chat with creator info
+                    context.push('/chat-room', extra: {
+                      'recipient_id': creator['id'],
+                      'recipient_name': name,
+                      'recipient_avatar': avatarUrl,
+                    });
+                  },
+                  icon: const Icon(Icons.chat_bubble_outline),
+                  label: const Text('Chat'),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    side: const BorderSide(color: AppColors.primary),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              // Invite to Campaign Button
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    // TODO: Navigate to campaign creation with pre-selected creator
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Campaign invitation coming soon!')),
+                    );
+                  },
+                  icon: const Icon(Icons.campaign),
+                  label: const Text('Invite'),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),

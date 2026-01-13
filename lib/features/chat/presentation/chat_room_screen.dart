@@ -1,28 +1,145 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
+import '../data/chat_repository.dart';
 
-class ChatRoomScreen extends StatefulWidget {
-  const ChatRoomScreen({super.key});
+class ChatRoomScreen extends ConsumerStatefulWidget {
+  final String? conversationId;
+  final String? recipientId;
+  final String? recipientName;
+  final String? recipientAvatar;
+
+  const ChatRoomScreen({
+    super.key,
+    this.conversationId,
+    this.recipientId,
+    this.recipientName,
+    this.recipientAvatar,
+  });
 
   @override
-  State<ChatRoomScreen> createState() => _ChatRoomScreenState();
+  ConsumerState<ChatRoomScreen> createState() => _ChatRoomScreenState();
 }
 
-class _ChatRoomScreenState extends State<ChatRoomScreen> {
+class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
   final TextEditingController _controller = TextEditingController();
-  final List<String> _messages = []; // Mock messages
+  final ScrollController _scrollController = ScrollController();
+  List<Map<String, dynamic>> _messages = [];
+  bool _isLoading = true;
+  bool _isSending = false;
+  String? _currentUserId;
 
-  void _sendMessage() {
-    if (_controller.text.trim().isNotEmpty) {
+  @override
+  void initState() {
+    super.initState();
+    _loadMessages();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadMessages() async {
+    if (widget.conversationId == null) {
+      setState(() => _isLoading = false);
+      return;
+    }
+
+    try {
+      final messages = await ref.read(chatRepositoryProvider).getMessages(widget.conversationId!);
       setState(() {
-        _messages.add(_controller.text);
-        _controller.clear();
+        _messages = messages.map((m) => m as Map<String, dynamic>).toList();
+        _isLoading = false;
       });
+      _scrollToBottom();
+    } catch (e) {
+      setState(() => _isLoading = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to load messages: $e')),
+        );
+      }
+    }
+  }
+
+  void _scrollToBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+    });
+  }
+
+  String? _conversationId;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _conversationId = widget.conversationId;
+  }
+
+  Future<void> _sendMessage() async {
+    final text = _controller.text.trim();
+    if (text.isEmpty) return;
+    
+    setState(() => _isSending = true);
+    _controller.clear();
+
+    try {
+      // If no conversation exists, create one first
+      if (_conversationId == null) {
+        if (widget.recipientId == null) {
+          throw Exception('No recipient specified');
+        }
+        
+        final convResponse = await ref.read(chatRepositoryProvider)
+            .getOrCreateConversation(widget.recipientId!);
+        _conversationId = convResponse['id']?.toString() ?? convResponse['conversation_id']?.toString();
+        
+        if (_conversationId == null) {
+          throw Exception('Failed to create conversation');
+        }
+      }
+
+      final response = await ref.read(chatRepositoryProvider).sendMessage(
+        _conversationId!,
+        text,
+      );
+      
+      // Add optimistic message
+      setState(() {
+        _messages.add({
+          'id': response['id'],
+          'text': text,
+          'sender_id': _currentUserId ?? 'me',
+          'timestamp': response['timestamp'] ?? DateTime.now().toIso8601String(),
+          'is_me': true,
+        });
+        _isSending = false;
+      });
+      _scrollToBottom();
+    } catch (e) {
+      setState(() => _isSending = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to send message: $e')),
+        );
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final recipientName = widget.recipientName ?? 'User';
+    final recipientAvatar = widget.recipientAvatar;
+
     return Scaffold(
       appBar: AppBar(
         title: Row(
@@ -30,34 +147,62 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
             CircleAvatar(
               backgroundColor: Colors.grey[300],
               radius: 16,
-              child: const Icon(Icons.person, size: 20, color: Colors.grey),
+              backgroundImage: recipientAvatar != null ? NetworkImage(recipientAvatar) : null,
+              child: recipientAvatar == null 
+                  ? Text(
+                      recipientName.isNotEmpty ? recipientName[0].toUpperCase() : '?',
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                    )
+                  : null,
             ),
             const SizedBox(width: 8),
-            const Text('User 1'),
+            Expanded(
+              child: Text(
+                recipientName,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
           ],
         ),
       ),
       body: Column(
         children: [
           Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: 3 + _messages.length, // Mock initial messages
-              itemBuilder: (context, index) {
-                if (index == 0) {
-                  return _OfferCard();
-                }
-                bool isMe = index % 2 != 0;
-                if (index > 2) isMe = true; // User messages
-
-                return _MessageBubble(
-                  message: index > 2
-                      ? _messages[index - 3]
-                      : (isMe ? 'Yes, I am interested!' : 'Hi, check out this offer.'),
-                  isMe: isMe,
-                );
-              },
-            ),
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : _messages.isEmpty
+                    ? const Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.chat_bubble_outline, size: 64, color: Colors.grey),
+                            SizedBox(height: 16),
+                            Text('No messages yet', style: TextStyle(color: Colors.grey)),
+                            SizedBox(height: 8),
+                            Text('Start the conversation!', style: TextStyle(color: Colors.grey)),
+                          ],
+                        ),
+                      )
+                    : ListView.builder(
+                        controller: _scrollController,
+                        padding: const EdgeInsets.all(16),
+                        itemCount: _messages.length,
+                        itemBuilder: (context, index) {
+                          final message = _messages[index];
+                          final text = message['text'] ?? message['content'] ?? '';
+                          final senderId = message['sender_id']?.toString() ?? '';
+                          // Determine if message is from current user
+                          final isMe = message['is_me'] == true || 
+                                       senderId == _currentUserId ||
+                                       senderId == widget.recipientId; // fallback
+                          
+                          return _MessageBubble(
+                            message: text,
+                            isMe: !isMe, // Invert logic - if sender is recipient, it's not me
+                            timestamp: message['timestamp'],
+                          );
+                        },
+                      ),
           ),
           Container(
             padding: const EdgeInsets.all(8),
@@ -76,11 +221,15 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                 children: [
                   IconButton(
                     icon: const Icon(Icons.add),
-                    onPressed: () {}, // Attachment mock
+                    onPressed: () {
+                      // TODO: Implement attachment picker
+                    },
                   ),
                   Expanded(
                     child: TextField(
                       controller: _controller,
+                      textInputAction: TextInputAction.send,
+                      onSubmitted: (_) => _sendMessage(),
                       decoration: InputDecoration(
                         hintText: 'Type a message...',
                         border: OutlineInputBorder(
@@ -94,8 +243,14 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.send, color: AppColors.primary),
-                    onPressed: _sendMessage,
+                    icon: _isSending 
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.send, color: AppColors.primary),
+                    onPressed: _isSending ? null : _sendMessage,
                   ),
                 ],
               ),
@@ -110,8 +265,13 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
 class _MessageBubble extends StatelessWidget {
   final String message;
   final bool isMe;
+  final String? timestamp;
 
-  const _MessageBubble({required this.message, required this.isMe});
+  const _MessageBubble({
+    required this.message, 
+    required this.isMe,
+    this.timestamp,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -119,6 +279,9 @@ class _MessageBubble extends StatelessWidget {
       alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
         margin: const EdgeInsets.only(bottom: 8),
+        constraints: BoxConstraints(
+          maxWidth: MediaQuery.of(context).size.width * 0.75,
+        ),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
           color: isMe ? AppColors.primary : Colors.grey[200],
@@ -129,54 +292,38 @@ class _MessageBubble extends StatelessWidget {
             bottomRight: isMe ? Radius.zero : const Radius.circular(16),
           ),
         ),
-        child: Text(
-          message,
-          style: TextStyle(color: isMe ? Colors.white : Colors.black),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Text(
+              message,
+              style: TextStyle(color: isMe ? Colors.white : Colors.black),
+            ),
+            if (timestamp != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  _formatTime(timestamp!),
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: isMe ? Colors.white70 : Colors.grey,
+                  ),
+                ),
+              ),
+          ],
         ),
       ),
     );
   }
-}
 
-class _OfferCard extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFFE8F5E9),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.green.withOpacity(0.3)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'New Contract Offer',
-            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.green),
-          ),
-          const SizedBox(height: 4),
-          const Text('Running Shoe Promo • ₹250'),
-          const SizedBox(height: 12),
-          ElevatedButton(
-            onPressed: () {
-               // Mock navigation to payment for contract
-               // In real app, this would be from Brand Dashboard -> Proposal -> Hire
-               // But for demo, let's just show we can open it.
-               Navigator.of(context).push(
-                 MaterialPageRoute(builder: (_) => Scaffold(body: Center(child: Text("Use Dashboard Flow")))),
-               );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.green,
-              foregroundColor: Colors.white,
-              minimumSize: const Size(double.infinity, 36),
-            ),
-            child: const Text('View Contract'),
-          ),
-        ],
-      ),
-    );
+  String _formatTime(String timestamp) {
+    try {
+      final date = DateTime.parse(timestamp);
+      final hour = date.hour.toString().padLeft(2, '0');
+      final minute = date.minute.toString().padLeft(2, '0');
+      return '$hour:$minute';
+    } catch (e) {
+      return '';
+    }
   }
 }

@@ -20,7 +20,7 @@ class JobCard extends ConsumerWidget {
     
     // Watch user profile for subscription status
     final profileAsync = ref.watch(userProfileProvider);
-    final isSubscribed = profileAsync.valueOrNull?.subscriptionStatus == 'ACTIVE';
+    final isSubscribed = profileAsync.value?.subscriptionStatus == 'ACTIVE';
 
     return Card(
       elevation: 2,

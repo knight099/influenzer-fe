@@ -62,6 +62,32 @@ class InstagramStats {
   }
 }
 
+class SubscriptionInfo {
+  final String? planName;
+  final String? planId;
+  final DateTime? startDate;
+  final DateTime? endDate;
+  final String status;
+
+  SubscriptionInfo({
+    this.planName,
+    this.planId,
+    this.startDate,
+    this.endDate,
+    this.status = 'inactive',
+  });
+
+  factory SubscriptionInfo.fromJson(Map<String, dynamic> json) {
+    return SubscriptionInfo(
+      planName: json['plan_name'],
+      planId: json['plan_id'],
+      startDate: json['start_date'] != null ? DateTime.tryParse(json['start_date']) : null,
+      endDate: json['end_date'] != null ? DateTime.tryParse(json['end_date']) : null,
+      status: json['status'] ?? 'inactive',
+    );
+  }
+}
+
 class UserProfile {
   final String id;
   final String email;
@@ -77,6 +103,8 @@ class UserProfile {
   final InstagramStats? instagramStats;
   final String? instagramError;
   final String subscriptionStatus;
+  final bool isSubscribed;
+  final SubscriptionInfo? subscription;
   final double walletBalance;
 
   UserProfile({
@@ -94,6 +122,8 @@ class UserProfile {
     this.instagramStats,
     this.instagramError,
     this.subscriptionStatus = 'INACTIVE',
+    this.isSubscribed = false,
+    this.subscription,
     this.walletBalance = 0.0,
   });
 
@@ -149,6 +179,16 @@ class UserProfile {
       }
     }
 
+    // Parse subscription info from new API format
+    final isSubscribed = json['is_subscribed'] == true;
+    SubscriptionInfo? subscriptionInfo;
+    if (json['subscription'] != null && json['subscription'] is Map<String, dynamic>) {
+      subscriptionInfo = SubscriptionInfo.fromJson(json['subscription']);
+    }
+    
+    // Derive subscriptionStatus from is_subscribed for backward compatibility
+    final subscriptionStatus = isSubscribed ? 'ACTIVE' : 'INACTIVE';
+
     return UserProfile(
       id: json['id'] ?? '',
       email: json['email'] ?? '',
@@ -163,7 +203,9 @@ class UserProfile {
       youtubeError: ytError,
       instagramStats: igStats,
       instagramError: igError,
-      subscriptionStatus: json['subscription_status'] ?? 'INACTIVE',
+      subscriptionStatus: subscriptionStatus,
+      isSubscribed: isSubscribed,
+      subscription: subscriptionInfo,
       walletBalance: (json['wallet_balance'] ?? 0).toDouble(),
     );
   }

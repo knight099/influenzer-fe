@@ -1,0 +1,1323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Influenzer - Pitch Deck</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6667AB;
+            --primary-dark: #5254A3;
+            --primary-light: #8283C0;
+            --accent: #FF6B6B;
+            --accent-secondary: #4ECDC4;
+            --dark: #0a0a1a;
+            --dark-secondary: #12122b;
+            --light: #ffffff;
+            --glass-bg: rgba(255, 255, 255, 0.08);
+            --glass-border: rgba(255, 255, 255, 0.15);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, var(--dark) 0%, var(--dark-secondary) 50%, #1a1a3e 100%);
+            color: var(--light);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .presentation {
+            position: relative;
+            width: 100%;
+            min-height: 100vh;
+        }
+
+        .slide {
+            display: none;
+            min-height: 100vh;
+            padding: 60px 80px 120px;
+            position: relative;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .slide.active {
+            display: flex;
+            flex-direction: column;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Slide Header */
+        .slide-header {
+            margin-bottom: 40px;
+        }
+
+        .slide-number {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--primary-light);
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+
+        .slide-title {
+            font-size: 48px;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--light) 0%, var(--primary-light) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .slide-subtitle {
+            font-size: 20px;
+            color: rgba(255, 255, 255, 0.6);
+            margin-top: 10px;
+            font-weight: 300;
+        }
+
+        /* Content Grid */
+        .content-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            flex: 1;
+        }
+
+        .content-grid-3 {
+            grid-template-columns: repeat(3, 1fr);
+        }
+
+        .content-grid-2 {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        /* Glass Card */
+        .glass-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 30px;
+            backdrop-filter: blur(20px);
+            transition: all 0.3s ease;
+        }
+
+        .glass-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary-light);
+            box-shadow: 0 20px 40px rgba(102, 103, 171, 0.2);
+        }
+
+        .card-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            margin-bottom: 20px;
+        }
+
+        .card-icon.primary {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+        }
+
+        .card-icon.accent {
+            background: linear-gradient(135deg, var(--accent), #ff8585);
+        }
+
+        .card-icon.teal {
+            background: linear-gradient(135deg, var(--accent-secondary), #6be3db);
+        }
+
+        .card-title {
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .card-text {
+            font-size: 15px;
+            color: rgba(255, 255, 255, 0.7);
+            line-height: 1.6;
+        }
+
+        /* Stats */
+        .stat-value {
+            font-size: 56px;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--primary-light), var(--accent-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-label {
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.6);
+            margin-top: 5px;
+        }
+
+        /* Phone Mockup */
+        .phone-mockup-container {
+            display: flex;
+            gap: 40px;
+            justify-content: center;
+            align-items: center;
+            flex: 1;
+            padding: 20px 0;
+        }
+
+        .phone-mockup {
+            width: 280px;
+            height: 560px;
+            background: linear-gradient(180deg, #1a1a3e 0%, #0a0a1a 100%);
+            border-radius: 40px;
+            border: 3px solid rgba(255, 255, 255, 0.2);
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5), 
+                        inset 0 0 30px rgba(102, 103, 171, 0.1);
+        }
+
+        .phone-mockup::before {
+            content: '';
+            position: absolute;
+            top: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 25px;
+            background: #0a0a1a;
+            border-radius: 15px;
+        }
+
+        .phone-screen {
+            width: 250px;
+            height: 500px;
+            background: linear-gradient(135deg, var(--dark-secondary), var(--dark));
+            border-radius: 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .phone-placeholder-icon {
+            font-size: 60px;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .phone-placeholder-text {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.5);
+            font-weight: 500;
+        }
+
+        .phone-label {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--primary-light);
+            letter-spacing: 1px;
+        }
+
+        /* Pricing Table */
+        .pricing-card {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .pricing-card.featured {
+            background: linear-gradient(135deg, rgba(102, 103, 171, 0.3), rgba(78, 205, 196, 0.2));
+            border: 2px solid var(--primary);
+        }
+
+        .pricing-badge {
+            display: inline-block;
+            padding: 6px 16px;
+            background: linear-gradient(135deg, var(--accent), #ff8585);
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 20px;
+        }
+
+        .pricing-type {
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .pricing-amount {
+            font-size: 64px;
+            font-weight: 900;
+            color: var(--light);
+        }
+
+        .pricing-currency {
+            font-size: 24px;
+            vertical-align: super;
+        }
+
+        .pricing-period {
+            font-size: 18px;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .pricing-features {
+            list-style: none;
+            margin-top: 30px;
+            text-align: left;
+        }
+
+        .pricing-features li {
+            padding: 10px 0;
+            color: rgba(255, 255, 255, 0.8);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .pricing-features li::before {
+            content: '✓';
+            color: var(--accent-secondary);
+            font-weight: 700;
+        }
+
+        /* Progress Bar */
+        .progress-bar-container {
+            margin: 20px 0;
+        }
+
+        .progress-bar {
+            height: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--accent-secondary));
+            border-radius: 10px;
+            transition: width 1s ease;
+        }
+
+        /* Timeline */
+        .timeline {
+            display: flex;
+            justify-content: space-between;
+            position: relative;
+            margin-top: 40px;
+            padding: 0 20px;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            top: 25px;
+            left: 40px;
+            right: 40px;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary), var(--accent-secondary), var(--accent));
+        }
+
+        .timeline-item {
+            text-align: center;
+            position: relative;
+            z-index: 1;
+            flex: 1;
+        }
+
+        .timeline-dot {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: var(--dark);
+            border: 3px solid var(--primary);
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 18px;
+        }
+
+        .timeline-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .timeline-text {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        /* Funding Table */
+        .funding-table {
+            width: 100%;
+            margin-top: 30px;
+        }
+
+        .funding-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 20px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .funding-category {
+            font-size: 18px;
+            font-weight: 500;
+        }
+
+        .funding-amount {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--accent-secondary);
+        }
+
+        /* Navigation */
+        .navigation {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(10, 10, 26, 0.95);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid var(--glass-border);
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .nav-btn {
+            padding: 14px 36px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-btn-prev {
+            background: transparent;
+            border: 2px solid var(--glass-border);
+            color: var(--light);
+        }
+
+        .nav-btn-prev:hover {
+            border-color: var(--primary);
+            background: rgba(102, 103, 171, 0.1);
+        }
+
+        .nav-btn-next {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            border: none;
+            color: var(--light);
+        }
+
+        .nav-btn-next:hover {
+            transform: translateX(5px);
+            box-shadow: 0 10px 30px rgba(102, 103, 171, 0.4);
+        }
+
+        .nav-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .progress-dots {
+            display: flex;
+            gap: 8px;
+        }
+
+        .progress-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .progress-dot.active {
+            background: var(--primary);
+            width: 30px;
+            border-radius: 10px;
+        }
+
+        .progress-dot:hover {
+            background: var(--primary-light);
+        }
+
+        /* Logo Slide */
+        .logo-slide {
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        .logo-main {
+            font-size: 100px;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--primary-light), var(--accent-secondary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 20px;
+            animation: pulse 3s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+
+        .tagline {
+            font-size: 28px;
+            color: rgba(255, 255, 255, 0.7);
+            font-weight: 300;
+            margin-bottom: 60px;
+        }
+
+        .cta-primary {
+            display: inline-block;
+            padding: 18px 50px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            border-radius: 50px;
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--light);
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .cta-primary:hover {
+            transform: scale(1.05);
+            box-shadow: 0 20px 50px rgba(102, 103, 171, 0.5);
+        }
+
+        /* Market Gap Visual */
+        .gap-visual {
+            display: flex;
+            align-items: center;
+            gap: 30px;
+            margin-top: 40px;
+        }
+
+        .gap-icon {
+            font-size: 80px;
+            opacity: 0.3;
+        }
+
+        .gap-arrow {
+            font-size: 40px;
+            color: var(--accent);
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .slide {
+                padding: 40px 40px 120px;
+            }
+            
+            .slide-title {
+                font-size: 36px;
+            }
+            
+            .content-grid-3, .content-grid-2 {
+                grid-template-columns: 1fr;
+            }
+            
+            .phone-mockup-container {
+                flex-direction: column;
+            }
+            
+            .stat-value {
+                font-size: 40px;
+            }
+        }
+
+        /* Feature List */
+        .feature-list {
+            margin-top: 20px;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+            padding: 15px 0;
+        }
+
+        .feature-check {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-secondary), #6be3db);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            flex-shrink: 0;
+        }
+
+        .feature-content h4 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .feature-content p {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        /* Full width section */
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        /* Highlight Text */
+        .highlight {
+            color: var(--accent-secondary);
+            font-weight: 700;
+        }
+
+        /* Ask Amount */
+        .ask-amount {
+            font-size: 80px;
+            font-weight: 900;
+            text-align: center;
+            margin: 30px 0;
+            background: linear-gradient(135deg, var(--accent), var(--accent-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .contact-info {
+            text-align: center;
+            margin-top: 40px;
+            font-size: 18px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .contact-info a {
+            color: var(--primary-light);
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="presentation">
+        
+        <!-- Slide 1: Title -->
+        <div class="slide logo-slide active" data-slide="1">
+            <div class="logo-main">Influenzer</div>
+            <div class="tagline">Connecting Brands with Authentic Creators</div>
+            <p style="font-size: 20px; color: rgba(255, 255, 255, 0.5); margin-bottom: 40px;">
+                The Next-Gen Influencer Marketing Platform for India
+            </p>
+            <a href="#" class="cta-primary">Let's Build the Future Together</a>
+        </div>
+
+        <!-- Slide 2: Problem -->
+        <div class="slide" data-slide="2">
+            <div class="slide-header">
+                <div class="slide-number">The Problem</div>
+                <h1 class="slide-title">The Influencer Marketing Gap</h1>
+                <p class="slide-subtitle">A fragmented ecosystem hurting both brands and creators</p>
+            </div>
+            <div class="content-grid content-grid-2">
+                <div class="glass-card">
+                    <div class="card-icon accent">🏢</div>
+                    <h3 class="card-title">Brand Challenges</h3>
+                    <div class="feature-list">
+                        <div class="feature-item">
+                            <div class="feature-check">✗</div>
+                            <div class="feature-content">
+                                <h4>Finding the Right Fit</h4>
+                                <p>Struggle to identify creators aligned with brand values beyond follower counts</p>
+                            </div>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-check">✗</div>
+                            <div class="feature-content">
+                                <h4>ROI Measurement</h4>
+                                <p>Difficulty connecting influencer activity to actual business outcomes</p>
+                            </div>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-check">✗</div>
+                            <div class="feature-content">
+                                <h4>Fraud & Fake Engagement</h4>
+                                <p>Wasted budgets on fake followers and inauthentic engagement</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="glass-card">
+                    <div class="card-icon teal">🎨</div>
+                    <h3 class="card-title">Creator Challenges</h3>
+                    <div class="feature-list">
+                        <div class="feature-item">
+                            <div class="feature-check">✗</div>
+                            <div class="feature-content">
+                                <h4>Finding Opportunities</h4>
+                                <p>No centralized platform to discover brand collaborations</p>
+                            </div>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-check">✗</div>
+                            <div class="feature-content">
+                                <h4>Fair Compensation</h4>
+                                <p>Inconsistent pricing and delayed payments from brands</p>
+                            </div>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-check">✗</div>
+                            <div class="feature-content">
+                                <h4>Communication Gaps</h4>
+                                <p>Unclear expectations and poor feedback loops</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 3: Market Opportunity -->
+        <div class="slide" data-slide="3">
+            <div class="slide-header">
+                <div class="slide-number">Market Opportunity</div>
+                <h1 class="slide-title">A Massive & Growing Market</h1>
+                <p class="slide-subtitle">India's influencer marketing industry is exploding</p>
+            </div>
+            <div class="content-grid content-grid-3">
+                <div class="glass-card" style="text-align: center;">
+                    <div class="stat-value">₹3,600Cr</div>
+                    <div class="stat-label">India's Influencer Marketing Industry (2024)</div>
+                </div>
+                <div class="glass-card" style="text-align: center;">
+                    <div class="stat-value">25-30%</div>
+                    <div class="stat-label">Annual Growth Rate</div>
+                </div>
+                <div class="glass-card" style="text-align: center;">
+                    <div class="stat-value">$7.5B</div>
+                    <div class="stat-label">Projected Platform Market by 2030</div>
+                </div>
+            </div>
+            <div class="glass-card full-width" style="margin-top: 30px;">
+                <h3 class="card-title">Key Market Drivers</h3>
+                <div class="content-grid content-grid-3" style="margin-top: 20px; gap: 20px;">
+                    <div>
+                        <h4 style="color: var(--accent-secondary); margin-bottom: 8px;">📱 Digital India</h4>
+                        <p class="card-text">750M+ smartphone users driving content consumption</p>
+                    </div>
+                    <div>
+                        <h4 style="color: var(--accent-secondary); margin-bottom: 8px;">🎬 Short-Form Video Boom</h4>
+                        <p class="card-text">Reels, Shorts, and Stories dominating engagement</p>
+                    </div>
+                    <div>
+                        <h4 style="color: var(--accent-secondary); margin-bottom: 8px;">💰 D2C Brand Explosion</h4>
+                        <p class="card-text">3,000+ D2C brands seeking authentic partnerships</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 4: Competitive Analysis -->
+        <div class="slide" data-slide="4">
+            <div class="slide-header">
+                <div class="slide-number">Competitive Landscape</div>
+                <h1 class="slide-title">Why Influenzer Wins</h1>
+                <p class="slide-subtitle">A comparison with existing solutions like Influish</p>
+            </div>
+            <div class="glass-card full-width">
+                <h3 class="card-title" style="margin-bottom: 25px;">📊 Feature Comparison</h3>
+                <div style="overflow-x: auto;">
+                    <table style="width: 100%; border-collapse: collapse; font-size: 15px;">
+                        <thead>
+                            <tr style="border-bottom: 2px solid rgba(255,255,255,0.2);">
+                                <th style="text-align: left; padding: 15px 10px; color: rgba(255,255,255,0.6);">Feature</th>
+                                <th style="text-align: center; padding: 15px 10px; color: rgba(255,255,255,0.5);">Influish</th>
+                                <th style="text-align: center; padding: 15px 10px; color: var(--accent-secondary);">Influenzer ✓</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+                                <td style="padding: 15px 10px;">Brand Pricing</td>
+                                <td style="text-align: center; padding: 15px 10px; color: rgba(255,255,255,0.5);">0% commission (unclear access fee)</td>
+                                <td style="text-align: center; padding: 15px 10px; color: var(--accent-secondary); font-weight: 600;">₹5,000 one-time lifetime</td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+                                <td style="padding: 15px 10px;">Platform Support</td>
+                                <td style="text-align: center; padding: 15px 10px; color: rgba(255,255,255,0.5);">Instagram only</td>
+                                <td style="text-align: center; padding: 15px 10px; color: var(--accent-secondary); font-weight: 600;">Instagram + YouTube</td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+                                <td style="padding: 15px 10px;">In-App Messaging</td>
+                                <td style="text-align: center; padding: 15px 10px; color: rgba(255,255,255,0.5);">Not emphasized</td>
+                                <td style="text-align: center; padding: 15px 10px; color: var(--accent-secondary); font-weight: 600;">Built-in chat system</td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+                                <td style="padding: 15px 10px;">Campaign Workflow</td>
+                                <td style="text-align: center; padding: 15px 10px; color: rgba(255,255,255,0.5);">AI campaign builder</td>
+                                <td style="text-align: center; padding: 15px 10px; color: var(--accent-secondary); font-weight: 600;">Full lifecycle management</td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+                                <td style="padding: 15px 10px;">Payment System</td>
+                                <td style="text-align: center; padding: 15px 10px; color: rgba(255,255,255,0.5);">Escrow only</td>
+                                <td style="text-align: center; padding: 15px 10px; color: var(--accent-secondary); font-weight: 600;">Escrow + Wallet + History</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 15px 10px;">Analytics</td>
+                                <td style="text-align: center; padding: 15px 10px; color: rgba(255,255,255,0.5);">Real-time metrics</td>
+                                <td style="text-align: center; padding: 15px 10px; color: var(--accent-secondary); font-weight: 600;">ROI tracking + Dashboards</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="content-grid content-grid-3" style="margin-top: 30px;">
+                <div class="glass-card" style="text-align: center;">
+                    <div style="font-size: 40px; margin-bottom: 15px;">🎯</div>
+                    <h4 style="color: var(--accent-secondary); margin-bottom: 10px;">Multi-Platform</h4>
+                    <p class="card-text">YouTube + Instagram support captures the full creator economy</p>
+                </div>
+                <div class="glass-card" style="text-align: center;">
+                    <div style="font-size: 40px; margin-bottom: 15px;">💰</div>
+                    <h4 style="color: var(--accent-secondary); margin-bottom: 10px;">Transparent Pricing</h4>
+                    <p class="card-text">Clear one-time fee for brands vs. ambiguous pricing models</p>
+                </div>
+                <div class="glass-card" style="text-align: center;">
+                    <div style="font-size: 40px; margin-bottom: 15px;">💬</div>
+                    <h4 style="color: var(--accent-secondary); margin-bottom: 10px;">Integrated Communication</h4>
+                    <p class="card-text">All negotiations happen in-app, no platform switching</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 5: Solution -->
+        <div class="slide" data-slide="5">
+            <div class="slide-header">
+                <div class="slide-number">Our Solution</div>
+                <h1 class="slide-title">Introducing Influenzer</h1>
+                <p class="slide-subtitle">A mobile-first platform bridging brands and creators seamlessly</p>
+            </div>
+            <div class="content-grid content-grid-3">
+                <div class="glass-card">
+                    <div class="card-icon primary">🎯</div>
+                    <h3 class="card-title">Smart Matching</h3>
+                    <p class="card-text">AI-powered algorithm matching brands with creators based on audience demographics, engagement quality, and brand fit - not just follower count.</p>
+                </div>
+                <div class="glass-card">
+                    <div class="card-icon accent">💳</div>
+                    <h3 class="card-title">Secure Escrow Payments</h3>
+                    <p class="card-text">Built-in escrow system ensuring creators get paid on time and brands get deliverables before release. Trust built into every transaction.</p>
+                </div>
+                <div class="glass-card">
+                    <div class="card-icon teal">📊</div>
+                    <h3 class="card-title">Real-time Analytics</h3>
+                    <p class="card-text">Comprehensive campaign dashboards with ROI tracking, engagement metrics, and performance insights for data-driven decisions.</p>
+                </div>
+                <div class="glass-card">
+                    <div class="card-icon teal">✅</div>
+                    <h3 class="card-title">Verified Profiles</h3>
+                    <p class="card-text">Instagram & YouTube OAuth integration to verify authentic metrics. Say goodbye to fake followers and inflated stats.</p>
+                </div>
+                <div class="glass-card">
+                    <div class="card-icon primary">💬</div>
+                    <h3 class="card-title">In-App Communication</h3>
+                    <p class="card-text">Built-in chat system for seamless brand-creator collaboration. All negotiations and briefs in one place.</p>
+                </div>
+                <div class="glass-card">
+                    <div class="card-icon accent">📋</div>
+                    <h3 class="card-title">Campaign Management</h3>
+                    <p class="card-text">End-to-end campaign workflow from posting jobs to receiving proposals, managing submissions, and tracking deliverables.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 6: App Preview -->
+        <div class="slide" data-slide="6">
+            <div class="slide-header">
+                <div class="slide-number">Product Preview</div>
+                <h1 class="slide-title">Beautiful & Intuitive Design</h1>
+                <p class="slide-subtitle">A premium mobile experience for brands and creators</p>
+            </div>
+            <div class="phone-mockup-container">
+                <div>
+                    <div class="phone-mockup">
+                        <div class="phone-screen">
+                            <div class="phone-placeholder-icon">🏢</div>
+                            <div class="phone-placeholder-text">Brand Dashboard<br/>Screenshot Placeholder</div>
+                        </div>
+                    </div>
+                    <div class="phone-label">BRAND VIEW</div>
+                </div>
+                <div>
+                    <div class="phone-mockup">
+                        <div class="phone-screen">
+                            <div class="phone-placeholder-icon">🎨</div>
+                            <div class="phone-placeholder-text">Creator Profile<br/>Screenshot Placeholder</div>
+                        </div>
+                    </div>
+                    <div class="phone-label">CREATOR VIEW</div>
+                </div>
+                <div>
+                    <div class="phone-mockup">
+                        <div class="phone-screen">
+                            <div class="phone-placeholder-icon">📊</div>
+                            <div class="phone-placeholder-text">Analytics Dashboard<br/>Screenshot Placeholder</div>
+                        </div>
+                    </div>
+                    <div class="phone-label">ANALYTICS</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 7: Pricing Model -->
+        <div class="slide" data-slide="7">
+            <div class="slide-header">
+                <div class="slide-number">Revenue Model</div>
+                <h1 class="slide-title">Simple & Transparent Pricing</h1>
+                <p class="slide-subtitle">Sustainable revenue from both sides of the marketplace</p>
+            </div>
+            <div class="content-grid content-grid-2">
+                <div class="glass-card pricing-card">
+                    <div class="pricing-type">For Creators</div>
+                    <div class="pricing-amount"><span class="pricing-currency">₹</span>499</div>
+                    <div class="pricing-period">per month</div>
+                    <ul class="pricing-features">
+                        <li>Unlimited job applications</li>
+                        <li>Verified profile badge</li>
+                        <li>Priority in brand search</li>
+                        <li>Analytics dashboard access</li>
+                        <li>Secure escrow payments</li>
+                        <li>In-app messaging</li>
+                        <li>Portfolio showcase</li>
+                    </ul>
+                </div>
+                <div class="glass-card pricing-card featured">
+                    <div class="pricing-badge">One-Time Fee</div>
+                    <div class="pricing-type">For Brands</div>
+                    <div class="pricing-amount"><span class="pricing-currency">₹</span>5,000</div>
+                    <div class="pricing-period">lifetime access</div>
+                    <ul class="pricing-features">
+                        <li>Unlimited campaign creation</li>
+                        <li>Access to verified creator pool</li>
+                        <li>Advanced search & filters</li>
+                        <li>Campaign analytics dashboard</li>
+                        <li>Escrow payment protection</li>
+                        <li>Proposal management system</li>
+                        <li>Direct creator messaging</li>
+                        <li>Priority support</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 8: Projections -->
+        <div class="slide" data-slide="8">
+            <div class="slide-header">
+                <div class="slide-number">Financial Projections</div>
+                <h1 class="slide-title">Path to Profitability</h1>
+                <p class="slide-subtitle">Conservative growth projections for the next 3 years</p>
+            </div>
+            <div class="content-grid content-grid-3">
+                <div class="glass-card" style="text-align: center;">
+                    <h3 style="color: rgba(255,255,255,0.5); margin-bottom: 20px;">YEAR 1</h3>
+                    <div class="stat-value" style="font-size: 40px;">₹2.1Cr</div>
+                    <div class="stat-label">Revenue</div>
+                    <div style="margin-top: 20px; text-align: left; font-size: 14px; color: rgba(255,255,255,0.6);">
+                        <p>• 2,000 Creator Subscribers</p>
+                        <p>• 200 Brand Registrations</p>
+                        <p>• Focus: Product-Market Fit</p>
+                    </div>
+                </div>
+                <div class="glass-card" style="text-align: center;">
+                    <h3 style="color: rgba(255,255,255,0.5); margin-bottom: 20px;">YEAR 2</h3>
+                    <div class="stat-value" style="font-size: 40px;">₹8.4Cr</div>
+                    <div class="stat-label">Revenue</div>
+                    <div style="margin-top: 20px; text-align: left; font-size: 14px; color: rgba(255,255,255,0.6);">
+                        <p>• 10,000 Creator Subscribers</p>
+                        <p>• 600 Brand Registrations</p>
+                        <p>• Focus: Scale & Retention</p>
+                    </div>
+                </div>
+                <div class="glass-card" style="text-align: center;">
+                    <h3 style="color: rgba(255,255,255,0.5); margin-bottom: 20px;">YEAR 3</h3>
+                    <div class="stat-value" style="font-size: 40px;">₹25Cr</div>
+                    <div class="stat-label">Revenue</div>
+                    <div style="margin-top: 20px; text-align: left; font-size: 14px; color: rgba(255,255,255,0.6);">
+                        <p>• 35,000 Creator Subscribers</p>
+                        <p>• 1,500 Brand Registrations</p>
+                        <p>• Focus: Market Leadership</p>
+                    </div>
+                </div>
+            </div>
+            <div class="glass-card full-width" style="margin-top: 30px;">
+                <h3 class="card-title">Revenue Breakdown Assumptions</h3>
+                <div style="display: flex; gap: 40px; margin-top: 20px;">
+                    <div style="flex: 1;">
+                        <div class="progress-bar-container">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                <span>Creator Subscriptions (₹499/mo)</span>
+                                <span class="highlight">70%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 70%;"></div>
+                            </div>
+                        </div>
+                        <div class="progress-bar-container">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                <span>Brand One-Time Fees (₹5,000)</span>
+                                <span class="highlight">30%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 30%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 9: Roadmap -->
+        <div class="slide" data-slide="9">
+            <div class="slide-header">
+                <div class="slide-number">Product Roadmap</div>
+                <h1 class="slide-title">Building for the Future</h1>
+                <p class="slide-subtitle">Strategic milestones to capture market leadership</p>
+            </div>
+            <div class="timeline">
+                <div class="timeline-item">
+                    <div class="timeline-dot">Q1</div>
+                    <div class="timeline-title">MVP Launch</div>
+                    <div class="timeline-text">Core platform with creator profiles, brand campaigns, and escrow payments</div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot">Q2</div>
+                    <div class="timeline-title">Analytics Suite</div>
+                    <div class="timeline-text">Advanced campaign analytics, ROI tracking, and performance insights</div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot">Q3</div>
+                    <div class="timeline-title">AI Matching</div>
+                    <div class="timeline-text">Machine learning-powered brand-creator matching algorithm</div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot">Q4</div>
+                    <div class="timeline-title">Multi-Platform</div>
+                    <div class="timeline-text">Expand to YouTube, Twitter, LinkedIn integrations</div>
+                </div>
+            </div>
+            <div class="content-grid content-grid-2" style="margin-top: 50px;">
+                <div class="glass-card">
+                    <div class="card-icon primary">🚀</div>
+                    <h3 class="card-title">Year 2 Vision</h3>
+                    <p class="card-text">Launch web platform, introduce agency tier, expand to Southeast Asian markets, and build creator education content.</p>
+                </div>
+                <div class="glass-card">
+                    <div class="card-icon accent">🌍</div>
+                    <h3 class="card-title">Year 3 Vision</h3>
+                    <p class="card-text">API access for enterprise brands, white-label solutions for agencies, and strategic partnerships with major platforms.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 10: Funding Ask -->
+        <div class="slide" data-slide="10">
+            <div class="slide-header">
+                <div class="slide-number">Investment Opportunity</div>
+                <h1 class="slide-title">Join Our Journey</h1>
+                <p class="slide-subtitle">Seed funding to accelerate growth and capture market share</p>
+            </div>
+            <div class="ask-amount">₹2 Crore</div>
+            <p style="text-align: center; font-size: 20px; color: rgba(255,255,255,0.7); margin-bottom: 40px;">Seed Round Funding</p>
+            <div class="content-grid content-grid-2">
+                <div class="glass-card">
+                    <h3 class="card-title" style="margin-bottom: 20px;">📊 Use of Funds</h3>
+                    <div class="funding-table">
+                        <div class="funding-row">
+                            <span class="funding-category">Product Development</span>
+                            <span class="funding-amount">₹70L (35%)</span>
+                        </div>
+                        <div class="funding-row">
+                            <span class="funding-category">Marketing & Growth</span>
+                            <span class="funding-amount">₹50L (25%)</span>
+                        </div>
+                        <div class="funding-row">
+                            <span class="funding-category">Team Expansion</span>
+                            <span class="funding-amount">₹40L (20%)</span>
+                        </div>
+                        <div class="funding-row">
+                            <span class="funding-category">Operations & Infra</span>
+                            <span class="funding-amount">₹25L (12.5%)</span>
+                        </div>
+                        <div class="funding-row">
+                            <span class="funding-category">Legal & Compliance</span>
+                            <span class="funding-amount">₹15L (7.5%)</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="glass-card">
+                    <h3 class="card-title" style="margin-bottom: 20px;">🎯 Key Milestones</h3>
+                    <div class="feature-list">
+                        <div class="feature-item">
+                            <div class="feature-check">✓</div>
+                            <div class="feature-content">
+                                <h4>10,000+ Active Creators</h4>
+                                <p>Build a thriving creator community in Year 1</p>
+                            </div>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-check">✓</div>
+                            <div class="feature-content">
+                                <h4>500+ Brand Partners</h4>
+                                <p>Onboard D2C brands and enterprises</p>
+                            </div>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-check">✓</div>
+                            <div class="feature-content">
+                                <h4>₹5Cr+ GMV</h4>
+                                <p>Campaigns facilitated through the platform</p>
+                            </div>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-check">✓</div>
+                            <div class="feature-content">
+                                <h4>Break-even by Month 18</h4>
+                                <p>Path to sustainable profitability</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 11: Cap Table -->
+        <div class="slide" data-slide="11">
+            <div class="slide-header">
+                <div class="slide-number">Capitalization Table</div>
+                <h1 class="slide-title">Ownership Structure</h1>
+                <p class="slide-subtitle">Post-Seed Round equity distribution</p>
+            </div>
+            <div class="content-grid content-grid-2">
+                <div class="glass-card">
+                    <h3 class="card-title" style="margin-bottom: 30px;">📈 Valuation</h3>
+                    <div style="display: grid; gap: 20px;">
+                        <div style="display: flex; justify-content: space-between; padding: 15px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                            <span style="font-size: 18px;">Pre-Money Valuation</span>
+                            <span style="font-size: 24px; font-weight: 700; color: var(--accent-secondary);">₹8 Crore</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; padding: 15px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                            <span style="font-size: 18px;">Investment Amount</span>
+                            <span style="font-size: 24px; font-weight: 700; color: var(--accent);">₹2 Crore</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; padding: 15px 0;">
+                            <span style="font-size: 18px;">Post-Money Valuation</span>
+                            <span style="font-size: 24px; font-weight: 700; color: var(--primary-light);">₹10 Crore</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="glass-card">
+                    <h3 class="card-title" style="margin-bottom: 30px;">🥧 Equity Distribution (Post-Round)</h3>
+                    <div style="position: relative; display: flex; flex-direction: column; gap: 15px;">
+                        <!-- Founders -->
+                        <div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                <span>Founders</span>
+                                <span class="highlight">80%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 80%; background: linear-gradient(90deg, var(--primary), var(--primary-light));"></div>
+                            </div>
+                        </div>
+                        <!-- Investors -->
+                        <div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                <span>Seed Investors</span>
+                                <span style="color: var(--accent);">20%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 20%; background: linear-gradient(90deg, var(--accent), #ff8585);"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="glass-card full-width" style="margin-top: 30px;">
+                <h3 class="card-title" style="margin-bottom: 20px;">📋 Detailed Cap Table</h3>
+                <div style="overflow-x: auto;">
+                    <table style="width: 100%; border-collapse: collapse; font-size: 16px;">
+                        <thead>
+                            <tr style="border-bottom: 2px solid rgba(255,255,255,0.2);">
+                                <th style="text-align: left; padding: 15px 10px; color: rgba(255,255,255,0.6);">Shareholder</th>
+                                <th style="text-align: center; padding: 15px 10px; color: rgba(255,255,255,0.6);">Pre-Seed %</th>
+                                <th style="text-align: center; padding: 15px 10px; color: rgba(255,255,255,0.6);">Post-Seed %</th>
+                                <th style="text-align: right; padding: 15px 10px; color: rgba(255,255,255,0.6);">Post-Seed Value</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+                                <td style="padding: 15px 10px;">👤 Founder 1 (CEO)</td>
+                                <td style="text-align: center; padding: 15px 10px;">50%</td>
+                                <td style="text-align: center; padding: 15px 10px; color: var(--accent-secondary);">40%</td>
+                                <td style="text-align: right; padding: 15px 10px; font-weight: 600;">₹4.0 Cr</td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+                                <td style="padding: 15px 10px;">👤 Founder 2 (CTO)</td>
+                                <td style="text-align: center; padding: 15px 10px;">50%</td>
+                                <td style="text-align: center; padding: 15px 10px; color: var(--accent-secondary);">40%</td>
+                                <td style="text-align: right; padding: 15px 10px; font-weight: 600;">₹4.0 Cr</td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+                                <td style="padding: 15px 10px;">💰 Seed Investors</td>
+                                <td style="text-align: center; padding: 15px 10px;">—</td>
+                                <td style="text-align: center; padding: 15px 10px; color: var(--accent);">20%</td>
+                                <td style="text-align: right; padding: 15px 10px; font-weight: 600;">₹2.0 Cr</td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.03);">
+                                <td style="padding: 15px 10px; font-weight: 700;">Total</td>
+                                <td style="text-align: center; padding: 15px 10px; font-weight: 700;">100%</td>
+                                <td style="text-align: center; padding: 15px 10px; font-weight: 700;">100%</td>
+                                <td style="text-align: right; padding: 15px 10px; font-weight: 700;">₹10.0 Cr</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div style="margin-top: 25px; padding: 15px; background: rgba(78, 205, 196, 0.1); border-radius: 10px; border-left: 3px solid var(--accent-secondary);">
+                    <p style="font-size: 14px; color: rgba(255,255,255,0.8);"><strong>Note:</strong> ESOP pool of 10% to be created post-funding from founder shares for future team incentivization.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 12: Thank You -->
+        <div class="slide logo-slide" data-slide="12">
+            <div class="logo-main">Influenzer</div>
+            <div class="tagline">Let's Revolutionize Influencer Marketing Together</div>
+            <p style="font-size: 22px; color: rgba(255, 255, 255, 0.8); margin-bottom: 40px; max-width: 700px; text-align: center;">
+                We're building the infrastructure for India's creator economy. <br/>Join us in this exciting journey.
+            </p>
+            <a href="#" class="cta-primary">Schedule a Meeting</a>
+            <div class="contact-info">
+                <p style="margin-top: 60px;">📧 Email: <a href="mailto:hello@influenzer.app">hello@influenzer.app</a></p>
+                <p>🌐 Website: <a href="#">www.influenzer.app</a></p>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Navigation -->
+    <div class="navigation">
+        <button class="nav-btn nav-btn-prev" id="prevBtn" disabled>
+            <span>←</span> Previous
+        </button>
+        <div class="progress-dots" id="progressDots"></div>
+        <button class="nav-btn nav-btn-next" id="nextBtn">
+            Next <span>→</span>
+        </button>
+    </div>
+
+    <script>
+        const slides = document.querySelectorAll('.slide');
+        const progressDots = document.getElementById('progressDots');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        let currentSlide = 0;
+
+        // Create progress dots
+        slides.forEach((_, index) => {
+            const dot = document.createElement('div');
+            dot.className = 'progress-dot' + (index === 0 ? ' active' : '');
+            dot.addEventListener('click', () => goToSlide(index));
+            progressDots.appendChild(dot);
+        });
+
+        function updateSlide() {
+            slides.forEach((slide, index) => {
+                slide.classList.remove('active');
+                if (index === currentSlide) {
+                    slide.classList.add('active');
+                }
+            });
+
+            document.querySelectorAll('.progress-dot').forEach((dot, index) => {
+                dot.classList.remove('active');
+                if (index === currentSlide) {
+                    dot.classList.add('active');
+                }
+            });
+
+            prevBtn.disabled = currentSlide === 0;
+            nextBtn.disabled = currentSlide === slides.length - 1;
+        }
+
+        function goToSlide(index) {
+            currentSlide = index;
+            updateSlide();
+        }
+
+        function nextSlide() {
+            if (currentSlide < slides.length - 1) {
+                currentSlide++;
+                updateSlide();
+            }
+        }
+
+        function prevSlide() {
+            if (currentSlide > 0) {
+                currentSlide--;
+                updateSlide();
+            }
+        }
+
+        prevBtn.addEventListener('click', prevSlide);
+        nextBtn.addEventListener('click', nextSlide);
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ') {
+                nextSlide();
+            } else if (e.key === 'ArrowLeft') {
+                prevSlide();
+            }
+        });
+    </script>
+</body>
+</html>

@@ -15,19 +15,37 @@ class ChatRepository {
 
   ChatRepository(this._dio);
 
+  /// GET /conversations - List all conversations for the user
   Future<List<dynamic>> listConversations() async {
     final response = await _dio.get('/conversations');
     return response.data as List<dynamic>;
   }
 
-  Future<List<dynamic>> getHistory(String conversationId) async {
+  /// GET /conversations/:id/messages - Get message history
+  Future<List<dynamic>> getMessages(String conversationId) async {
     final response = await _dio.get('/conversations/$conversationId/messages');
     return response.data as List<dynamic>;
   }
 
-  Future<void> sendMessage(String conversationId, String content) async {
-    await _dio.post('/conversations/$conversationId/messages', data: {
-      'content': content,
+  /// POST /conversations/:id/messages - Send a message
+  Future<Map<String, dynamic>> sendMessage(
+    String conversationId, 
+    String text, 
+    {String? attachmentUrl}
+  ) async {
+    final response = await _dio.post('/conversations/$conversationId/messages', data: {
+      'text': text,
+      if (attachmentUrl != null) 'attachment_url': attachmentUrl,
     });
+    return response.data as Map<String, dynamic>;
+  }
+
+  /// POST /conversations - Create a new conversation with a user
+  /// Returns the conversation_id for the new or existing conversation
+  Future<Map<String, dynamic>> getOrCreateConversation(String recipientId) async {
+    final response = await _dio.post('/conversations', data: {
+      'recipient_id': recipientId,
+    });
+    return response.data as Map<String, dynamic>;
   }
 }
