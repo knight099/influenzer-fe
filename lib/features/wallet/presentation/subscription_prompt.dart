@@ -73,9 +73,18 @@ class _SubscriptionPromptState extends ConsumerState<SubscriptionPrompt> {
             final roleLower = widget.role.toLowerCase();
             
             // Filter plans by target_role matching the current user's role
+            // Also check plan name if target_role is empty (fallback for legacy data)
             final matchingPlans = plans.where((plan) {
               final targetRole = (plan['target_role'] ?? '').toString().toLowerCase();
-              return targetRole == roleLower;
+              final planName = (plan['name'] ?? '').toString().toLowerCase();
+              
+              // First check explicit target_role
+              if (targetRole.isNotEmpty) {
+                return targetRole == roleLower;
+              }
+              
+              // Fallback: check if plan name contains the role (e.g., "Brand Annual", "Creator Monthly")
+              return planName.contains(roleLower);
             }).toList();
             
             Map<String, dynamic> selectedPlan;

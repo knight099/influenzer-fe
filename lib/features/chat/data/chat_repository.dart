@@ -18,13 +18,13 @@ class ChatRepository {
   /// GET /conversations - List all conversations for the user
   Future<List<dynamic>> listConversations() async {
     final response = await _dio.get('/conversations');
-    return response.data as List<dynamic>;
+    return (response.data as List<dynamic>?) ?? [];
   }
 
   /// GET /conversations/:id/messages - Get message history
   Future<List<dynamic>> getMessages(String conversationId) async {
     final response = await _dio.get('/conversations/$conversationId/messages');
-    return response.data as List<dynamic>;
+    return (response.data as List<dynamic>?) ?? [];
   }
 
   /// POST /conversations/:id/messages - Send a message
