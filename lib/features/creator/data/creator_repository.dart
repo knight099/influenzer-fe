@@ -18,6 +18,13 @@ Future<List<dynamic>> cachedCreatorSearch(Ref ref) async {
   return repo.searchCreators();
 }
 
+/// Spotlight creators — early adopters with connected platforms
+@Riverpod(keepAlive: true)
+Future<List<dynamic>> spotlightCreators(Ref ref) async {
+  final repo = ref.watch(creatorRepositoryProvider);
+  return repo.getSpotlight();
+}
+
 class CreatorRepository {
   final Dio _dio;
 
@@ -32,6 +39,28 @@ class CreatorRepository {
   /// GET /creators/:id - Get a specific creator by ID
   Future<Map<String, dynamic>> getProfile(String id) async {
     final response = await _dio.get('/creators/$id');
+    return response.data as Map<String, dynamic>;
+  }
+
+  /// GET /creators/spotlight - Early adopters with connected platforms
+  Future<List<dynamic>> getSpotlight() async {
+    final response = await _dio.get('/creators/spotlight');
+    return response.data as List<dynamic>;
+  }
+
+  /// GET /creators/:id/media?platform=instagram|youtube&limit=N
+  /// Returns { "instagram": [...], "youtube": [...] }
+  Future<Map<String, dynamic>> getCreatorMedia(
+    String id, {
+    String? platform,
+    int limit = 12,
+  }) async {
+    final queryParams = <String, dynamic>{'limit': limit};
+    if (platform != null) queryParams['platform'] = platform;
+    final response = await _dio.get(
+      '/creators/$id/media',
+      queryParameters: queryParams,
+    );
     return response.data as Map<String, dynamic>;
   }
 }
