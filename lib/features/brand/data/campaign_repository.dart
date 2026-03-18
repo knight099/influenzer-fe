@@ -32,5 +32,40 @@ class CampaignRepository {
     final response = await _dio.get('/campaigns/$id');
     return response.data as Map<String, dynamic>;
   }
+
+  /// GET /campaigns/my - List campaigns owned by the authenticated brand
+  Future<List<dynamic>> listMyCampaigns() async {
+    final response = await _dio.get('/campaigns/my');
+    return (response.data as List<dynamic>?) ?? [];
+  }
+
+  /// GET /campaigns/invitations - List campaigns the creator was invited to
+  Future<List<dynamic>> getInvitations() async {
+    final response = await _dio.get('/campaigns/invitations');
+    return (response.data as List<dynamic>?) ?? [];
+  }
+
+  /// GET /campaigns/my/invitable/:creatorId - Open campaigns the creator hasn't applied to or been invited to
+  Future<List<dynamic>> listInvitableCampaigns(String creatorId) async {
+    final response = await _dio.get('/campaigns/my/invitable/$creatorId');
+    return (response.data as List<dynamic>?) ?? [];
+  }
+
+  /// POST /campaigns/:id/invite - Invite a creator to a campaign
+  Future<void> inviteCreator(String campaignId, String creatorId) async {
+    await _dio.post('/campaigns/$campaignId/invite', data: {
+      'creator_id': creatorId,
+    });
+  }
+
+  /// PATCH /campaigns/:id/close - End (close) a campaign
+  Future<void> closeCampaign(String campaignId) async {
+    await _dio.patch('/campaigns/$campaignId/close');
+  }
+
+  /// DELETE /campaigns/:id - Delete a closed campaign
+  Future<void> deleteCampaign(String campaignId) async {
+    await _dio.delete('/campaigns/$campaignId');
+  }
 }
 

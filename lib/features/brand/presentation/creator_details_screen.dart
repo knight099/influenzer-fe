@@ -848,7 +848,7 @@ class _InviteToCampaignSheetState extends State<_InviteToCampaignSheet> {
 
   Future<void> _loadCampaigns() async {
     try {
-      final campaigns = await widget.campaignRepo.listMyCampaigns();
+      final campaigns = await widget.campaignRepo.listInvitableCampaigns(widget.creatorId);
       if (mounted) setState(() { _campaigns = campaigns; _loading = false; });
     } catch (e) {
       if (mounted) setState(() { _error = e.toString(); _loading = false; });
@@ -938,7 +938,7 @@ class _InviteToCampaignSheetState extends State<_InviteToCampaignSheet> {
           else if (_campaigns == null || _campaigns!.isEmpty)
             const Center(child: Padding(
               padding: EdgeInsets.all(24),
-              child: Text('No active campaigns found.\nCreate a campaign first.', textAlign: TextAlign.center,
+              child: Text('No eligible campaigns.\nCreate a new campaign or this creator has already been invited/applied.', textAlign: TextAlign.center,
                 style: TextStyle(color: AppColors.textSecondary, height: 1.5)),
             ))
           else
