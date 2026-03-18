@@ -9,6 +9,7 @@ import '../../auth/presentation/instagram_auth_webview.dart';
 import '../data/user_profile_repository.dart';
 import '../../auth/application/auth_controller.dart';
 import '../../notifications/presentation/notifications_screen.dart';
+import '../../wallet/data/payment_repository.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -227,6 +228,20 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with WidgetsBindi
               ),
             ),
 
+            // Bank Account
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
+                child: _SectionLabel(label: 'Payment Details'),
+              ),
+            ),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+                child: _BankAccountCard(ref: ref),
+              ),
+            ),
+
             // Settings
             SliverToBoxAdapter(
               child: Padding(
@@ -236,7 +251,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with WidgetsBindi
             ),
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 12, 20, 40),
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 110),
                 child: _SettingsCard(ref: ref),
               ),
             ),
@@ -986,6 +1001,357 @@ class _AccountRow extends StatelessWidget {
         ),
         if (showDivider)
           const Divider(height: 1, indent: 16, endIndent: 16, color: AppColors.divider),
+      ],
+    );
+  }
+}
+
+// ── Bank Account ──────────────────────────────────────────────────────────────
+
+class _BankAccountCard extends StatefulWidget {
+  final WidgetRef ref;
+  const _BankAccountCard({required this.ref});
+
+  @override
+  State<_BankAccountCard> createState() => _BankAccountCardState();
+}
+
+class _BankAccountCardState extends State<_BankAccountCard> {
+  Map<String, dynamic>? _bankAccount;
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadBankAccount();
+  }
+
+  Future<void> _loadBankAccount() async {
+    final account = await widget.ref.read(paymentRepositoryProvider).getBankAccount();
+    if (mounted) setState(() { _bankAccount = account; _loading = false; });
+  }
+
+  void _showAddBankSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _AddBankAccountSheet(
+        existing: _bankAccount,
+        onSaved: () {
+          Navigator.pop(context);
+          _loadBankAccount();
+        },
+        paymentRepo: widget.ref.read(paymentRepositoryProvider),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: _loading
+          ? const Center(child: SizedBox(height: 40, child: CircularProgressIndicator(strokeWidth: 2)))
+          : _bankAccount == null
+              ? _EmptyBankAccount(onAdd: _showAddBankSheet)
+              : _BankAccountInfo(account: _bankAccount!, onEdit: _showAddBankSheet),
+    );
+  }
+}
+
+class _EmptyBankAccount extends StatelessWidget {
+  final VoidCallback onAdd;
+  const _EmptyBankAccount({required this.onAdd});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Container(
+          width: 48, height: 48,
+          decoration: BoxDecoration(
+            color: AppColors.primaryLight,
+            shape: BoxShape.circle,
+          ),
+          child: const Icon(Icons.account_balance_rounded, color: AppColors.primary, size: 24),
+        ),
+        const SizedBox(height: 12),
+        const Text(
+          'No bank account added',
+          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+        ),
+        const SizedBox(height: 4),
+        const Text(
+          'Add your bank account to receive payments from brands',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 12, color: AppColors.textSecondary, height: 1.4),
+        ),
+        const SizedBox(height: 16),
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton.icon(
+            onPressed: onAdd,
+            icon: const Icon(Icons.add_rounded, size: 16),
+            label: const Text('Add Bank Account'),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _BankAccountInfo extends StatelessWidget {
+  final Map<String, dynamic> account;
+  final VoidCallback onEdit;
+  const _BankAccountInfo({required this.account, required this.onEdit});
+
+  @override
+  Widget build(BuildContext context) {
+    final name = account['account_holder_name'] ?? '';
+    final number = account['account_number'] ?? '';
+    final ifsc = account['ifsc'] ?? '';
+    final bank = account['bank_name'] ?? '';
+    final isLinked = account['is_linked'] == true;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Container(
+              width: 44, height: 44,
+              decoration: BoxDecoration(
+                color: isLinked ? AppColors.successLight : AppColors.primaryLight,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                Icons.account_balance_rounded,
+                color: isLinked ? AppColors.success : AppColors.primary,
+                size: 22,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    name,
+                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                  ),
+                  if (bank.isNotEmpty)
+                    Text(bank, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                ],
+              ),
+            ),
+            GestureDetector(
+              onTap: onEdit,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryLight,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Text('Edit', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.primary)),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 14),
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: AppColors.background,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Column(
+            children: [
+              _BankDetailRow(label: 'Account No.', value: number),
+              const SizedBox(height: 8),
+              _BankDetailRow(label: 'IFSC', value: ifsc),
+              if (isLinked) ...[
+                const SizedBox(height: 8),
+                _BankDetailRow(
+                  label: 'Status',
+                  value: 'Verified',
+                  valueColor: AppColors.success,
+                ),
+              ],
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _BankDetailRow extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color? valueColor;
+  const _BankDetailRow({required this.label, required this.value, this.valueColor});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(label, style: const TextStyle(fontSize: 12, color: AppColors.textHint)),
+        Text(value, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: valueColor ?? AppColors.textPrimary)),
+      ],
+    );
+  }
+}
+
+class _AddBankAccountSheet extends StatefulWidget {
+  final Map<String, dynamic>? existing;
+  final VoidCallback onSaved;
+  final PaymentRepository paymentRepo;
+
+  const _AddBankAccountSheet({this.existing, required this.onSaved, required this.paymentRepo});
+
+  @override
+  State<_AddBankAccountSheet> createState() => _AddBankAccountSheetState();
+}
+
+class _AddBankAccountSheetState extends State<_AddBankAccountSheet> {
+  final _nameCtrl = TextEditingController();
+  final _accountCtrl = TextEditingController();
+  final _ifscCtrl = TextEditingController();
+  final _bankCtrl = TextEditingController();
+  bool _saving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final e = widget.existing;
+    if (e != null) {
+      _nameCtrl.text = e['account_holder_name'] ?? '';
+      _bankCtrl.text = e['bank_name'] ?? '';
+      _ifscCtrl.text = e['ifsc'] ?? '';
+    }
+  }
+
+  @override
+  void dispose() {
+    _nameCtrl.dispose();
+    _accountCtrl.dispose();
+    _ifscCtrl.dispose();
+    _bankCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _save() async {
+    final name = _nameCtrl.text.trim();
+    final account = _accountCtrl.text.trim();
+    final ifsc = _ifscCtrl.text.trim().toUpperCase();
+
+    if (name.isEmpty || account.isEmpty || ifsc.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please fill all required fields')),
+      );
+      return;
+    }
+
+    setState(() => _saving = true);
+    try {
+      await widget.paymentRepo.saveBankAccount(
+        accountHolderName: name,
+        accountNumber: account,
+        ifsc: ifsc,
+        bankName: _bankCtrl.text.trim(),
+      );
+      widget.onSaved();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to save: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      child: Container(
+        decoration: const BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        ),
+        padding: const EdgeInsets.fromLTRB(24, 12, 24, 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40, height: 4,
+                decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(2)),
+              ),
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              'Bank Account Details',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
+            ),
+            const SizedBox(height: 6),
+            const Text(
+              'Your bank account details are securely stored and used to transfer payments.',
+              style: TextStyle(fontSize: 12, color: AppColors.textSecondary, height: 1.4),
+            ),
+            const SizedBox(height: 20),
+            _buildField('Account Holder Name *', _nameCtrl, 'Full name as on bank account'),
+            const SizedBox(height: 12),
+            _buildField('Account Number *', _accountCtrl, 'Enter your account number',
+                keyboardType: TextInputType.number),
+            const SizedBox(height: 12),
+            _buildField('IFSC Code *', _ifscCtrl, 'e.g. SBIN0001234',
+                textCapitalization: TextCapitalization.characters),
+            const SizedBox(height: 12),
+            _buildField('Bank Name', _bankCtrl, 'e.g. State Bank of India (optional)'),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: _saving ? null : _save,
+                child: _saving
+                    ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                    : const Text('Save Bank Account'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildField(String label, TextEditingController ctrl, String hint, {
+    TextInputType? keyboardType,
+    TextCapitalization textCapitalization = TextCapitalization.none,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
+        const SizedBox(height: 6),
+        TextField(
+          controller: ctrl,
+          keyboardType: keyboardType,
+          textCapitalization: textCapitalization,
+          style: const TextStyle(fontSize: 14, color: AppColors.textPrimary),
+          decoration: InputDecoration(hintText: hint),
+        ),
       ],
     );
   }

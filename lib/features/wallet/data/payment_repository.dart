@@ -43,6 +43,29 @@ class PaymentRepository {
     });
   }
 
+  Future<void> saveBankAccount({
+    required String accountHolderName,
+    required String accountNumber,
+    required String ifsc,
+    String bankName = '',
+  }) async {
+    await _dio.post('/payments/bank-account', data: {
+      'account_holder_name': accountHolderName,
+      'account_number': accountNumber,
+      'ifsc': ifsc,
+      'bank_name': bankName,
+    });
+  }
+
+  Future<Map<String, dynamic>?> getBankAccount() async {
+    try {
+      final response = await _dio.get('/payments/bank-account');
+      return response.data as Map<String, dynamic>;
+    } catch (_) {
+      return null;
+    }
+  }
+
   Future<List<dynamic>> getSubscriptionPlans() async {
     final response = await _dio.get('/payments/plans');
     return response.data as List<dynamic>;
