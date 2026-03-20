@@ -9,6 +9,8 @@ class BrandProfile {
   final String? contactName;
   final String? phone;
   final String? roleInCompany;
+  final String? website;
+  final String? logoUrl;
   final double walletBalance;
   final String subscriptionStatus;
 
@@ -17,6 +19,8 @@ class BrandProfile {
     this.contactName,
     this.phone,
     this.roleInCompany,
+    this.website,
+    this.logoUrl,
     this.walletBalance = 0.0,
     this.subscriptionStatus = 'INACTIVE',
   });
@@ -27,8 +31,10 @@ class BrandProfile {
       contactName: json['contact_name'],
       phone: json['phone'],
       roleInCompany: json['role_in_company'],
+      website: json['website'],
+      logoUrl: json['logo_url']?.toString(),
       walletBalance: (json['wallet_balance'] ?? 0).toDouble(),
-      subscriptionStatus: json['subscription_status'] ?? 'INACTIVE',
+      subscriptionStatus: (json['is_subscribed'] == true) ? 'ACTIVE' : 'INACTIVE',
     );
   }
 
@@ -38,6 +44,7 @@ class BrandProfile {
       'contact_name': contactName,
       'phone': phone,
       'role_in_company': roleInCompany,
+      'website': website,
     };
   }
 }

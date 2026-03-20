@@ -4,71 +4,123 @@ import '../../../../core/theme/app_colors.dart';
 
 class CreatorCard extends StatelessWidget {
   final Map<String, dynamic> creator;
-  
+
   const CreatorCard({super.key, required this.creator});
 
   @override
   Widget build(BuildContext context) {
     final name = creator['name'] ?? 'Unknown Creator';
-    final niche = creator['niche']?.toString().trim().isEmpty == true 
-        ? 'Creator' 
-        : creator['niche'];
-    final city = creator['city'];
-    
-    // Determine primary platform and follower count
+    final niche = (creator['niche']?.toString().trim().isNotEmpty == true)
+        ? creator['niche'].toString()
+        : 'Creator';
+    final city = creator['city']?.toString() ?? '';
+
     final instagramFollowers = creator['instagram_followers'] ?? 0;
-    final youtubeSubscribers = int.tryParse(creator['youtube_subscribers']?.toString() ?? '0') ?? 0;
-    
+    final youtubeSubscribers =
+        int.tryParse(creator['youtube_subscribers']?.toString() ?? '0') ?? 0;
+
     int followers;
     String platform;
-    if (instagramFollowers > youtubeSubscribers) {
-      followers = instagramFollowers;
-      platform = 'Instagram';
-    } else if (youtubeSubscribers > 0) {
+    bool isYouTube;
+
+    if (youtubeSubscribers > instagramFollowers) {
       followers = youtubeSubscribers;
       platform = 'YouTube';
+      isYouTube = true;
     } else {
-      followers = instagramFollowers;
+      followers = instagramFollowers is int ? instagramFollowers : int.tryParse(instagramFollowers.toString()) ?? 0;
       platform = 'Instagram';
+      isYouTube = false;
     }
-    
-    // Use avatar from cached stats or fallback to avatar_url
+
     String? avatarUrl = creator['avatar_url'];
     if (creator['cached_stats'] != null) {
-      final cachedStats = creator['cached_stats'];
-      if (cachedStats['instagram'] != null && cachedStats['instagram']['profile_picture'] != null) {
-        avatarUrl = cachedStats['instagram']['profile_picture'];
-      } else if (cachedStats['youtube'] != null && cachedStats['youtube']['thumbnail'] != null) {
-        avatarUrl = cachedStats['youtube']['thumbnail'];
-      }
+      final cs = creator['cached_stats'];
+      avatarUrl = cs['instagram']?['profile_picture'] ?? cs['youtube']?['thumbnail'] ?? avatarUrl;
     }
-    
-    // Calculate engagement rate (placeholder - would need actual data)
-    final engagement = 0.0;
-    
-    // Get minimum budget from API (default to 0 if not present)
+
     final startingPrice = creator['min_budget'] ?? 0;
-    
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: InkWell(
-        onTap: () {
-          context.push('/creator-details', extra: creator);
-        },
-        borderRadius: BorderRadius.circular(12),
+    final isVerified = creator['verified'] == true;
+    final hasBoth = creator['instagram_username'] != null && creator['youtube_channel_id'] != null;
+
+    final platformColor = isYouTube ? AppColors.youtube : AppColors.instagram;
+    final platformIcon = isYouTube ? Icons.play_circle_rounded : Icons.camera_alt_rounded;
+
+    return GestureDetector(
+      onTap: () => context.push('/creator-details', extra: creator),
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: AppColors.border),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 10, offset: const Offset(0, 3),
+            ),
+          ],
+        ),
         child: Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(16),
           child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              CircleAvatar(
-                radius: 30,
-                backgroundColor: Colors.grey[300],
-                backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl) : null,
-                child: avatarUrl == null ? const Icon(Icons.person, size: 30, color: Colors.grey) : null,
+              // Avatar with platform indicator
+              Stack(
+                children: [
+                  Container(
+                    width: 58, height: 58,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: avatarUrl == null ? AppColors.brandGradient : null,
+                      color: avatarUrl != null ? AppColors.border : null,
+                      border: Border.all(
+                        color: platformColor.withOpacity(0.3), width: 2,
+                      ),
+                    ),
+                    child: ClipOval(
+                      child: avatarUrl != null
+                          ? Image.network(
+                              avatarUrl,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => Center(
+                                child: Text(
+                                  name[0].toUpperCase(),
+                                  style: const TextStyle(
+                                    color: Colors.white, fontSize: 22, fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                              ),
+                            )
+                          : Center(
+                              child: Text(
+                                name[0].toUpperCase(),
+                                style: const TextStyle(
+                                  color: Colors.white, fontSize: 22, fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ),
+                    ),
+                  ),
+                  // Platform badge
+                  Positioned(
+                    bottom: 0, right: 0,
+                    child: Container(
+                      width: 20, height: 20,
+                      decoration: BoxDecoration(
+                        color: platformColor,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: AppColors.surface, width: 2),
+                      ),
+                      child: Icon(platformIcon, color: Colors.white, size: 10),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(width: 16),
+
+              const SizedBox(width: 14),
+
+              // Info
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -79,56 +131,70 @@ class CreatorCard extends StatelessWidget {
                           child: Text(
                             name,
                             style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
+                              fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.textPrimary,
                             ),
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                        const SizedBox(width: 4),
-                        if (creator['verified'] == true)
-                          const Icon(Icons.verified, size: 16, color: Colors.blue),
+                        if (isVerified) ...[
+                          const SizedBox(width: 4),
+                          const Icon(Icons.verified_rounded, size: 15, color: Color(0xFF1D9BF0)),
+                        ],
+                        if (hasBoth) ...[
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              gradient: AppColors.brandGradient,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Text(
+                              'Multi',
+                              style: TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: Colors.white),
+                            ),
+                          ),
+                        ],
                       ],
                     ),
+                    const SizedBox(height: 3),
                     Text(
-                      niche is String 
-                          ? '$niche${city != null && city.toString().isNotEmpty ? ' • $city' : ''}'
-                          : city != null && city.toString().isNotEmpty ? city : 'Creator',
+                      city.isNotEmpty ? '$niche • $city' : niche,
+                      style: const TextStyle(
+                        fontSize: 12, color: AppColors.textSecondary,
+                      ),
+                      overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 8),
+                    // Stats row
                     Row(
                       children: [
-                        _Stat(label: platform, value: _formatNumber(followers)),
-                        if (creator['instagram_username'] != null && creator['youtube_channel_id'] != null)
-                          const SizedBox(width: 16),
-                        if (creator['instagram_username'] != null && creator['youtube_channel_id'] != null)
-                          const Icon(Icons.link, size: 14, color: Colors.grey),
+                        _StatPill(
+                          icon: platformIcon,
+                          iconColor: platformColor,
+                          value: _formatNumber(followers),
+                          label: platform,
+                        ),
+                        const SizedBox(width: 8),
+                        if (startingPrice > 0)
+                          _StatPill(
+                            icon: Icons.currency_rupee_rounded,
+                            iconColor: AppColors.success,
+                            value: _formatBudget(startingPrice),
+                            label: 'from',
+                          ),
                       ],
                     ),
                   ],
                 ),
               ),
+
+              const SizedBox(width: 8),
+
+              // Right side action
               Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Text(
-                    '₹$startingPrice',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.primary,
-                    ),
-                  ),
-                  const Text(
-                    'starting',
-                    style: TextStyle(fontSize: 10, color: Colors.grey),
-                  ),
-                  const SizedBox(height: 8),
-                  IconButton(
-                    icon: const Icon(Icons.bookmark_border),
-                    onPressed: () {
-                      // TODO: Implement bookmark functionality
-                    },
-                  ),
+                  const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppColors.textHint),
                 ],
               ),
             ],
@@ -139,35 +205,53 @@ class CreatorCard extends StatelessWidget {
   }
 
   String _formatNumber(int num) {
-    if (num >= 1000000) {
-      return '${(num / 1000000).toStringAsFixed(1)}M';
-    } else if (num >= 1000) {
-      return '${(num / 1000).toStringAsFixed(1)}K';
-    }
+    if (num >= 1000000) return '${(num / 1000000).toStringAsFixed(1)}M';
+    if (num >= 1000) return '${(num / 1000).toStringAsFixed(1)}K';
     return num.toString();
+  }
+
+  String _formatBudget(dynamic budget) {
+    final amount = budget is int ? budget : int.tryParse(budget.toString()) ?? 0;
+    if (amount >= 100000) return '${(amount / 100000).toStringAsFixed(1)}L';
+    if (amount >= 1000) return '${(amount / 1000).toStringAsFixed(1)}K';
+    return amount.toString();
   }
 }
 
-class _Stat extends StatelessWidget {
-  final String label;
+class _StatPill extends StatelessWidget {
+  final IconData icon;
+  final Color iconColor;
   final String value;
+  final String label;
 
-  const _Stat({required this.label, required this.value});
+  const _StatPill({
+    required this.icon,
+    required this.iconColor,
+    required this.value,
+    required this.label,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          value,
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-        Text(
-          label,
-          style: const TextStyle(fontSize: 10, color: Colors.grey),
-        ),
-      ],
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: iconColor.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 11, color: iconColor),
+          const SizedBox(width: 4),
+          Text(
+            '$value $label',
+            style: TextStyle(
+              fontSize: 11, fontWeight: FontWeight.w600, color: iconColor,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

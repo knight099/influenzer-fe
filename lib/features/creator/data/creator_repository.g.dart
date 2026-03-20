@@ -103,3 +103,48 @@ final class CachedCreatorSearchProvider
 
 String _$cachedCreatorSearchHash() =>
     r'7af445b1ab2408b03c4e62fd147bb4d7118bc9d4';
+
+/// Spotlight creators — early adopters with connected platforms
+
+@ProviderFor(spotlightCreators)
+const spotlightCreatorsProvider = SpotlightCreatorsProvider._();
+
+/// Spotlight creators — early adopters with connected platforms
+
+final class SpotlightCreatorsProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<dynamic>>,
+          List<dynamic>,
+          FutureOr<List<dynamic>>
+        >
+    with $FutureModifier<List<dynamic>>, $FutureProvider<List<dynamic>> {
+  /// Spotlight creators — early adopters with connected platforms
+  const SpotlightCreatorsProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'spotlightCreatorsProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$spotlightCreatorsHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<List<dynamic>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<List<dynamic>> create(Ref ref) {
+    return spotlightCreators(ref);
+  }
+}
+
+String _$spotlightCreatorsHash() =>
+    r'a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0';

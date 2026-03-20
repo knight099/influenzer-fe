@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:razorpay_flutter/razorpay_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../wallet/data/payment_repository.dart';
+import '../../creator/data/proposal_repository.dart';
 
 class SubmissionDetailsScreen extends ConsumerStatefulWidget {
   final Map<String, dynamic> submission;
@@ -15,118 +15,68 @@ class SubmissionDetailsScreen extends ConsumerStatefulWidget {
 }
 
 class _SubmissionDetailsScreenState extends ConsumerState<SubmissionDetailsScreen> {
-  late Razorpay _razorpay;
   bool _isProcessing = false;
-  String? _currentOrderId;
+  late String _submissionStatus;
 
   @override
   void initState() {
     super.initState();
-    _razorpay = Razorpay();
-    _razorpay.on(Razorpay.EVENT_PAYMENT_SUCCESS, _handlePaymentSuccess);
-    _razorpay.on(Razorpay.EVENT_PAYMENT_ERROR, _handlePaymentError);
-    _razorpay.on(Razorpay.EVENT_EXTERNAL_WALLET, _handleExternalWallet);
-  }
-
-  @override
-  void dispose() {
-    _razorpay.clear();
-    super.dispose();
-  }
-
-  void _handlePaymentSuccess(PaymentSuccessResponse response) async {
-    try {
-      if (_currentOrderId == null) return;
-      
-      await ref.read(paymentRepositoryProvider).verifyPayment(
-        _currentOrderId!,
-        response.paymentId!,
-        response.signature!,
-      );
-
-      if (mounted) {
-        setState(() => _isProcessing = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Payment Successful! Submission Funded.'),
-            backgroundColor: Colors.green,
-          ),
-        );
-        Navigator.pop(context); // Close dialog or screen? Maybe close dialog first 
-        // Actually this is called from callback, dialog might cover screen.
-        // But we handle dialog closing in _acceptSubmission before opening razorpay?
-        // No, flow is: Dialog -> Accept -> Payment -> Success.
-        // We will pop the screen or refresh state.
-        
-        // For now, let's pop back to Previous Screen as "work is done"
-        context.pop(); 
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() => _isProcessing = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Verification Failed: $e')),
-        );
-      }
-    }
-  }
-
-  void _handlePaymentError(PaymentFailureResponse response) {
-    if (mounted) {
-      setState(() => _isProcessing = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Payment Failed: ${response.message}')),
-      );
-    }
-  }
-
-  void _handleExternalWallet(ExternalWalletResponse response) {
-    // Handle external wallet
+    _submissionStatus = (widget.submission['status'] ?? 'APPLIED').toString().toUpperCase();
   }
 
   Future<void> _acceptSubmission() async {
-    final bidAmount = widget.submission['bid_amount'] ?? 0;
-    final proposalId = widget.submission['id']; // Assuming ID is here
-    
-    if (proposalId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Error: Invalid Proposal ID')),
-      );
-      return;
-    }
+    final proposalId = widget.submission['id'];
+    if (proposalId == null) return;
 
     setState(() => _isProcessing = true);
-
     try {
-      // 1. Create Order
-      final orderData = await ref.read(paymentRepositoryProvider).createOrder(
-        proposalId.toString(),
-        (bidAmount * 100).toInt(), // Convert to paise/cents if needed, usually backend expects amount ?
-        // User request: "amount": 25000. Assuming currency units.
-        // Razorpay expects smallest currency unit (paise). 
-        // If 'bidAmount' is 250, then we send 25000.
-        'INR',
-      );
-      
-      _currentOrderId = orderData['order_id'];
-      
-      // 2. Open Notification/Checkout
-      var options = {
-        'key': 'rzp_test_placeholder', // Replace with environment variable
-        'amount': (bidAmount * 100).toInt(), 
-        'name': 'Influenzer',
-        'description': 'Funding Proposal #${proposalId.toString().substring(0, 4)}',
-        'order_id': _currentOrderId, // Important
-        'prefill': {'contact': '8888888888', 'email': 'brand@example.com'},
-      };
-
-      _razorpay.open(options);
-      
+      await ref.read(proposalRepositoryProvider).updateStatus(proposalId.toString(), 'APPROVED');
+      if (mounted) {
+        setState(() {
+          _isProcessing = false;
+          _submissionStatus = 'APPROVED';
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Submission accepted! You can now pay the creator from the campaign page.'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
     } catch (e) {
       if (mounted) {
         setState(() => _isProcessing = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to initiate payment: $e')),
+          SnackBar(content: Text('Failed to accept: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _rejectSubmission() async {
+    final proposalId = widget.submission['id'];
+    if (proposalId == null) return;
+
+    setState(() => _isProcessing = true);
+    try {
+      await ref.read(proposalRepositoryProvider).updateStatus(proposalId.toString(), 'REJECTED');
+      if (mounted) {
+        setState(() {
+          _isProcessing = false;
+          _submissionStatus = 'REJECTED';
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Submission rejected.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isProcessing = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to reject: $e')),
         );
       }
     }
@@ -137,16 +87,40 @@ class _SubmissionDetailsScreenState extends ConsumerState<SubmissionDetailsScree
     // Determine info from submission
     final submission = widget.submission;
     final creatorName = submission['creator_name'] ?? 'Unknown Creator';
-    final creatorFollowers = submission['creator_followers'] ?? 0;
-    final creatorId = submission['creator_id'];
-    final submissionStatus = submission['status'] ?? 'PENDING';
-    final proposalText = submission['proposal_text'] ?? '';
+    final creatorAvatar = submission['creator_avatar']?.toString();
+    final submissionStatus = _submissionStatus;
+    final proposalText = (submission['cover_note'] ?? submission['proposal_text'] ?? '') as String;
     final bidAmount = submission['bid_amount'] ?? 0;
     final createdAt = submission['created_at'] ?? '';
+
+    final instagramUsername = submission['instagram_username']?.toString() ?? '';
+    final instagramUrl = submission['instagram_url']?.toString() ?? '';
+    final instagramFollowers = submission['instagram_followers'];
+    final instagramMediaCount = submission['instagram_media_count'];
+    final youtubeChannelTitle = submission['youtube_channel_title']?.toString() ?? '';
+    final youtubeUrl = submission['youtube_url']?.toString() ?? '';
+    final youtubeSubscribers = submission['youtube_subscribers'];
+    final youtubeVideoCount = submission['youtube_video_count'];
+    final hasSocialStats = instagramUsername.isNotEmpty || youtubeChannelTitle.isNotEmpty;
+
+    final creatorId = submission['creator_id']?.toString() ?? '';
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Submission Details'),
+        actions: [
+          if (creatorId.isNotEmpty)
+            IconButton(
+              icon: const Icon(Icons.chat_bubble_outline_rounded),
+              tooltip: 'Chat with creator',
+              onPressed: () => context.push('/chat-room', extra: {
+                'conversation_id': submission['id']?.toString(),
+                'recipient_id': creatorId,
+                'recipient_name': creatorName,
+                'recipient_avatar': creatorAvatar ?? '',
+              }),
+            ),
+        ],
       ),
       body: SingleChildScrollView(
         child: Column(
@@ -160,8 +134,8 @@ class _SubmissionDetailsScreenState extends ConsumerState<SubmissionDetailsScree
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
-                    AppColors.primary.withOpacity(0.1),
-                    AppColors.primary.withOpacity(0.05),
+                    AppColors.primary.withValues(alpha: 0.1),
+                    AppColors.primary.withValues(alpha: 0.05),
                   ],
                 ),
               ),
@@ -170,10 +144,15 @@ class _SubmissionDetailsScreenState extends ConsumerState<SubmissionDetailsScree
                   CircleAvatar(
                     radius: 40,
                     backgroundColor: Colors.grey[300],
-                    child: Text(
-                      creatorName.isNotEmpty ? creatorName[0].toUpperCase() : '?',
-                      style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
-                    ),
+                    backgroundImage: creatorAvatar != null && creatorAvatar.isNotEmpty
+                        ? NetworkImage(creatorAvatar)
+                        : null,
+                    child: (creatorAvatar == null || creatorAvatar.isEmpty)
+                        ? Text(
+                            creatorName.isNotEmpty ? creatorName[0].toUpperCase() : '?',
+                            style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
+                          )
+                        : null,
                   ),
                   const SizedBox(height: 16),
                   Text(
@@ -182,33 +161,19 @@ class _SubmissionDetailsScreenState extends ConsumerState<SubmissionDetailsScree
                           fontWeight: FontWeight.bold,
                         ),
                   ),
-                  const SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.people, size: 20, color: Colors.grey),
-                      const SizedBox(width: 8),
-                      Text(
-                        '${_formatNumber(creatorFollowers)} followers',
-                        style: TextStyle(color: Colors.grey[600], fontSize: 16),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  // View Profile Button
-                  ElevatedButton.icon(
-                    onPressed: creatorId != null
-                        ? () {
-                            // Navigation logic...
-                          }
-                        : null,
-                    icon: const Icon(Icons.person),
-                    label: const Text('View Full Profile'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      foregroundColor: AppColors.primary,
+                  if (hasSocialStats) ...[
+                    const SizedBox(height: 16),
+                    _SocialStatsSection(
+                      instagramUsername: instagramUsername,
+                      instagramUrl: instagramUrl,
+                      instagramFollowers: instagramFollowers,
+                      instagramMediaCount: instagramMediaCount,
+                      youtubeChannelTitle: youtubeChannelTitle,
+                      youtubeUrl: youtubeUrl,
+                      youtubeSubscribers: youtubeSubscribers,
+                      youtubeVideoCount: youtubeVideoCount,
                     ),
-                  ),
+                  ],
                 ],
               ),
             ),
@@ -274,7 +239,7 @@ class _SubmissionDetailsScreenState extends ConsumerState<SubmissionDetailsScree
           ],
         ),
       ),
-      bottomNavigationBar: submissionStatus.toUpperCase() == 'PENDING'
+      bottomNavigationBar: submissionStatus == 'APPLIED'
           ? SafeArea(
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
@@ -282,7 +247,7 @@ class _SubmissionDetailsScreenState extends ConsumerState<SubmissionDetailsScree
                   children: [
                     Expanded(
                       child: OutlinedButton.icon(
-                        onPressed: _showRejectDialog,
+                        onPressed: _isProcessing ? null : _showRejectDialog,
                         icon: const Icon(Icons.close),
                         label: const Text('Reject'),
                         style: OutlinedButton.styleFrom(
@@ -296,10 +261,10 @@ class _SubmissionDetailsScreenState extends ConsumerState<SubmissionDetailsScree
                     Expanded(
                       child: ElevatedButton.icon(
                         onPressed: _isProcessing ? null : _showAcceptDialog,
-                        icon: _isProcessing 
-                           ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) 
-                           : const Icon(Icons.check),
-                        label: const Text('Accept & Fund'), // Updated text
+                        icon: _isProcessing
+                            ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                            : const Icon(Icons.check),
+                        label: const Text('Accept'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.green,
                           padding: const EdgeInsets.symmetric(vertical: 16),
@@ -316,24 +281,21 @@ class _SubmissionDetailsScreenState extends ConsumerState<SubmissionDetailsScree
 
   Color _getStatusColor(String status) {
     switch (status.toUpperCase()) {
-      case 'PENDING':
+      case 'APPLIED':
         return Colors.orange;
-      case 'ACCEPTED':
+      case 'APPROVED':
         return Colors.green;
       case 'REJECTED':
         return Colors.red;
+      case 'FUNDED':
+        return Colors.blue;
+      case 'PAID':
+        return Colors.purple;
+      case 'COMPLETED':
+        return Colors.teal;
       default:
         return Colors.grey;
     }
-  }
-
-  String _formatNumber(int num) {
-    if (num >= 1000000) {
-      return '${(num / 1000000).toStringAsFixed(1)}M';
-    } else if (num >= 1000) {
-      return '${(num / 1000).toStringAsFixed(1)}K';
-    }
-    return num.toString();
   }
 
   String _formatDate(String dateStr) {
@@ -349,21 +311,21 @@ class _SubmissionDetailsScreenState extends ConsumerState<SubmissionDetailsScree
   void _showAcceptDialog() {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Accept & Fund Submission'),
-        content: Text('You are about to accept this submission and fund ₹${widget.submission['bid_amount']} into escrow. Proceed?'),
+      builder: (ctx) => AlertDialog(
+        title: const Text('Accept Submission'),
+        content: Text('Accept this submission from ${widget.submission['creator_name'] ?? 'this creator'}? You can pay them from the campaign management page.'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(ctx),
             child: const Text('Cancel'),
           ),
           ElevatedButton(
             onPressed: () {
-              Navigator.pop(context); // Close dialog
-              _acceptSubmission();    // Start payment flow
+              Navigator.pop(ctx);
+              _acceptSubmission();
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-            child: const Text('Proceed to Payment'),
+            child: const Text('Accept'),
           ),
         ],
       ),
@@ -373,24 +335,18 @@ class _SubmissionDetailsScreenState extends ConsumerState<SubmissionDetailsScree
   void _showRejectDialog() {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (ctx) => AlertDialog(
         title: const Text('Reject Submission'),
         content: const Text('Are you sure you want to reject this submission?'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(ctx),
             child: const Text('Cancel'),
           ),
           ElevatedButton(
             onPressed: () {
-              Navigator.pop(context);
-              // Call API to reject (not implemented in this turn)
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Submission rejected'),
-                  backgroundColor: Colors.red,
-                ),
-              );
+              Navigator.pop(ctx);
+              _rejectSubmission();
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             child: const Text('Reject'),
@@ -434,6 +390,183 @@ class _InfoRow extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _SocialStatsSection extends StatefulWidget {
+  final String instagramUsername;
+  final String instagramUrl;
+  final dynamic instagramFollowers;
+  final dynamic instagramMediaCount;
+  final String youtubeChannelTitle;
+  final String youtubeUrl;
+  final dynamic youtubeSubscribers;
+  final dynamic youtubeVideoCount;
+
+  const _SocialStatsSection({
+    required this.instagramUsername,
+    required this.instagramUrl,
+    required this.instagramFollowers,
+    required this.instagramMediaCount,
+    required this.youtubeChannelTitle,
+    required this.youtubeUrl,
+    required this.youtubeSubscribers,
+    required this.youtubeVideoCount,
+  });
+
+  @override
+  State<_SocialStatsSection> createState() => _SocialStatsSectionState();
+}
+
+class _SocialStatsSectionState extends State<_SocialStatsSection> {
+  bool _expanded = false;
+
+  String _fmt(dynamic val) {
+    if (val == null) return '—';
+    final n = val is num ? val.toInt() : int.tryParse(val.toString()) ?? 0;
+    if (n >= 1000000) return '${(n / 1000000).toStringAsFixed(1)}M';
+    if (n >= 1000) return '${(n / 1000).toStringAsFixed(1)}K';
+    return n.toString();
+  }
+
+  Future<void> _launch(String url) async {
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        InkWell(
+          onTap: () => setState(() => _expanded = !_expanded),
+          borderRadius: BorderRadius.circular(10),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.6),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.bar_chart_rounded, size: 16, color: AppColors.primary),
+                const SizedBox(width: 6),
+                const Text('Social Stats',
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.primary)),
+                const SizedBox(width: 4),
+                Icon(_expanded ? Icons.expand_less : Icons.expand_more,
+                    size: 16, color: AppColors.primary),
+              ],
+            ),
+          ),
+        ),
+        if (_expanded) ...[
+          const SizedBox(height: 10),
+          if (widget.instagramUsername.isNotEmpty)
+            _PlatformRow(
+              icon: Icons.camera_alt_rounded,
+              color: const Color(0xFFE1306C),
+              handle: '@${widget.instagramUsername}',
+              primaryLabel: 'Followers',
+              primaryValue: _fmt(widget.instagramFollowers),
+              secondaryLabel: 'Posts',
+              secondaryValue: _fmt(widget.instagramMediaCount),
+              url: widget.instagramUrl,
+              onTap: widget.instagramUrl.isNotEmpty ? () => _launch(widget.instagramUrl) : null,
+            ),
+          if (widget.instagramUsername.isNotEmpty && widget.youtubeChannelTitle.isNotEmpty)
+            const SizedBox(height: 8),
+          if (widget.youtubeChannelTitle.isNotEmpty)
+            _PlatformRow(
+              icon: Icons.play_circle_rounded,
+              color: const Color(0xFFFF0000),
+              handle: widget.youtubeChannelTitle,
+              primaryLabel: 'Subscribers',
+              primaryValue: _fmt(widget.youtubeSubscribers),
+              secondaryLabel: 'Videos',
+              secondaryValue: _fmt(widget.youtubeVideoCount),
+              url: widget.youtubeUrl,
+              onTap: widget.youtubeUrl.isNotEmpty ? () => _launch(widget.youtubeUrl) : null,
+            ),
+        ],
+      ],
+    );
+  }
+}
+
+class _PlatformRow extends StatelessWidget {
+  final IconData icon;
+  final Color color;
+  final String handle;
+  final String primaryLabel;
+  final String primaryValue;
+  final String secondaryLabel;
+  final String secondaryValue;
+  final String url;
+  final VoidCallback? onTap;
+
+  const _PlatformRow({
+    required this.icon,
+    required this.color,
+    required this.handle,
+    required this.primaryLabel,
+    required this.primaryValue,
+    required this.secondaryLabel,
+    required this.secondaryValue,
+    required this.url,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: color.withValues(alpha: 0.3)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(icon, color: color, size: 18),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                handle,
+                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            Text(
+              '$primaryValue $primaryLabel',
+              style: TextStyle(fontSize: 12, color: color, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              '· $secondaryValue $secondaryLabel',
+              style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+            ),
+            if (onTap != null) ...[
+              const SizedBox(width: 6),
+              Icon(Icons.open_in_new_rounded, size: 13, color: color),
+            ],
+          ],
+        ),
+      ),
     );
   }
 }

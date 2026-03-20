@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../auth/data/auth_repository.dart';
 import '../data/brand_profile_repository.dart';
+import '../../notifications/presentation/notifications_screen.dart';
 
 class BrandProfileScreen extends ConsumerWidget {
   const BrandProfileScreen({super.key});
@@ -15,89 +17,1000 @@ class BrandProfileScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: profileAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => Center(
+        loading: () => const _ProfileSkeleton(),
+        error: (err, _) => Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.error_outline, size: 48, color: Colors.red),
+              Container(
+                width: 64, height: 64,
+                decoration: const BoxDecoration(color: AppColors.errorLight, shape: BoxShape.circle),
+                child: const Icon(Icons.error_outline_rounded, color: AppColors.error, size: 30),
+              ),
               const SizedBox(height: 16),
-              Text('Failed to load profile', style: TextStyle(color: AppColors.textSecondary)),
-              const SizedBox(height: 8),
-              ElevatedButton(
+              const Text(
+                'Failed to load profile',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton.icon(
                 onPressed: () => ref.invalidate(brandProfileProvider),
-                child: const Text('Retry'),
+                icon: const Icon(Icons.refresh_rounded, size: 16),
+                label: const Text('Retry'),
               ),
             ],
           ),
         ),
-        data: (profile) => SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 20),
-              // Profile Header
-              _buildProfileHeader(profile),
-              const SizedBox(height: 32),
-              
-              // Profile Information Section
-              _buildSectionTitle('Profile Information'),
-              const SizedBox(height: 12),
-              _buildProfileInfoCard(context, ref, profile),
-              const SizedBox(height: 24),
-              
-              // Settings Section
-              _buildSectionTitle('Settings'),
-              const SizedBox(height: 12),
-              _buildSettingsCard(context, ref),
-            ],
-          ),
+        data: (profile) => CustomScrollView(
+          slivers: [
+            SliverToBoxAdapter(child: _BrandHero(profile: profile)),
+
+            // Wallet / subscription banner
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
+                child: _WalletBanner(profile: profile),
+              ),
+            ),
+
+            // Profile info section
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
+                child: _SectionLabel(label: 'Company Info'),
+              ),
+            ),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+                child: _ProfileInfoCard(profile: profile, ref: ref),
+              ),
+            ),
+
+            // Settings
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
+                child: _SectionLabel(label: 'Settings'),
+              ),
+            ),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 110),
+                child: _SettingsCard(ref: ref),
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
+}
 
-  Widget _buildProfileHeader(BrandProfile profile) {
+// ── Hero ──────────────────────────────────────────────────────────────────────
+
+class _BrandHero extends StatelessWidget {
+  final BrandProfile profile;
+  const _BrandHero({required this.profile});
+
+  @override
+  Widget build(BuildContext context) {
+    final companyName = profile.companyName ?? 'Brand';
+    final initial = companyName.isNotEmpty ? companyName[0].toUpperCase() : 'B';
+    final isActive = profile.subscriptionStatus == 'ACTIVE';
+
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        // Cover gradient
+        Container(
+          height: 160,
+          decoration: const BoxDecoration(gradient: AppColors.brandGradient),
+          child: Stack(
+            children: [
+              Positioned(
+                top: -20, right: -30,
+                child: Container(
+                  width: 160, height: 160,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white.withOpacity(0.08),
+                  ),
+                ),
+              ),
+              Positioned(
+                bottom: -10, left: 20,
+                child: Container(
+                  width: 80, height: 80,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white.withOpacity(0.06),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        // Content
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 110, 20, 0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Avatar + badge row
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Container(
+                    width: 88, height: 88,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: AppColors.surface, width: 4),
+                      gradient: AppColors.brandGradient,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.12),
+                          blurRadius: 16, offset: const Offset(0, 6),
+                        ),
+                      ],
+                    ),
+                    child: ClipOval(
+                      child: profile.logoUrl != null
+                          ? Image.network(
+                              profile.logoUrl!,
+                              width: 88, height: 88,
+                              fit: BoxFit.contain,
+                              errorBuilder: (_, __, ___) => Center(
+                                child: Text(
+                                  initial,
+                                  style: const TextStyle(
+                                    color: Colors.white, fontSize: 36, fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                              ),
+                            )
+                          : Center(
+                              child: Text(
+                                initial,
+                                style: const TextStyle(
+                                  color: Colors.white, fontSize: 36, fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ),
+                    ),
+                  ),
+                  const Spacer(),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: isActive ? AppColors.successLight : AppColors.primaryLight,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: isActive
+                            ? AppColors.success.withOpacity(0.3)
+                            : AppColors.primary.withOpacity(0.2),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          isActive ? Icons.verified_rounded : Icons.bolt_rounded,
+                          size: 13,
+                          color: isActive ? AppColors.success : AppColors.primary,
+                        ),
+                        const SizedBox(width: 5),
+                        Text(
+                          isActive ? 'Pro Brand' : 'Free Plan',
+                          style: TextStyle(
+                            fontSize: 12, fontWeight: FontWeight.w600,
+                            color: isActive ? AppColors.success : AppColors.primary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 14),
+
+              Text(
+                companyName,
+                style: const TextStyle(
+                  fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 4),
+              if (profile.contactName != null)
+                Text(
+                  profile.contactName!,
+                  style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                ),
+              const SizedBox(height: 10),
+
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryLight,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: const Text(
+                  'BRAND',
+                  style: TextStyle(
+                    fontSize: 11, fontWeight: FontWeight.w700,
+                    color: AppColors.primary, letterSpacing: 0.5,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ── Wallet banner ─────────────────────────────────────────────────────────────
+
+class _WalletBanner extends StatelessWidget {
+  final BrandProfile profile;
+  const _WalletBanner({required this.profile});
+
+  @override
+  Widget build(BuildContext context) {
+    final isActive = profile.subscriptionStatus == 'ACTIVE';
+
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
+        gradient: AppColors.brandGradient,
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            color: AppColors.primary.withOpacity(0.25),
+            blurRadius: 20, offset: const Offset(0, 8),
           ),
         ],
       ),
       child: Row(
         children: [
-          CircleAvatar(
-            radius: 40,
-            backgroundColor: AppColors.primary.withOpacity(0.1),
-            child: const Icon(Icons.business, size: 40, color: AppColors.primary),
+          // Wallet
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Wallet Balance',
+                  style: TextStyle(fontSize: 12, color: Colors.white70, fontWeight: FontWeight.w500),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '₹${profile.walletBalance ?? 0}',
+                  style: const TextStyle(
+                    fontSize: 26, fontWeight: FontWeight.w800, color: Colors.white,
+                  ),
+                ),
+              ],
+            ),
           ),
-          const SizedBox(width: 16),
+          // Divider
+          Container(
+            width: 1, height: 40,
+            color: Colors.white.withOpacity(0.3),
+            margin: const EdgeInsets.symmetric(horizontal: 20),
+          ),
+          // Subscription
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                isActive ? 'Pro Active' : 'Free Plan',
+                style: const TextStyle(
+                  fontSize: 14, fontWeight: FontWeight.w700, color: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                isActive ? 'All features unlocked' : 'Upgrade for more',
+                style: TextStyle(fontSize: 11, color: Colors.white.withOpacity(0.75)),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Profile info card ─────────────────────────────────────────────────────────
+
+class _ProfileInfoCard extends StatelessWidget {
+  final BrandProfile profile;
+  final WidgetRef ref;
+  const _ProfileInfoCard({required this.profile, required this.ref});
+
+  void _update(BuildContext context, String field, String? currentValue, BrandProfile Function(String) builder) {
+    final controller = TextEditingController(text: currentValue ?? '');
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _EditSheet(
+        field: field,
+        controller: controller,
+        onSave: (value) {
+          ref.read(brandProfileRepositoryProvider).updateProfile(builder(value)).then((_) {
+            ref.invalidate(brandProfileProvider);
+          });
+        },
+      ),
+    );
+  }
+
+  void _showRolePicker(BuildContext context) {
+    const roles = ['Head Marketing', 'Marketing Manager', 'HR Manager', 'Brand Manager', 'CEO', 'Other'];
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _RoleSheet(
+        roles: roles,
+        current: profile.roleInCompany,
+        onSelect: (role) {
+          final updated = BrandProfile(
+            companyName: profile.companyName,
+            contactName: profile.contactName,
+            phone: profile.phone,
+            roleInCompany: role,
+            website: profile.website,
+          );
+          ref.read(brandProfileRepositoryProvider).updateProfile(updated).then((_) {
+            ref.invalidate(brandProfileProvider);
+          });
+        },
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        children: [
+          _InfoRow(
+            icon: Icons.storefront_rounded,
+            iconColor: AppColors.primary,
+            label: 'Brand Name',
+            value: profile.companyName ?? 'Not set',
+            showDivider: true,
+            onTap: () => _update(context, 'Brand Name', profile.companyName,
+                (v) => BrandProfile(companyName: v, contactName: profile.contactName, phone: profile.phone, roleInCompany: profile.roleInCompany, website: profile.website)),
+          ),
+          _InfoRow(
+            icon: Icons.person_rounded,
+            iconColor: const Color(0xFF0EA5E9),
+            label: 'Contact Name',
+            value: profile.contactName ?? 'Not set',
+            showDivider: true,
+            onTap: () => _update(context, 'Contact Name', profile.contactName,
+                (v) => BrandProfile(companyName: profile.companyName, contactName: v, phone: profile.phone, roleInCompany: profile.roleInCompany, website: profile.website)),
+          ),
+          _InfoRow(
+            icon: Icons.phone_rounded,
+            iconColor: AppColors.success,
+            label: 'Phone',
+            value: profile.phone ?? 'Not set',
+            showDivider: true,
+            onTap: () => _update(context, 'Phone', profile.phone,
+                (v) => BrandProfile(companyName: profile.companyName, contactName: profile.contactName, phone: v, roleInCompany: profile.roleInCompany, website: profile.website)),
+          ),
+          _InfoRow(
+            icon: Icons.badge_rounded,
+            iconColor: AppColors.warning,
+            label: 'Your Role',
+            value: profile.roleInCompany ?? 'Not set',
+            showDivider: true,
+            onTap: () => _showRolePicker(context),
+          ),
+          _InfoRow(
+            icon: Icons.language_rounded,
+            iconColor: const Color(0xFF6366F1),
+            label: 'Website',
+            value: profile.website?.isNotEmpty == true ? profile.website! : 'Not set',
+            showDivider: false,
+            onTap: () => _update(context, 'Website', profile.website,
+                (v) => BrandProfile(companyName: profile.companyName, contactName: profile.contactName, phone: profile.phone, roleInCompany: profile.roleInCompany, website: v)),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _InfoRow extends StatelessWidget {
+  final IconData icon;
+  final Color iconColor;
+  final String label;
+  final String value;
+  final bool showDivider;
+  final VoidCallback onTap;
+
+  const _InfoRow({
+    required this.icon,
+    required this.iconColor,
+    required this.label,
+    required this.value,
+    required this.showDivider,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(20),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            child: Row(
+              children: [
+                Container(
+                  width: 40, height: 40,
+                  decoration: BoxDecoration(
+                    color: iconColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(icon, color: iconColor, size: 20),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        label,
+                        style: const TextStyle(
+                          fontSize: 11, fontWeight: FontWeight.w500, color: AppColors.textSecondary,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        value,
+                        style: const TextStyle(
+                          fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.textPrimary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryLight,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(Icons.edit_rounded, size: 14, color: AppColors.primary),
+                ),
+              ],
+            ),
+          ),
+        ),
+        if (showDivider)
+          const Divider(height: 1, indent: 16, endIndent: 16, color: AppColors.divider),
+      ],
+    );
+  }
+}
+
+// ── Bottom sheet editor ───────────────────────────────────────────────────────
+
+class _EditSheet extends StatelessWidget {
+  final String field;
+  final TextEditingController controller;
+  final void Function(String) onSave;
+
+  const _EditSheet({required this.field, required this.controller, required this.onSave});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.fromLTRB(20, 24, 20, MediaQuery.of(context).viewInsets.bottom + 24),
+      decoration: const BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Handle
+          Center(
+            child: Container(
+              width: 36, height: 4,
+              decoration: BoxDecoration(
+                color: AppColors.border,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+          Text(
+            'Edit $field',
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: controller,
+            autofocus: true,
+            decoration: InputDecoration(
+              hintText: 'Enter $field',
+              prefixIcon: const Icon(Icons.edit_rounded, size: 18, color: AppColors.textHint),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancel'),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () {
+                    onSave(controller.text);
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('$field updated')),
+                    );
+                  },
+                  child: const Text('Save'),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RoleSheet extends StatelessWidget {
+  final List<String> roles;
+  final String? current;
+  final void Function(String) onSelect;
+
+  const _RoleSheet({required this.roles, required this.current, required this.onSelect});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
+      decoration: const BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Center(
+            child: Container(
+              width: 36, height: 4,
+              decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(2)),
+            ),
+          ),
+          const SizedBox(height: 20),
+          const Text(
+            'Select Your Role',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+          ),
+          const SizedBox(height: 16),
+          ...roles.map((role) {
+            final isSelected = role == current;
+            return GestureDetector(
+              onTap: () {
+                onSelect(role);
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Role updated to $role')),
+                );
+              },
+              child: Container(
+                margin: const EdgeInsets.only(bottom: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                decoration: BoxDecoration(
+                  color: isSelected ? AppColors.primaryLight : AppColors.background,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: isSelected ? AppColors.primary.withOpacity(0.4) : AppColors.border,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        role,
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                          color: isSelected ? AppColors.primary : AppColors.textPrimary,
+                        ),
+                      ),
+                    ),
+                    if (isSelected)
+                      const Icon(Icons.check_circle_rounded, size: 18, color: AppColors.primary),
+                  ],
+                ),
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Settings card ─────────────────────────────────────────────────────────────
+
+class _SettingsCard extends StatelessWidget {
+  final WidgetRef ref;
+  const _SettingsCard({required this.ref});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        children: [
+          _SettingsRow(
+            icon: Icons.notifications_rounded,
+            iconColor: AppColors.primary,
+            title: 'Notifications',
+            subtitle: 'View your alerts',
+            showDivider: true,
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+            ),
+          ),
+          _SettingsRow(
+            icon: Icons.privacy_tip_rounded,
+            iconColor: const Color(0xFF0EA5E9),
+            title: 'Privacy',
+            subtitle: 'Data & privacy settings',
+            showDivider: true,
+            onTap: () => _showPrivacy(context),
+          ),
+          _SettingsRow(
+            icon: Icons.help_outline_rounded,
+            iconColor: AppColors.textSecondary,
+            title: 'Help & Support',
+            subtitle: 'FAQs, contact us',
+            showDivider: true,
+            onTap: () => _showHelpSupport(context),
+          ),
+          _SettingsRow(
+            icon: Icons.info_outline_rounded,
+            iconColor: const Color(0xFF6366F1),
+            title: 'About',
+            subtitle: 'Version 1.0.0',
+            showDivider: true,
+            onTap: () => _showAbout(context),
+          ),
+          _SettingsRow(
+            icon: Icons.logout_rounded,
+            iconColor: AppColors.error,
+            title: 'Log Out',
+            subtitle: 'Sign out of your account',
+            titleColor: AppColors.error,
+            showDivider: false,
+            onTap: () async {
+              await ref.read(authRepositoryProvider).logout();
+              if (context.mounted) context.go('/login');
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SettingsRow extends StatelessWidget {
+  final IconData icon;
+  final Color iconColor;
+  final String title;
+  final String subtitle;
+  final Color? titleColor;
+  final bool showDivider;
+  final VoidCallback onTap;
+
+  const _SettingsRow({
+    required this.icon,
+    required this.iconColor,
+    required this.title,
+    required this.subtitle,
+    this.titleColor,
+    required this.showDivider,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(20),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            child: Row(
+              children: [
+                Container(
+                  width: 40, height: 40,
+                  decoration: BoxDecoration(
+                    color: iconColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(icon, color: iconColor, size: 20),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: TextStyle(
+                          fontSize: 15, fontWeight: FontWeight.w600,
+                          color: titleColor ?? AppColors.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        subtitle,
+                        style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  size: 14,
+                  color: titleColor ?? AppColors.textHint,
+                ),
+              ],
+            ),
+          ),
+        ),
+        if (showDivider)
+          const Divider(height: 1, indent: 16, endIndent: 16, color: AppColors.divider),
+      ],
+    );
+  }
+}
+
+// ── Shared helpers ─────────────────────────────────────────────────────────────
+
+class _SectionLabel extends StatelessWidget {
+  final String label;
+  const _SectionLabel({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      label,
+      style: const TextStyle(
+        fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.textPrimary,
+      ),
+    );
+  }
+}
+
+class _ProfileSkeleton extends StatelessWidget {
+  const _ProfileSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Container(height: 160, color: AppColors.border),
+        Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 50),
+              _box(160, 20),
+              const SizedBox(height: 8),
+              _box(120, 14),
+              const SizedBox(height: 24),
+              _box(double.infinity, 100, radius: 20),
+              const SizedBox(height: 16),
+              _box(double.infinity, 200, radius: 20),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _box(double w, double h, {double radius = 8}) {
+    return Container(
+      width: w, height: h,
+      decoration: BoxDecoration(
+        color: AppColors.border,
+        borderRadius: BorderRadius.circular(radius),
+      ),
+    );
+  }
+}
+
+// ── Privacy sheet ─────────────────────────────────────────────────────────────
+
+void _showPrivacy(BuildContext context) {
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (_) => DraggableScrollableSheet(
+      initialChildSize: 0.75,
+      maxChildSize: 0.92,
+      minChildSize: 0.4,
+      builder: (_, controller) => Container(
+        decoration: const BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          children: [
+            const SizedBox(height: 12),
+            Center(
+              child: Container(
+                width: 36, height: 4,
+                decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(2)),
+              ),
+            ),
+            Expanded(
+              child: ListView(
+                controller: controller,
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
+                children: [
+                  const Text(
+                    'Privacy & Data',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    'How we handle your information',
+                    style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                  ),
+                  const SizedBox(height: 24),
+                  _PrivacySection(
+                    icon: Icons.lock_rounded,
+                    iconColor: AppColors.primary,
+                    title: 'Data We Collect',
+                    body: 'We collect your name, email, company information, and campaign data to provide our services. Social platform stats are fetched only with your explicit permission.',
+                  ),
+                  const SizedBox(height: 16),
+                  _PrivacySection(
+                    icon: Icons.share_rounded,
+                    iconColor: const Color(0xFF0EA5E9),
+                    title: 'Data Sharing',
+                    body: 'Your profile details are shared with creators only when they apply to your campaigns. We never sell your personal data to third parties.',
+                  ),
+                  const SizedBox(height: 16),
+                  _PrivacySection(
+                    icon: Icons.security_rounded,
+                    iconColor: AppColors.success,
+                    title: 'Data Security',
+                    body: 'All data is encrypted in transit (TLS 1.3) and at rest. Tokens and credentials are stored securely using industry-standard encryption.',
+                  ),
+                  const SizedBox(height: 16),
+                  _PrivacySection(
+                    icon: Icons.delete_rounded,
+                    iconColor: AppColors.error,
+                    title: 'Data Deletion',
+                    body: 'You can request deletion of your account and all associated data at any time by contacting support@influenzer.in.',
+                  ),
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: () async {
+                        final uri = Uri.parse('https://influenzer.in/privacy');
+                        if (await canLaunchUrl(uri)) launchUrl(uri, mode: LaunchMode.externalApplication);
+                      },
+                      icon: const Icon(Icons.open_in_new_rounded, size: 16),
+                      label: const Text('View Full Privacy Policy'),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: () async {
+                        final uri = Uri(
+                          scheme: 'mailto',
+                          path: 'support@influenzer.in',
+                          query: 'subject=Data Deletion Request',
+                        );
+                        if (await canLaunchUrl(uri)) launchUrl(uri);
+                      },
+                      icon: const Icon(Icons.delete_outline_rounded, size: 16),
+                      label: const Text('Request Data Deletion'),
+                      style: OutlinedButton.styleFrom(foregroundColor: AppColors.error, side: const BorderSide(color: AppColors.error)),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+class _PrivacySection extends StatelessWidget {
+  final IconData icon;
+  final Color iconColor;
+  final String title;
+  final String body;
+
+  const _PrivacySection({
+    required this.icon,
+    required this.iconColor,
+    required this.title,
+    required this.body,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.background,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 40, height: 40,
+            decoration: BoxDecoration(
+              color: iconColor.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: iconColor, size: 20),
+          ),
+          const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  profile.companyName ?? 'Brand Name',
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  title,
+                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  profile.contactName ?? 'Contact Name',
-                  style: const TextStyle(
-                    color: AppColors.textSecondary,
-                    fontSize: 14,
-                  ),
+                  body,
+                  style: const TextStyle(fontSize: 13, color: AppColors.textSecondary, height: 1.5),
                 ),
               ],
             ),
@@ -106,275 +1019,341 @@ class BrandProfileScreen extends ConsumerWidget {
       ),
     );
   }
+}
 
-  Widget _buildSectionTitle(String title) {
-    return Text(
-      title,
-      style: const TextStyle(
-        fontSize: 18,
-        fontWeight: FontWeight.bold,
-        color: AppColors.textPrimary,
+// ── Help & Support sheet ──────────────────────────────────────────────────────
+
+void _showHelpSupport(BuildContext context) {
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (_) => const _HelpSupportSheet(),
+  );
+}
+
+class _HelpSupportSheet extends StatefulWidget {
+  const _HelpSupportSheet();
+
+  @override
+  State<_HelpSupportSheet> createState() => _HelpSupportSheetState();
+}
+
+class _HelpSupportSheetState extends State<_HelpSupportSheet> {
+  int? _expanded;
+
+  static const _faqs = [
+    (
+      q: 'How do I post a campaign?',
+      a: 'Tap the "Post Campaign" button on the dashboard. You need an active subscription to create campaigns.',
+    ),
+    (
+      q: 'How do I find the right creator for my brand?',
+      a: 'Use the Discover tab to search creators by niche, platform, and follower count. You can also browse proposals from creators who applied to your campaigns.',
+    ),
+    (
+      q: 'How do I pay a creator?',
+      a: 'Once you approve a proposal, you fund the campaign via Razorpay. The money is held in escrow and released to the creator after the work is verified.',
+    ),
+    (
+      q: 'What is the wallet balance?',
+      a: 'Your wallet holds funds that are ready for campaign payments. You can top up your wallet or pay directly during campaign funding.',
+    ),
+    (
+      q: 'How do I cancel or close a campaign?',
+      a: 'Go to the campaign details page and select "Close Campaign". Note: Funded milestones cannot be cancelled without creator agreement.',
+    ),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return DraggableScrollableSheet(
+      initialChildSize: 0.85,
+      maxChildSize: 0.95,
+      minChildSize: 0.5,
+      builder: (_, controller) => Container(
+        decoration: const BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          children: [
+            const SizedBox(height: 12),
+            Center(
+              child: Container(
+                width: 36, height: 4,
+                decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(2)),
+              ),
+            ),
+            Expanded(
+              child: ListView(
+                controller: controller,
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
+                children: [
+                  const Text(
+                    'Help & Support',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    'Find answers or get in touch',
+                    style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                  ),
+                  const SizedBox(height: 24),
+                  const Text(
+                    'Frequently Asked Questions',
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                  ),
+                  const SizedBox(height: 12),
+                  ...List.generate(_faqs.length, (i) {
+                    final faq = _faqs[i];
+                    final isOpen = _expanded == i;
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 10),
+                      decoration: BoxDecoration(
+                        color: isOpen ? AppColors.primaryLight : AppColors.background,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: isOpen ? AppColors.primary.withOpacity(0.3) : AppColors.border,
+                        ),
+                      ),
+                      child: InkWell(
+                        onTap: () => setState(() => _expanded = isOpen ? null : i),
+                        borderRadius: BorderRadius.circular(14),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      faq.q,
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600,
+                                        color: isOpen ? AppColors.primary : AppColors.textPrimary,
+                                      ),
+                                    ),
+                                  ),
+                                  Icon(
+                                    isOpen ? Icons.expand_less_rounded : Icons.expand_more_rounded,
+                                    size: 20,
+                                    color: isOpen ? AppColors.primary : AppColors.textHint,
+                                  ),
+                                ],
+                              ),
+                              if (isOpen) ...[
+                                const SizedBox(height: 10),
+                                Text(
+                                  faq.a,
+                                  style: const TextStyle(fontSize: 13, color: AppColors.textSecondary, height: 1.5),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  }),
+                  const SizedBox(height: 24),
+                  const Text(
+                    'Still need help?',
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                  ),
+                  const SizedBox(height: 12),
+                  _ContactTile(
+                    icon: Icons.email_rounded,
+                    iconColor: AppColors.primary,
+                    title: 'Email Support',
+                    subtitle: 'support@influenzer.in',
+                    onTap: () async {
+                      final uri = Uri(scheme: 'mailto', path: 'support@influenzer.in',
+                          query: 'subject=Brand Support Request - Influenzer');
+                      if (await canLaunchUrl(uri)) launchUrl(uri);
+                    },
+                  ),
+                  const SizedBox(height: 10),
+                  _ContactTile(
+                    icon: Icons.chat_bubble_rounded,
+                    iconColor: const Color(0xFF25D366),
+                    title: 'WhatsApp',
+                    subtitle: 'Chat with us on WhatsApp',
+                    onTap: () async {
+                      final uri = Uri.parse('https://wa.me/919999999999?text=Hi+Influenzer+Brand+Support');
+                      if (await canLaunchUrl(uri)) launchUrl(uri, mode: LaunchMode.externalApplication);
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
+}
 
-  Widget _buildProfileInfoCard(BuildContext context, WidgetRef ref, BrandProfile profile) {
-    return Container(
-      decoration: BoxDecoration(
+class _ContactTile extends StatelessWidget {
+  final IconData icon;
+  final Color iconColor;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  const _ContactTile({
+    required this.icon,
+    required this.iconColor,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppColors.background,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 44, height: 44,
+              decoration: BoxDecoration(
+                color: iconColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, color: iconColor, size: 22),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+                  Text(subtitle, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                ],
+              ),
+            ),
+            const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppColors.textHint),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── About sheet ───────────────────────────────────────────────────────────────
+
+void _showAbout(BuildContext context) {
+  showModalBottomSheet(
+    context: context,
+    backgroundColor: Colors.transparent,
+    builder: (_) => Container(
+      padding: const EdgeInsets.fromLTRB(20, 24, 20, 40),
+      decoration: const BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          _buildInfoTile(
-            icon: Icons.business,
-            title: 'Brand Name',
-            subtitle: profile.companyName ?? 'Not set',
-            onTap: () => _showEditDialog(context, ref, 'Brand Name', profile.companyName, (value) {
-              final updated = BrandProfile(
-                companyName: value,
-                contactName: profile.contactName,
-                phone: profile.phone,
-                roleInCompany: profile.roleInCompany,
-              );
-              ref.read(brandProfileRepositoryProvider).updateProfile(updated).then((_) {
-                ref.invalidate(brandProfileProvider);
-              });
-            }),
+          Center(
+            child: Container(
+              width: 36, height: 4,
+              decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(2)),
+            ),
           ),
-          const Divider(height: 1),
-          _buildInfoTile(
-            icon: Icons.person,
-            title: 'Your Name',
-            subtitle: profile.contactName ?? 'Not set',
-            onTap: () => _showEditDialog(context, ref, 'Your Name', profile.contactName, (value) {
-              final updated = BrandProfile(
-                companyName: profile.companyName,
-                contactName: value,
-                phone: profile.phone,
-                roleInCompany: profile.roleInCompany,
-              );
-              ref.read(brandProfileRepositoryProvider).updateProfile(updated).then((_) {
-                ref.invalidate(brandProfileProvider);
-              });
-            }),
+          const SizedBox(height: 24),
+          Container(
+            width: 72, height: 72,
+            decoration: BoxDecoration(
+              gradient: AppColors.brandGradient,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(color: AppColors.primary.withOpacity(0.3), blurRadius: 20, offset: const Offset(0, 8)),
+              ],
+            ),
+            child: const Icon(Icons.bolt_rounded, color: Colors.white, size: 38),
           ),
-          const Divider(height: 1),
-          _buildInfoTile(
-            icon: Icons.phone,
-            title: 'Phone Number',
-            subtitle: profile.phone ?? 'Not set',
-            onTap: () => _showEditDialog(context, ref, 'Phone Number', profile.phone, (value) {
-              final updated = BrandProfile(
-                companyName: profile.companyName,
-                contactName: profile.contactName,
-                phone: value,
-                roleInCompany: profile.roleInCompany,
-              );
-              ref.read(brandProfileRepositoryProvider).updateProfile(updated).then((_) {
-                ref.invalidate(brandProfileProvider);
-              });
-            }),
+          const SizedBox(height: 16),
+          const Text(
+            'Influenzer',
+            style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
           ),
-          const Divider(height: 1),
-          _buildInfoTile(
-            icon: Icons.work,
-            title: 'Your Role',
-            subtitle: profile.roleInCompany ?? 'Not set',
-            onTap: () => _showRoleDialog(context, ref, profile),
+          const SizedBox(height: 4),
+          const Text(
+            'Version 1.0.0',
+            style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            'Where Brands Meet Creators',
+            style: TextStyle(fontSize: 13, color: AppColors.textHint),
+          ),
+          const SizedBox(height: 28),
+          Row(
+            children: [
+              Expanded(
+                child: _AboutLink(
+                  label: 'Terms of Service',
+                  onTap: () async {
+                    final uri = Uri.parse('https://influenzer.in/terms');
+                    if (await canLaunchUrl(uri)) launchUrl(uri, mode: LaunchMode.externalApplication);
+                  },
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _AboutLink(
+                  label: 'Privacy Policy',
+                  onTap: () async {
+                    final uri = Uri.parse('https://influenzer.in/privacy');
+                    if (await canLaunchUrl(uri)) launchUrl(uri, mode: LaunchMode.externalApplication);
+                  },
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          const Text(
+            'Made with ❤️ in India',
+            style: TextStyle(fontSize: 12, color: AppColors.textHint),
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 
-  Widget _buildInfoTile({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required VoidCallback onTap,
-  }) {
-    return ListTile(
-      leading: CircleAvatar(
-        backgroundColor: AppColors.primary.withOpacity(0.1),
-        child: Icon(icon, color: AppColors.primary, size: 20),
-      ),
-      title: Text(
-        title,
-        style: const TextStyle(
-          fontWeight: FontWeight.w500,
-          fontSize: 14,
-          color: AppColors.textSecondary,
-        ),
-      ),
-      subtitle: Text(
-        subtitle,
-        style: const TextStyle(
-          fontSize: 16,
-          color: AppColors.textPrimary,
-        ),
-      ),
-      trailing: const Icon(Icons.edit, color: AppColors.textSecondary, size: 20),
+class _AboutLink extends StatelessWidget {
+  final String label;
+  final VoidCallback onTap;
+  const _AboutLink({required this.label, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
       onTap: onTap,
-    );
-  }
-
-  Widget _buildSettingsCard(BuildContext context, WidgetRef ref) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          _buildSettingsTile(
-            icon: Icons.notifications,
-            title: 'Notifications',
-            subtitle: 'Manage notification preferences',
-            onTap: () {},
-          ),
-          const Divider(height: 1),
-          _buildSettingsTile(
-            icon: Icons.privacy_tip,
-            title: 'Privacy',
-            subtitle: 'Control your privacy settings',
-            onTap: () {},
-          ),
-          const Divider(height: 1),
-          _buildSettingsTile(
-            icon: Icons.logout,
-            title: 'Logout',
-            iconColor: Colors.red,
-            textColor: Colors.red,
-            onTap: () async {
-              await ref.read(authRepositoryProvider).logout();
-              if (context.mounted) {
-                context.go('/login');
-              }
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSettingsTile({
-    required IconData icon,
-    required String title,
-    String? subtitle,
-    Color? iconColor,
-    Color? textColor,
-    required VoidCallback onTap,
-  }) {
-    return ListTile(
-      leading: CircleAvatar(
-        backgroundColor: (iconColor ?? AppColors.primary).withOpacity(0.1),
-        child: Icon(icon, color: iconColor ?? AppColors.primary, size: 20),
-      ),
-      title: Text(
-        title,
-        style: TextStyle(
-          fontWeight: FontWeight.w500,
-          fontSize: 16,
-          color: textColor ?? AppColors.textPrimary,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          color: AppColors.primaryLight,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.primary.withOpacity(0.2)),
         ),
-      ),
-      subtitle: subtitle != null
-          ? Text(subtitle, style: const TextStyle(color: AppColors.textSecondary))
-          : null,
-      trailing: const Icon(Icons.chevron_right, color: AppColors.textSecondary),
-      onTap: onTap,
-    );
-  }
-
-  void _showEditDialog(BuildContext context, WidgetRef ref, String field, String? currentValue, Function(String) onSave) {
-    final controller = TextEditingController(text: currentValue ?? '');
-    
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Edit $field'),
-        content: TextField(
-          controller: controller,
-          decoration: InputDecoration(
-            labelText: field,
-            border: const OutlineInputBorder(),
-          ),
-          autofocus: true,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              onSave(controller.text);
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('$field updated')),
-              );
-            },
-            child: const Text('Save'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showRoleDialog(BuildContext context, WidgetRef ref, BrandProfile profile) {
-    final roles = [
-      'Head Marketing',
-      'Marketing Manager',
-      'HR Manager',
-      'Brand Manager',
-      'CEO',
-      'Other',
-    ];
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Select Your Role'),
-        content: SizedBox(
-          width: double.maxFinite,
-          child: ListView.builder(
-            shrinkWrap: true,
-            itemCount: roles.length,
-            itemBuilder: (context, index) {
-              return ListTile(
-                title: Text(roles[index]),
-                onTap: () {
-                  final updated = BrandProfile(
-                    companyName: profile.companyName,
-                    contactName: profile.contactName,
-                    phone: profile.phone,
-                    roleInCompany: roles[index],
-                  );
-                  ref.read(brandProfileRepositoryProvider).updateProfile(updated).then((_) {
-                    ref.invalidate(brandProfileProvider);
-                  });
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Role updated to ${roles[index]}')),
-                  );
-                },
-              );
-            },
+        child: Center(
+          child: Text(
+            label,
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.primary),
           ),
         ),
       ),

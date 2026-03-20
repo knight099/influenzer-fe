@@ -55,6 +55,7 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
     _typingTimer?.cancel();
     _controller.dispose();
     _scrollController.dispose();
+    ref.read(webSocketServiceProvider).disconnect();
     super.dispose();
   }
 
@@ -67,7 +68,21 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
     _currentUserId = _getUserIdFromToken();
     print('[ChatDebug] Resolved currentUserId from token: $_currentUserId');
 
-    // 2. Load message history if conversation exists
+    // 2. If no conversationId but we have a recipientId, resolve it now so
+    //    we load existing message history instead of showing an empty screen.
+    if (_conversationId == null && widget.recipientId != null) {
+      try {
+        final convResponse = await ref
+            .read(chatRepositoryProvider)
+            .getOrCreateConversation(widget.recipientId!);
+        _conversationId =
+            convResponse['id']?.toString() ?? convResponse['conversation_id']?.toString();
+      } catch (e) {
+        print('[ChatDebug] Failed to resolve conversation: $e');
+      }
+    }
+
+    // 3. Load message history and connect WebSocket
     if (_conversationId != null) {
       await _loadMessages();
       _connectWebSocket();

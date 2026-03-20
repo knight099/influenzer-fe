@@ -190,16 +190,18 @@ class WebSocketService {
   Future<void> disconnect() async {
     _reconnectTimer?.cancel();
     _reconnectTimer = null;
-    
+    // Clear room ID BEFORE closing channel so the onDone callback
+    // (_handleDisconnect -> _scheduleReconnect) sees no room and skips reconnect
+    _currentRoomId = null;
+    _isConnected = false;
+
     if (_channel != null) {
       await _channel!.sink.close();
       _channel = null;
     }
-    
-    _isConnected = false;
-    _currentRoomId = null;
+
     _connectionController.add(false);
-    
+
     print('[WebSocket] Disconnected');
   }
 

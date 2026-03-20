@@ -62,7 +62,7 @@ class _CallbackScreenState extends ConsumerState<CallbackScreen> {
         if (mounted) {
            // Determine where to go next
            // For now, go back to social link or dashboard
-           context.go('/social-link'); 
+           context.go('/creator-dashboard'); 
            ScaffoldMessenger.of(context).showSnackBar(
              SnackBar(content: Text('Connected $provider successfully!')),
            );
@@ -76,7 +76,7 @@ class _CallbackScreenState extends ConsumerState<CallbackScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(errorMessage), backgroundColor: Colors.red),
           );
-          context.go('/social-link');
+          context.go('/creator-dashboard');
         }
       }
     } else {
@@ -84,7 +84,7 @@ class _CallbackScreenState extends ConsumerState<CallbackScreen> {
          ScaffoldMessenger.of(context).showSnackBar(
            const SnackBar(content: Text('Authorization failed: No code received')),
          );
-         context.go('/social-link');
+         context.go('/creator-dashboard');
        }
     }
   }

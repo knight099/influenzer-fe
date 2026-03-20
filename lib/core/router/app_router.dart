@@ -13,6 +13,7 @@ import '../../features/brand/presentation/submission_details_screen.dart';
 import '../../features/creator/presentation/creator_dashboard_screen.dart';
 import '../../features/creator/presentation/submit_proposal_screen.dart';
 import '../../features/creator/presentation/application_details_screen.dart';
+import '../../features/creator/presentation/invited_campaign_details_screen.dart';
 import '../../features/chat/presentation/chat_room_screen.dart';
 import '../../features/wallet/presentation/payment_screen.dart';
 import '../../features/wallet/presentation/transaction_history_screen.dart';
@@ -105,6 +106,13 @@ GoRouter goRouter(Ref ref) {
         builder: (context, state) {
           final application = state.extra as Map<String, dynamic>;
           return ApplicationDetailsScreen(application: application);
+        },
+      ),
+      GoRoute(
+        path: '/invited-campaign-details',
+        builder: (context, state) {
+          final campaign = state.extra as Map<String, dynamic>;
+          return InvitedCampaignDetailsScreen(campaign: campaign);
         },
       ),
     ],
