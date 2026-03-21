@@ -6,42 +6,68 @@ import '../../../core/theme/app_colors.dart';
 import '../data/campaign_repository.dart';
 import '../../creator/data/creator_repository.dart';
 
-class CreatorDetailsScreen extends ConsumerWidget {
+class CreatorDetailsScreen extends ConsumerStatefulWidget {
   final Map<String, dynamic> creator;
-
   const CreatorDetailsScreen({super.key, required this.creator});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<CreatorDetailsScreen> createState() => _CreatorDetailsScreenState();
+}
+
+class _CreatorDetailsScreenState extends ConsumerState<CreatorDetailsScreen> {
+  Map<String, dynamic>? _analytics;
+  bool _analyticsLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAnalytics();
+  }
+
+  Future<void> _loadAnalytics() async {
+    final id = widget.creator['id']?.toString() ?? '';
+    if (id.isEmpty) { setState(() => _analyticsLoading = false); return; }
+    try {
+      final data = await ref.read(creatorRepositoryProvider).getCreatorAnalytics(id);
+      if (mounted) setState(() { _analytics = data; _analyticsLoading = false; });
+    } catch (_) {
+      if (mounted) setState(() => _analyticsLoading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final creator = widget.creator;
     final name = creator['name'] ?? 'Unknown Creator';
     final niche = (creator['niche']?.toString().trim().isNotEmpty == true)
-        ? creator['niche'].toString()
-        : 'Creator';
+        ? creator['niche'].toString() : 'Creator';
     final city = creator['city']?.toString() ?? '';
     final isVerified = creator['verified'] == true;
+    final bio = creator['bio']?.toString() ?? '';
+    final languages = creator['languages']?.toString() ?? '';
+    final yearsExp = creator['years_experience'];
+    final contentCats = creator['content_categories']?.toString() ?? '';
+    final pastBrands = creator['past_brands']?.toString() ?? '';
+    final rateCard = creator['rate_card'] as Map<String, dynamic>?;
+    final socialLinks = creator['social_links'] as Map<String, dynamic>?;
 
     final instagramUsername = creator['instagram_username'];
     final instagramUrl = creator['instagram_url'];
     final instagramFollowers = creator['instagram_followers'] ?? 0;
     final instFollowers = instagramFollowers is int
-        ? instagramFollowers
-        : int.tryParse(instagramFollowers.toString()) ?? 0;
+        ? instagramFollowers : int.tryParse(instagramFollowers.toString()) ?? 0;
 
     final youtubeChannelTitle = creator['youtube_channel_title'];
     final youtubeUrl = creator['youtube_url'];
-    final ytSubscribers =
-        int.tryParse(creator['youtube_subscribers']?.toString() ?? '0') ?? 0;
+    final ytSubscribers = int.tryParse(creator['youtube_subscribers']?.toString() ?? '0') ?? 0;
 
-    final instagramMediaCount =
-        creator['cached_stats']?['instagram']?['media_count'];
-    final youtubeVideoCount =
-        creator['cached_stats']?['youtube']?['video_count'];
+    final instagramMediaCount = creator['cached_stats']?['instagram']?['media_count'];
+    final youtubeVideoCount = creator['cached_stats']?['youtube']?['video_count'];
 
     String? avatarUrl = creator['avatar_url'];
     if (creator['cached_stats'] != null) {
       final cs = creator['cached_stats'];
-      avatarUrl =
-          cs['instagram']?['profile_picture'] ?? cs['youtube']?['thumbnail'] ?? avatarUrl;
+      avatarUrl = cs['instagram']?['profile_picture'] ?? cs['youtube']?['thumbnail'] ?? avatarUrl;
     }
 
     final minBudget = creator['min_budget'] ?? 0;
@@ -52,9 +78,9 @@ class CreatorDetailsScreen extends ConsumerWidget {
       backgroundColor: AppColors.background,
       body: CustomScrollView(
         slivers: [
-          // Hero header
+          // ── Hero header ────────────────────────────────────────────────
           SliverAppBar(
-            expandedHeight: 280,
+            expandedHeight: 290,
             pinned: true,
             backgroundColor: AppColors.primary,
             elevation: 0,
@@ -63,12 +89,8 @@ class CreatorDetailsScreen extends ConsumerWidget {
               child: GestureDetector(
                 onTap: () => context.pop(),
                 child: Container(
-                  decoration: const BoxDecoration(
-                    color: Colors.black26,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.arrow_back_ios_rounded,
-                      color: Colors.white, size: 16),
+                  decoration: const BoxDecoration(color: Colors.black26, shape: BoxShape.circle),
+                  child: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white, size: 16),
                 ),
               ),
             ),
@@ -84,66 +106,34 @@ class CreatorDetailsScreen extends ConsumerWidget {
                       Stack(
                         children: [
                           Container(
-                            width: 92,
-                            height: 92,
+                            width: 92, height: 92,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              color: Colors.white.withOpacity(0.3),
+                              color: Colors.white.withValues(alpha: 0.3),
                               border: Border.all(color: Colors.white, width: 3),
                             ),
                             child: ClipOval(
                               child: avatarUrl != null
-                                  ? Image.network(
-                                      avatarUrl,
-                                      fit: BoxFit.cover,
-                                      errorBuilder: (_, __, ___) => Center(
-                                        child: Text(
-                                          name[0].toUpperCase(),
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 36,
-                                            fontWeight: FontWeight.w800,
-                                          ),
-                                        ),
-                                      ),
-                                    )
-                                  : Center(
-                                      child: Text(
+                                  ? Image.network(avatarUrl, fit: BoxFit.cover,
+                                      errorBuilder: (_, __, ___) => Center(child: Text(
                                         name[0].toUpperCase(),
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 36,
-                                          fontWeight: FontWeight.w800,
-                                        ),
-                                      ),
-                                    ),
+                                        style: const TextStyle(color: Colors.white, fontSize: 36, fontWeight: FontWeight.w800),
+                                      )))
+                                  : Center(child: Text(name[0].toUpperCase(),
+                                      style: const TextStyle(color: Colors.white, fontSize: 36, fontWeight: FontWeight.w800))),
                             ),
                           ),
                           if (hasBoth)
                             Positioned(
-                              bottom: 0,
-                              right: 0,
+                              bottom: 0, right: 0,
                               child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 6, vertical: 2),
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                 decoration: BoxDecoration(
                                   color: Colors.white,
                                   borderRadius: BorderRadius.circular(8),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withOpacity(0.15),
-                                      blurRadius: 4,
-                                    ),
-                                  ],
+                                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.15), blurRadius: 4)],
                                 ),
-                                child: const Text(
-                                  'Multi',
-                                  style: TextStyle(
-                                    fontSize: 9,
-                                    fontWeight: FontWeight.w700,
-                                    color: AppColors.primary,
-                                  ),
-                                ),
+                                child: const Text('Multi', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: AppColors.primary)),
                               ),
                             ),
                         ],
@@ -153,51 +143,33 @@ class CreatorDetailsScreen extends ConsumerWidget {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Flexible(
-                            child: Text(
-                              name,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 22,
-                                fontWeight: FontWeight.w800,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
+                            child: Text(name,
+                              style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w800),
+                              overflow: TextOverflow.ellipsis),
                           ),
                           if (isVerified) ...[
                             const SizedBox(width: 6),
-                            const Icon(Icons.verified_rounded,
-                                size: 18, color: Color(0xFF93C5FD)),
+                            const Icon(Icons.verified_rounded, size: 18, color: Color(0xFF93C5FD)),
                           ],
                         ],
                       ),
-                      const SizedBox(height: 6),
-                      Text(
-                        city.isNotEmpty ? '$niche • $city' : niche,
-                        style: const TextStyle(
-                            color: Colors.white70, fontSize: 13),
-                      ),
+                      const SizedBox(height: 4),
+                      Text(city.isNotEmpty ? '$niche • $city' : niche,
+                          style: const TextStyle(color: Colors.white70, fontSize: 13)),
                       if (minBudget > 0) ...[
                         const SizedBox(height: 10),
                         Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 5),
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
+                            color: Colors.white.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(Icons.currency_rupee_rounded,
-                                  size: 13, color: Colors.white),
-                              Text(
-                                'From ${_formatBudget(minBudget)}',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
+                              const Icon(Icons.currency_rupee_rounded, size: 13, color: Colors.white),
+                              Text('From ${_formatBudget(minBudget)}',
+                                style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600)),
                             ],
                           ),
                         ),
@@ -209,22 +181,218 @@ class CreatorDetailsScreen extends ConsumerWidget {
             ),
           ),
 
-          // Platform stats section
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 20, 20, 100),
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 120),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  if (instagramUsername != null || youtubeChannelTitle != null) ...[
-                    const Text(
-                      'Social Platforms',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textPrimary,
+
+                  // ── Analytics Dashboard ──────────────────────────────────
+                  _SectionHeader(label: 'Performance Analytics'),
+                  const SizedBox(height: 12),
+                  _AnalyticsDashboard(
+                    analytics: _analytics,
+                    loading: _analyticsLoading,
+                    igFollowers: instFollowers,
+                    ytSubscribers: ytSubscribers,
+                  ),
+
+                  // ── About / Bio ──────────────────────────────────────────
+                  if (bio.isNotEmpty) ...[
+                    const SizedBox(height: 24),
+                    _SectionHeader(label: 'About'),
+                    const SizedBox(height: 12),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: AppColors.border),
+                      ),
+                      child: Text(bio,
+                        style: const TextStyle(fontSize: 14, color: AppColors.textSecondary, height: 1.6)),
+                    ),
+                  ],
+
+                  // ── Creator Details ──────────────────────────────────────
+                  if (languages.isNotEmpty || (yearsExp != null && yearsExp != 0) || contentCats.isNotEmpty) ...[
+                    const SizedBox(height: 24),
+                    _SectionHeader(label: 'Creator Details'),
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: AppColors.border),
+                      ),
+                      child: Column(
+                        children: [
+                          if (languages.isNotEmpty)
+                            _DetailRow(
+                              icon: Icons.language_rounded,
+                              label: 'Languages',
+                              child: Wrap(
+                                spacing: 6, runSpacing: 4,
+                                children: languages.split(',')
+                                    .map((l) => l.trim())
+                                    .where((l) => l.isNotEmpty)
+                                    .map((l) => _Chip(label: l))
+                                    .toList(),
+                              ),
+                            ),
+                          if (yearsExp != null && yearsExp != 0) ...[
+                            if (languages.isNotEmpty) const SizedBox(height: 12),
+                            _DetailRow(
+                              icon: Icons.work_history_rounded,
+                              label: 'Experience',
+                              value: '$yearsExp ${yearsExp == 1 ? "year" : "years"}',
+                            ),
+                          ],
+                          if (contentCats.isNotEmpty) ...[
+                            if (languages.isNotEmpty || (yearsExp != null && yearsExp != 0))
+                              const SizedBox(height: 12),
+                            _DetailRow(
+                              icon: Icons.category_rounded,
+                              label: 'Content',
+                              child: Wrap(
+                                spacing: 6, runSpacing: 4,
+                                children: contentCats.split(',')
+                                    .map((c) => c.trim())
+                                    .where((c) => c.isNotEmpty)
+                                    .map((c) => _Chip(label: c, color: AppColors.secondary))
+                                    .toList(),
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
                     ),
+                  ],
+
+                  // ── Past Collaborations ──────────────────────────────────
+                  if (pastBrands.isNotEmpty) ...[
+                    const SizedBox(height: 24),
+                    _SectionHeader(label: 'Past Collaborations'),
+                    const SizedBox(height: 12),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: AppColors.border),
+                      ),
+                      child: Wrap(
+                        spacing: 8, runSpacing: 8,
+                        children: pastBrands.split(',')
+                            .map((b) => b.trim())
+                            .where((b) => b.isNotEmpty)
+                            .map((b) => Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primaryLight,
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(Icons.business_rounded, size: 12, color: AppColors.primary),
+                                      const SizedBox(width: 5),
+                                      Text(b, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.primary)),
+                                    ],
+                                  ),
+                                ))
+                            .toList(),
+                      ),
+                    ),
+                  ],
+
+                  // ── Rate Card ────────────────────────────────────────────
+                  if (rateCard != null && rateCard.isNotEmpty) ...[
+                    const SizedBox(height: 24),
+                    _SectionHeader(label: 'Rate Card'),
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: AppColors.border),
+                      ),
+                      child: Column(
+                        children: rateCard.entries.map((e) {
+                          final label = e.key.replaceAll('_', ' ').split(' ')
+                              .map((w) => w.isEmpty ? '' : '${w[0].toUpperCase()}${w.substring(1)}')
+                              .join(' ');
+                          final amount = e.value?.toString() ?? '';
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 10),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Row(children: [
+                                  const Icon(Icons.receipt_long_rounded, size: 14, color: AppColors.textHint),
+                                  const SizedBox(width: 8),
+                                  Text(label, style: const TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+                                ]),
+                                Text('₹$amount',
+                                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                              ],
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                  ],
+
+                  // ── Social Links ─────────────────────────────────────────
+                  if (socialLinks != null && socialLinks.isNotEmpty) ...[
+                    const SizedBox(height: 24),
+                    _SectionHeader(label: 'Connect'),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 8, runSpacing: 8,
+                      children: socialLinks.entries.map((e) {
+                        IconData icon;
+                        switch (e.key.toLowerCase()) {
+                          case 'twitter': icon = Icons.tag_rounded; break;
+                          case 'linkedin': icon = Icons.work_rounded; break;
+                          default: icon = Icons.link_rounded;
+                        }
+                        final label = '${e.key[0].toUpperCase()}${e.key.substring(1)}';
+                        return GestureDetector(
+                          onTap: () async {
+                            final uri = Uri.tryParse(e.value?.toString() ?? '');
+                            if (uri != null && await canLaunchUrl(uri)) {
+                              launchUrl(uri, mode: LaunchMode.externalApplication);
+                            }
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: AppColors.surface,
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(color: AppColors.border),
+                            ),
+                            child: Row(mainAxisSize: MainAxisSize.min, children: [
+                              Icon(icon, size: 14, color: AppColors.primary),
+                              const SizedBox(width: 6),
+                              Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+                            ]),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ],
+
+                  // ── Social Platforms ─────────────────────────────────────
+                  if (instagramUsername != null || youtubeChannelTitle != null) ...[
+                    const SizedBox(height: 24),
+                    _SectionHeader(label: 'Social Platforms'),
                     const SizedBox(height: 12),
                     if (instagramUsername != null) ...[
                       _PlatformMediaCard(
@@ -238,14 +406,13 @@ class CreatorDetailsScreen extends ConsumerWidget {
                         secondaryCount: instagramMediaCount,
                         secondaryLabel: 'Posts',
                         profileUrl: instagramUrl,
-                        fetchMedia: () => ref
-                            .read(creatorRepositoryProvider)
+                        fetchMedia: () => ref.read(creatorRepositoryProvider)
                             .getCreatorMedia(creatorId, platform: 'instagram'),
                         mediaKey: 'instagram',
                       ),
                       const SizedBox(height: 12),
                     ],
-                    if (youtubeChannelTitle != null) ...[
+                    if (youtubeChannelTitle != null)
                       _PlatformMediaCard(
                         gradient: AppColors.youtubeGradient,
                         icon: Icons.play_circle_rounded,
@@ -257,12 +424,10 @@ class CreatorDetailsScreen extends ConsumerWidget {
                         secondaryCount: youtubeVideoCount,
                         secondaryLabel: 'Videos',
                         profileUrl: youtubeUrl,
-                        fetchMedia: () => ref
-                            .read(creatorRepositoryProvider)
+                        fetchMedia: () => ref.read(creatorRepositoryProvider)
                             .getCreatorMedia(creatorId, platform: 'youtube'),
                         mediaKey: 'youtube',
                       ),
-                    ],
                   ],
                 ],
               ),
@@ -274,15 +439,14 @@ class CreatorDetailsScreen extends ConsumerWidget {
         child: Padding(
           padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
           child: ElevatedButton.icon(
-            onPressed: () => _showInviteSheet(context, ref, creator),
+            onPressed: () => _showInviteSheet(context, widget.creator),
             icon: const Icon(Icons.campaign_rounded, size: 18),
             label: const Text('Invite to Campaign'),
             style: ElevatedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 14),
               backgroundColor: AppColors.primary,
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14)),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
               elevation: 0,
             ),
           ),
@@ -291,7 +455,7 @@ class CreatorDetailsScreen extends ConsumerWidget {
     );
   }
 
-  void _showInviteSheet(BuildContext context, WidgetRef ref, Map<String, dynamic> creator) {
+  void _showInviteSheet(BuildContext context, Map<String, dynamic> creator) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -305,11 +469,350 @@ class CreatorDetailsScreen extends ConsumerWidget {
   }
 
   String _formatBudget(dynamic budget) {
-    final amount =
-        budget is int ? budget : int.tryParse(budget.toString()) ?? 0;
+    final amount = budget is int ? budget : int.tryParse(budget.toString()) ?? 0;
     if (amount >= 100000) return '${(amount / 100000).toStringAsFixed(1)}L';
     if (amount >= 1000) return '${(amount / 1000).toStringAsFixed(1)}K';
     return amount.toString();
+  }
+}
+
+// ── Analytics Dashboard ───────────────────────────────────────────────────────
+
+class _AnalyticsDashboard extends StatelessWidget {
+  final Map<String, dynamic>? analytics;
+  final bool loading;
+  final int igFollowers;
+  final int ytSubscribers;
+
+  const _AnalyticsDashboard({
+    this.analytics, required this.loading,
+    required this.igFollowers, required this.ytSubscribers,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (loading) {
+      return Container(
+        height: 120,
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+      );
+    }
+
+    final igAnalytics = analytics?['instagram'] as Map<String, dynamic>?;
+    final ytAnalytics = analytics?['youtube'] as Map<String, dynamic>?;
+
+    if (igAnalytics == null && ytAnalytics == null) {
+      return _buildBasicStats();
+    }
+
+    return Column(
+      children: [
+        if (igAnalytics != null)
+          _PlatformAnalyticsCard(
+            platform: 'Instagram',
+            icon: Icons.camera_alt_rounded,
+            gradient: AppColors.instagramGradient,
+            color: AppColors.instagram,
+            followers: igFollowers,
+            engRate: igAnalytics['engagement_rate']?.toString() ?? '—',
+            avgViews: igAnalytics['avg_views'],
+            avgLikes: igAnalytics['avg_likes'],
+            tier: igAnalytics['tier']?.toString() ?? '—',
+          ),
+        if (igAnalytics != null && ytAnalytics != null) const SizedBox(height: 12),
+        if (ytAnalytics != null)
+          _PlatformAnalyticsCard(
+            platform: 'YouTube',
+            icon: Icons.play_circle_rounded,
+            gradient: AppColors.youtubeGradient,
+            color: AppColors.youtube,
+            followers: ytSubscribers,
+            followersLabel: 'Subscribers',
+            engRate: ytAnalytics['engagement_rate']?.toString() ?? '—',
+            avgViews: ytAnalytics['avg_views'],
+            avgLikes: ytAnalytics['avg_likes'],
+            tier: ytAnalytics['tier']?.toString() ?? '—',
+          ),
+      ],
+    );
+  }
+
+  Widget _buildBasicStats() {
+    final hasIG = igFollowers > 0;
+    final hasYT = ytSubscribers > 0;
+    if (!hasIG && !hasYT) {
+      return Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: const Row(
+          children: [
+            Icon(Icons.bar_chart_rounded, color: AppColors.textHint, size: 20),
+            SizedBox(width: 10),
+            Text('No social platforms connected yet',
+                style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+          ],
+        ),
+      );
+    }
+    return Row(
+      children: [
+        if (hasIG)
+          Expanded(child: _SimpleStatBox(
+            label: 'IG Followers', value: _fmt(igFollowers),
+            color: AppColors.instagram, icon: Icons.camera_alt_rounded,
+          )),
+        if (hasIG && hasYT) const SizedBox(width: 12),
+        if (hasYT)
+          Expanded(child: _SimpleStatBox(
+            label: 'YT Subscribers', value: _fmt(ytSubscribers),
+            color: AppColors.youtube, icon: Icons.play_circle_rounded,
+          )),
+      ],
+    );
+  }
+
+  String _fmt(int n) {
+    if (n >= 1000000) return '${(n / 1000000).toStringAsFixed(1)}M';
+    if (n >= 1000) return '${(n / 1000).toStringAsFixed(1)}K';
+    return n.toString();
+  }
+}
+
+class _PlatformAnalyticsCard extends StatelessWidget {
+  final String platform;
+  final IconData icon;
+  final LinearGradient gradient;
+  final Color color;
+  final int followers;
+  final String followersLabel;
+  final String engRate;
+  final dynamic avgViews;
+  final dynamic avgLikes;
+  final String tier;
+
+  const _PlatformAnalyticsCard({
+    required this.platform, required this.icon, required this.gradient,
+    required this.color, required this.followers, required this.engRate,
+    this.avgViews, this.avgLikes, required this.tier,
+    this.followersLabel = 'Followers',
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: color.withValues(alpha: 0.25)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 36, height: 36,
+                decoration: BoxDecoration(gradient: gradient, borderRadius: BorderRadius.circular(10)),
+                child: Icon(icon, color: Colors.white, size: 18),
+              ),
+              const SizedBox(width: 10),
+              Text(platform, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+              const Spacer(),
+              _TierBadge(tier: tier, color: color),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              _AnalyticMetric(
+                label: followersLabel,
+                value: _fmt(followers),
+                icon: Icons.people_rounded,
+                color: color,
+              ),
+              const SizedBox(width: 12),
+              _AnalyticMetric(
+                label: 'Engagement',
+                value: engRate == '—' ? '—' : '$engRate%',
+                icon: Icons.trending_up_rounded,
+                color: _engColor(engRate),
+              ),
+              const SizedBox(width: 12),
+              _AnalyticMetric(
+                label: 'Avg Views',
+                value: avgViews != null ? _fmt(avgViews is int ? avgViews : int.tryParse(avgViews.toString()) ?? 0) : '—',
+                icon: Icons.visibility_rounded,
+                color: AppColors.textSecondary,
+              ),
+              const SizedBox(width: 12),
+              _AnalyticMetric(
+                label: 'Avg Likes',
+                value: avgLikes != null ? _fmt(avgLikes is int ? avgLikes : int.tryParse(avgLikes.toString()) ?? 0) : '—',
+                icon: Icons.favorite_rounded,
+                color: AppColors.secondary,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Color _engColor(String rate) {
+    final r = double.tryParse(rate) ?? 0;
+    if (r >= 5) return AppColors.success;
+    if (r >= 2) return Colors.orange;
+    return AppColors.textHint;
+  }
+
+  String _fmt(int n) {
+    if (n >= 1000000) return '${(n / 1000000).toStringAsFixed(1)}M';
+    if (n >= 1000) return '${(n / 1000).toStringAsFixed(1)}K';
+    return n.toString();
+  }
+}
+
+class _AnalyticMetric extends StatelessWidget {
+  final String label;
+  final String value;
+  final IconData icon;
+  final Color color;
+  const _AnalyticMetric({required this.label, required this.value, required this.icon, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Column(
+        children: [
+          Icon(icon, size: 16, color: color),
+          const SizedBox(height: 4),
+          Text(value, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: color)),
+          Text(label, style: const TextStyle(fontSize: 9, color: AppColors.textHint), textAlign: TextAlign.center),
+        ],
+      ),
+    );
+  }
+}
+
+class _TierBadge extends StatelessWidget {
+  final String tier;
+  final Color color;
+  const _TierBadge({required this.tier, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withValues(alpha: 0.4)),
+      ),
+      child: Text(tier, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: color)),
+    );
+  }
+}
+
+class _SimpleStatBox extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color color;
+  final IconData icon;
+  const _SimpleStatBox({required this.label, required this.value, required this.color, required this.icon});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, size: 20, color: color),
+          const SizedBox(height: 6),
+          Text(value, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: color)),
+          Text(label, style: const TextStyle(fontSize: 10, color: AppColors.textHint)),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Shared detail widgets ─────────────────────────────────────────────────────
+
+class _SectionHeader extends StatelessWidget {
+  final String label;
+  const _SectionHeader({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(width: 3, height: 16, decoration: BoxDecoration(
+          gradient: AppColors.brandGradient, borderRadius: BorderRadius.circular(2))),
+        const SizedBox(width: 8),
+        Text(label, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+      ],
+    );
+  }
+}
+
+class _DetailRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String? value;
+  final Widget? child;
+  const _DetailRow({required this.icon, required this.label, this.value, this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 16, color: AppColors.textHint),
+        const SizedBox(width: 8),
+        SizedBox(width: 80, child: Text(label,
+            style: const TextStyle(fontSize: 12, color: AppColors.textHint, fontWeight: FontWeight.w500))),
+        Expanded(
+          child: value != null
+              ? Text(value!, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textPrimary))
+              : child ?? const SizedBox.shrink(),
+        ),
+      ],
+    );
+  }
+}
+
+class _Chip extends StatelessWidget {
+  final String label;
+  final Color? color;
+  const _Chip({required this.label, this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    final c = color ?? AppColors.primary;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: c.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: c.withValues(alpha: 0.3)),
+      ),
+      child: Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: c)),
+    );
   }
 }
 

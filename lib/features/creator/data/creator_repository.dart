@@ -63,4 +63,15 @@ class CreatorRepository {
     );
     return response.data as Map<String, dynamic>;
   }
+
+  /// GET /creators/:id/analytics
+  Future<Map<String, dynamic>> getCreatorAnalytics(String id) async {
+    final response = await _dio.get('/creators/$id/analytics');
+    return response.data as Map<String, dynamic>;
+  }
+
+  /// PUT /api/creators/profile — update extended profile fields
+  Future<void> updateCreatorProfile(Map<String, dynamic> data) async {
+    await _dio.put('/api/creators/profile', data: data);
+  }
 }

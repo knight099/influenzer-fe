@@ -107,6 +107,18 @@ class UserProfile {
   final SubscriptionInfo? subscription;
   final double walletBalance;
 
+  // Extended creator profile fields
+  final String? bio;
+  final String? languages;
+  final int yearsExperience;
+  final String? contentCategories;
+  final String? pastBrands;
+  final Map<String, dynamic>? rateCard;
+  final Map<String, dynamic>? socialLinks;
+  final String? city;
+  final String? phone;
+  final double minBudget;
+
   UserProfile({
     required this.id,
     required this.email,
@@ -125,6 +137,16 @@ class UserProfile {
     this.isSubscribed = false,
     this.subscription,
     this.walletBalance = 0.0,
+    this.bio,
+    this.languages,
+    this.yearsExperience = 0,
+    this.contentCategories,
+    this.pastBrands,
+    this.rateCard,
+    this.socialLinks,
+    this.city,
+    this.phone,
+    this.minBudget = 0.0,
   });
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
@@ -189,6 +211,9 @@ class UserProfile {
     // Derive subscriptionStatus from is_subscribed for backward compatibility
     final subscriptionStatus = isSubscribed ? 'ACTIVE' : 'INACTIVE';
 
+    // Parse extended creator profile fields from nested creator_profile object
+    final cp = json['creator_profile'] as Map<String, dynamic>?;
+
     return UserProfile(
       id: json['id'] ?? '',
       email: json['email'] ?? '',
@@ -207,6 +232,16 @@ class UserProfile {
       isSubscribed: isSubscribed,
       subscription: subscriptionInfo,
       walletBalance: (json['wallet_balance'] ?? 0).toDouble(),
+      bio: cp?['bio'] as String?,
+      languages: cp?['languages'] as String?,
+      yearsExperience: (cp?['years_experience'] as int?) ?? 0,
+      contentCategories: cp?['content_categories'] as String?,
+      pastBrands: cp?['past_brands'] as String?,
+      rateCard: cp?['rate_card'] as Map<String, dynamic>?,
+      socialLinks: cp?['social_links'] as Map<String, dynamic>?,
+      city: cp?['city'] as String?,
+      phone: cp?['phone'] as String?,
+      minBudget: ((cp?['min_budget']) ?? 0).toDouble(),
     );
   }
 }

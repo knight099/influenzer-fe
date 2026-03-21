@@ -7,6 +7,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../auth/presentation/instagram_auth_webview.dart';
 import '../data/user_profile_repository.dart';
+import '../data/creator_repository.dart';
 import '../../auth/application/auth_controller.dart';
 import '../../notifications/presentation/notifications_screen.dart';
 import '../../wallet/data/payment_repository.dart';
@@ -225,6 +226,20 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with WidgetsBindi
                   onConnectYouTube: _launchYouTubeOAuth,
                   onConnectInstagram: _launchInstagramOAuth,
                 ),
+              ),
+            ),
+
+            // Profile Details
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
+                child: _SectionLabel(label: 'Profile Details'),
+              ),
+            ),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+                child: _ProfileDetailsCard(profile: profile, ref: ref),
               ),
             ),
 
@@ -1001,6 +1016,489 @@ class _AccountRow extends StatelessWidget {
         ),
         if (showDivider)
           const Divider(height: 1, indent: 16, endIndent: 16, color: AppColors.divider),
+      ],
+    );
+  }
+}
+
+// ── Profile Details ───────────────────────────────────────────────────────────
+
+class _ProfileDetailsCard extends StatelessWidget {
+  final UserProfile profile;
+  final WidgetRef ref;
+  const _ProfileDetailsCard({required this.profile, required this.ref});
+
+  @override
+  Widget build(BuildContext context) {
+    final hasBio = profile.bio?.isNotEmpty == true;
+    final hasLanguages = profile.languages?.isNotEmpty == true;
+    final hasCategories = profile.contentCategories?.isNotEmpty == true;
+    final hasBrands = profile.pastBrands?.isNotEmpty == true;
+    final hasRateCard = profile.rateCard?.isNotEmpty == true;
+    final hasSocialLinks = profile.socialLinks?.isNotEmpty == true;
+    final hasAnyData = hasBio || hasLanguages || hasCategories || hasBrands ||
+        hasRateCard || hasSocialLinks || (profile.yearsExperience > 0) ||
+        profile.city?.isNotEmpty == true || profile.minBudget > 0;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header row
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+            child: Row(
+              children: [
+                Container(
+                  width: 40, height: 40,
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryLight,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(Icons.person_rounded, color: AppColors.primary, size: 20),
+                ),
+                const SizedBox(width: 12),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Creator Profile',
+                          style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                      Text('Visible to brands when they view your profile',
+                          style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                    ],
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () => _showEditSheet(context),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryLight,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      hasAnyData ? 'Edit' : 'Add',
+                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.primary),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          if (!hasAnyData) ...[
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+              child: Column(
+                children: [
+                  const Text(
+                    'Add your professional details to attract more brand deals',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 13, color: AppColors.textSecondary, height: 1.4),
+                  ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () => _showEditSheet(context),
+                      icon: const Icon(Icons.edit_rounded, size: 16),
+                      label: const Text('Complete Your Profile'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ] else ...[
+            const SizedBox(height: 14),
+            const Divider(height: 1, color: AppColors.divider),
+            const SizedBox(height: 14),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (hasBio) ...[
+                    Text(profile.bio!,
+                        style: const TextStyle(fontSize: 13, color: AppColors.textSecondary, height: 1.5),
+                        maxLines: 3, overflow: TextOverflow.ellipsis),
+                    const SizedBox(height: 12),
+                  ],
+                  Wrap(
+                    spacing: 8, runSpacing: 8,
+                    children: [
+                      if (profile.city?.isNotEmpty == true)
+                        _InfoChip(icon: Icons.location_on_rounded, label: profile.city!, color: AppColors.primary),
+                      if (profile.yearsExperience > 0)
+                        _InfoChip(icon: Icons.work_rounded,
+                            label: '${profile.yearsExperience}y exp', color: const Color(0xFF0EA5E9)),
+                      if (profile.minBudget > 0)
+                        _InfoChip(icon: Icons.currency_rupee_rounded,
+                            label: 'From ₹${profile.minBudget.toStringAsFixed(0)}',
+                            color: AppColors.success),
+                    ],
+                  ),
+                  if (hasLanguages) ...[
+                    const SizedBox(height: 10),
+                    Text('Languages',
+                        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.textHint)),
+                    const SizedBox(height: 6),
+                    Wrap(
+                      spacing: 6, runSpacing: 6,
+                      children: (profile.languages ?? '').split(',')
+                          .where((s) => s.trim().isNotEmpty)
+                          .map((l) => _Tag(label: l.trim()))
+                          .toList(),
+                    ),
+                  ],
+                  if (hasCategories) ...[
+                    const SizedBox(height: 10),
+                    Text('Content Categories',
+                        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.textHint)),
+                    const SizedBox(height: 6),
+                    Wrap(
+                      spacing: 6, runSpacing: 6,
+                      children: (profile.contentCategories ?? '').split(',')
+                          .where((s) => s.trim().isNotEmpty)
+                          .map((c) => _Tag(label: c.trim(), color: AppColors.primaryLight, textColor: AppColors.primary))
+                          .toList(),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  void _showEditSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _EditProfileSheet(
+        profile: profile,
+        onSaved: () {
+          Navigator.pop(context);
+          ref.invalidate(userProfileProvider);
+        },
+        creatorRepo: ref.read(creatorRepositoryProvider),
+      ),
+    );
+  }
+}
+
+class _InfoChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  const _InfoChip({required this.icon, required this.label, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withOpacity(0.3)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: color),
+          const SizedBox(width: 4),
+          Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: color)),
+        ],
+      ),
+    );
+  }
+}
+
+class _Tag extends StatelessWidget {
+  final String label;
+  final Color color;
+  final Color textColor;
+  const _Tag({required this.label, this.color = const Color(0xFFF1F5F9), this.textColor = AppColors.textSecondary});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(label, style: TextStyle(fontSize: 12, color: textColor)),
+    );
+  }
+}
+
+class _EditProfileSheet extends StatefulWidget {
+  final UserProfile profile;
+  final VoidCallback onSaved;
+  final CreatorRepository creatorRepo;
+
+  const _EditProfileSheet({required this.profile, required this.onSaved, required this.creatorRepo});
+
+  @override
+  State<_EditProfileSheet> createState() => _EditProfileSheetState();
+}
+
+class _EditProfileSheetState extends State<_EditProfileSheet> {
+  final _bioCtrl = TextEditingController();
+  final _langCtrl = TextEditingController();
+  final _expCtrl = TextEditingController();
+  final _categoriesCtrl = TextEditingController();
+  final _brandsCtrl = TextEditingController();
+  final _cityCtrl = TextEditingController();
+  final _phoneCtrl = TextEditingController();
+  final _minBudgetCtrl = TextEditingController();
+  // Rate card
+  final _perPostCtrl = TextEditingController();
+  final _perReelCtrl = TextEditingController();
+  final _perVideoCtrl = TextEditingController();
+  // Social links
+  final _twitterCtrl = TextEditingController();
+  final _linkedinCtrl = TextEditingController();
+  final _websiteCtrl = TextEditingController();
+
+  bool _saving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final p = widget.profile;
+    _bioCtrl.text = p.bio ?? '';
+    _langCtrl.text = p.languages ?? '';
+    _expCtrl.text = p.yearsExperience > 0 ? p.yearsExperience.toString() : '';
+    _categoriesCtrl.text = p.contentCategories ?? '';
+    _brandsCtrl.text = p.pastBrands ?? '';
+    _cityCtrl.text = p.city ?? '';
+    _phoneCtrl.text = p.phone ?? '';
+    _minBudgetCtrl.text = p.minBudget > 0 ? p.minBudget.toStringAsFixed(0) : '';
+    final rc = p.rateCard ?? {};
+    _perPostCtrl.text = rc['per_post']?.toString() ?? '';
+    _perReelCtrl.text = rc['per_reel']?.toString() ?? '';
+    _perVideoCtrl.text = rc['per_video']?.toString() ?? '';
+    final sl = p.socialLinks ?? {};
+    _twitterCtrl.text = sl['twitter']?.toString() ?? '';
+    _linkedinCtrl.text = sl['linkedin']?.toString() ?? '';
+    _websiteCtrl.text = sl['website']?.toString() ?? '';
+  }
+
+  @override
+  void dispose() {
+    for (final c in [_bioCtrl, _langCtrl, _expCtrl, _categoriesCtrl, _brandsCtrl,
+        _cityCtrl, _phoneCtrl, _minBudgetCtrl, _perPostCtrl, _perReelCtrl, _perVideoCtrl,
+        _twitterCtrl, _linkedinCtrl, _websiteCtrl]) {
+      c.dispose();
+    }
+    super.dispose();
+  }
+
+  Future<void> _save() async {
+    setState(() => _saving = true);
+    try {
+      final rateCard = <String, dynamic>{};
+      if (_perPostCtrl.text.trim().isNotEmpty) rateCard['per_post'] = double.tryParse(_perPostCtrl.text.trim()) ?? 0;
+      if (_perReelCtrl.text.trim().isNotEmpty) rateCard['per_reel'] = double.tryParse(_perReelCtrl.text.trim()) ?? 0;
+      if (_perVideoCtrl.text.trim().isNotEmpty) rateCard['per_video'] = double.tryParse(_perVideoCtrl.text.trim()) ?? 0;
+
+      final socialLinks = <String, dynamic>{};
+      if (_twitterCtrl.text.trim().isNotEmpty) socialLinks['twitter'] = _twitterCtrl.text.trim();
+      if (_linkedinCtrl.text.trim().isNotEmpty) socialLinks['linkedin'] = _linkedinCtrl.text.trim();
+      if (_websiteCtrl.text.trim().isNotEmpty) socialLinks['website'] = _websiteCtrl.text.trim();
+
+      await widget.creatorRepo.updateCreatorProfile({
+        'bio': _bioCtrl.text.trim(),
+        'languages': _langCtrl.text.trim(),
+        'years_experience': int.tryParse(_expCtrl.text.trim()) ?? 0,
+        'content_categories': _categoriesCtrl.text.trim(),
+        'past_brands': _brandsCtrl.text.trim(),
+        'city': _cityCtrl.text.trim(),
+        'phone': _phoneCtrl.text.trim(),
+        'min_budget': double.tryParse(_minBudgetCtrl.text.trim()) ?? 0,
+        if (rateCard.isNotEmpty) 'rate_card': rateCard,
+        if (socialLinks.isNotEmpty) 'social_links': socialLinks,
+      });
+      widget.onSaved();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to save: $e'), backgroundColor: AppColors.error),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      child: Container(
+        decoration: const BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Handle
+            const SizedBox(height: 12),
+            Center(
+              child: Container(
+                width: 40, height: 4,
+                decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(2)),
+              ),
+            ),
+            const SizedBox(height: 16),
+            // Header
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Row(
+                children: [
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Edit Profile',
+                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+                        Text('Brands see this when they view your profile',
+                            style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                      ],
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: const Icon(Icons.close_rounded, color: AppColors.textSecondary),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Divider(height: 1, color: AppColors.divider),
+            // Scrollable content
+            Flexible(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildField('Bio', _bioCtrl, 'Tell brands about yourself and your content style',
+                        maxLines: 3),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(child: _buildField('City', _cityCtrl, 'e.g. Mumbai')),
+                        const SizedBox(width: 12),
+                        Expanded(child: _buildField('Years of Experience', _expCtrl, 'e.g. 3',
+                            keyboardType: TextInputType.number)),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(child: _buildField('Phone', _phoneCtrl, '+91 9876543210',
+                            keyboardType: TextInputType.phone)),
+                        const SizedBox(width: 12),
+                        Expanded(child: _buildField('Min Budget (₹)', _minBudgetCtrl, 'e.g. 5000',
+                            keyboardType: TextInputType.number)),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    _buildField('Languages', _langCtrl, 'e.g. Hindi, English, Tamil (comma-separated)'),
+                    const SizedBox(height: 16),
+                    _buildField('Content Categories', _categoriesCtrl,
+                        'e.g. Lifestyle, Tech, Food (comma-separated)'),
+                    const SizedBox(height: 16),
+                    _buildField('Past Brand Collaborations', _brandsCtrl,
+                        'e.g. Nike, Myntra, boAt (comma-separated)'),
+                    const SizedBox(height: 20),
+                    _buildSectionHeader('Rate Card', Icons.monetization_on_rounded),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(child: _buildField('Per Post (₹)', _perPostCtrl, 'e.g. 5000',
+                            keyboardType: TextInputType.number)),
+                        const SizedBox(width: 12),
+                        Expanded(child: _buildField('Per Reel (₹)', _perReelCtrl, 'e.g. 8000',
+                            keyboardType: TextInputType.number)),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    _buildField('Per Video (₹)', _perVideoCtrl, 'e.g. 15000',
+                        keyboardType: TextInputType.number),
+                    const SizedBox(height: 20),
+                    _buildSectionHeader('Social Links', Icons.link_rounded),
+                    const SizedBox(height: 12),
+                    _buildField('Twitter / X', _twitterCtrl, 'https://twitter.com/yourhandle',
+                        keyboardType: TextInputType.url),
+                    const SizedBox(height: 12),
+                    _buildField('LinkedIn', _linkedinCtrl, 'https://linkedin.com/in/yourprofile',
+                        keyboardType: TextInputType.url),
+                    const SizedBox(height: 12),
+                    _buildField('Website / Portfolio', _websiteCtrl, 'https://yourwebsite.com',
+                        keyboardType: TextInputType.url),
+                    const SizedBox(height: 28),
+                  ],
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+              child: SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: _saving ? null : _save,
+                  child: _saving
+                      ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                      : const Text('Save Profile'),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(String label, IconData icon) {
+    return Row(
+      children: [
+        Icon(icon, size: 16, color: AppColors.primary),
+        const SizedBox(width: 8),
+        Text(label,
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+      ],
+    );
+  }
+
+  Widget _buildField(String label, TextEditingController ctrl, String hint, {
+    TextInputType? keyboardType,
+    int maxLines = 1,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
+        const SizedBox(height: 6),
+        TextField(
+          controller: ctrl,
+          keyboardType: keyboardType,
+          maxLines: maxLines,
+          style: const TextStyle(fontSize: 14, color: AppColors.textPrimary),
+          decoration: InputDecoration(hintText: hint),
+        ),
       ],
     );
   }
