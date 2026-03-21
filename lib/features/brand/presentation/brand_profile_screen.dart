@@ -67,6 +67,62 @@ class BrandProfileScreen extends ConsumerWidget {
               ),
             ),
 
+            // About the Brand
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
+                child: _SectionLabel(label: 'About the Brand'),
+              ),
+            ),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+                child: _AboutCard(profile: profile, ref: ref),
+              ),
+            ),
+
+            // Brand Details
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
+                child: _SectionLabel(label: 'Brand Details'),
+              ),
+            ),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+                child: _BrandDetailsCard(profile: profile, ref: ref),
+              ),
+            ),
+
+            // Social Links
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
+                child: _SectionLabel(label: 'Social Links'),
+              ),
+            ),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+                child: _SocialLinksCard(profile: profile, ref: ref),
+              ),
+            ),
+
+            // Campaign Focus
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
+                child: _SectionLabel(label: 'Campaign Focus'),
+              ),
+            ),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+                child: _CampaignFocusCard(profile: profile, ref: ref),
+              ),
+            ),
+
             // Settings
             SliverToBoxAdapter(
               child: Padding(
@@ -656,6 +712,521 @@ class _RoleSheet extends StatelessWidget {
             );
           }),
         ],
+      ),
+    );
+  }
+}
+
+// ── About Card ────────────────────────────────────────────────────────────────
+
+class _AboutCard extends StatelessWidget {
+  final BrandProfile profile;
+  final WidgetRef ref;
+  const _AboutCard({required this.profile, required this.ref});
+
+  @override
+  Widget build(BuildContext context) {
+    final desc = profile.description?.isNotEmpty == true ? profile.description! : null;
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    desc ?? 'Add a description of your brand...',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: desc != null ? AppColors.textPrimary : AppColors.textHint,
+                      height: 1.6,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: GestureDetector(
+                onTap: () => _showEditSheet(context),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryLight,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.primary.withOpacity(0.2)),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.edit_rounded, size: 14, color: AppColors.primary),
+                      SizedBox(width: 6),
+                      Text('Edit', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.primary)),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showEditSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _EditBrandDetailsSheet(
+        profile: profile,
+        initialSection: 'about',
+        onSave: (updated) {
+          ref.read(brandProfileRepositoryProvider).updateProfile(updated).then((_) {
+            ref.invalidate(brandProfileProvider);
+          });
+        },
+      ),
+    );
+  }
+}
+
+// ── Brand Details Card ────────────────────────────────────────────────────────
+
+class _BrandDetailsCard extends StatelessWidget {
+  final BrandProfile profile;
+  final WidgetRef ref;
+  const _BrandDetailsCard({required this.profile, required this.ref});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        children: [
+          _InfoRow(
+            icon: Icons.category_rounded,
+            iconColor: const Color(0xFF6366F1),
+            label: 'Industry',
+            value: profile.industry?.isNotEmpty == true ? profile.industry! : 'Not set',
+            showDivider: true,
+            onTap: () => _showEditSheet(context),
+          ),
+          _InfoRow(
+            icon: Icons.calendar_month_rounded,
+            iconColor: AppColors.warning,
+            label: 'Founded Year',
+            value: (profile.foundedYear != null && profile.foundedYear! > 0) ? profile.foundedYear.toString() : 'Not set',
+            showDivider: true,
+            onTap: () => _showEditSheet(context),
+          ),
+          _InfoRow(
+            icon: Icons.people_rounded,
+            iconColor: AppColors.success,
+            label: 'Company Size',
+            value: profile.companySize?.isNotEmpty == true ? profile.companySize! : 'Not set',
+            showDivider: true,
+            onTap: () => _showEditSheet(context),
+          ),
+          _InfoRow(
+            icon: Icons.location_on_rounded,
+            iconColor: AppColors.error,
+            label: 'Headquarters',
+            value: profile.headquarters?.isNotEmpty == true ? profile.headquarters! : 'Not set',
+            showDivider: false,
+            onTap: () => _showEditSheet(context),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showEditSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _EditBrandDetailsSheet(
+        profile: profile,
+        initialSection: 'details',
+        onSave: (updated) {
+          ref.read(brandProfileRepositoryProvider).updateProfile(updated).then((_) {
+            ref.invalidate(brandProfileProvider);
+          });
+        },
+      ),
+    );
+  }
+}
+
+// ── Social Links Card ─────────────────────────────────────────────────────────
+
+class _SocialLinksCard extends StatelessWidget {
+  final BrandProfile profile;
+  final WidgetRef ref;
+  const _SocialLinksCard({required this.profile, required this.ref});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        children: [
+          _InfoRow(
+            icon: Icons.camera_alt_rounded,
+            iconColor: AppColors.instagram,
+            label: 'Instagram',
+            value: profile.instagramUrl?.isNotEmpty == true ? profile.instagramUrl! : 'Not set',
+            showDivider: true,
+            onTap: () => _showEditSheet(context),
+          ),
+          _InfoRow(
+            icon: Icons.alternate_email_rounded,
+            iconColor: const Color(0xFF1DA1F2),
+            label: 'Twitter / X',
+            value: profile.twitterUrl?.isNotEmpty == true ? profile.twitterUrl! : 'Not set',
+            showDivider: true,
+            onTap: () => _showEditSheet(context),
+          ),
+          _InfoRow(
+            icon: Icons.work_rounded,
+            iconColor: const Color(0xFF0A66C2),
+            label: 'LinkedIn',
+            value: profile.linkedinUrl?.isNotEmpty == true ? profile.linkedinUrl! : 'Not set',
+            showDivider: false,
+            onTap: () => _showEditSheet(context),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showEditSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _EditBrandDetailsSheet(
+        profile: profile,
+        initialSection: 'social',
+        onSave: (updated) {
+          ref.read(brandProfileRepositoryProvider).updateProfile(updated).then((_) {
+            ref.invalidate(brandProfileProvider);
+          });
+        },
+      ),
+    );
+  }
+}
+
+// ── Campaign Focus Card ───────────────────────────────────────────────────────
+
+class _CampaignFocusCard extends StatelessWidget {
+  final BrandProfile profile;
+  final WidgetRef ref;
+  const _CampaignFocusCard({required this.profile, required this.ref});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        children: [
+          _InfoRow(
+            icon: Icons.shopping_bag_rounded,
+            iconColor: AppColors.primary,
+            label: 'Product Categories',
+            value: profile.productCategories?.isNotEmpty == true ? profile.productCategories! : 'Not set',
+            showDivider: true,
+            onTap: () => _showEditSheet(context),
+          ),
+          _InfoRow(
+            icon: Icons.groups_rounded,
+            iconColor: const Color(0xFF0EA5E9),
+            label: 'Target Audience',
+            value: profile.targetAudience?.isNotEmpty == true ? profile.targetAudience! : 'Not set',
+            showDivider: true,
+            onTap: () => _showEditSheet(context),
+          ),
+          _InfoRow(
+            icon: Icons.campaign_rounded,
+            iconColor: AppColors.warning,
+            label: 'Campaign Types',
+            value: profile.campaignTypes?.isNotEmpty == true ? profile.campaignTypes! : 'Not set',
+            showDivider: false,
+            onTap: () => _showEditSheet(context),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showEditSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _EditBrandDetailsSheet(
+        profile: profile,
+        initialSection: 'campaign',
+        onSave: (updated) {
+          ref.read(brandProfileRepositoryProvider).updateProfile(updated).then((_) {
+            ref.invalidate(brandProfileProvider);
+          });
+        },
+      ),
+    );
+  }
+}
+
+// ── Edit Brand Details Sheet ──────────────────────────────────────────────────
+
+class _EditBrandDetailsSheet extends StatefulWidget {
+  final BrandProfile profile;
+  final String initialSection;
+  final void Function(BrandProfile) onSave;
+
+  const _EditBrandDetailsSheet({
+    required this.profile,
+    required this.initialSection,
+    required this.onSave,
+  });
+
+  @override
+  State<_EditBrandDetailsSheet> createState() => _EditBrandDetailsSheetState();
+}
+
+class _EditBrandDetailsSheetState extends State<_EditBrandDetailsSheet> {
+  late TextEditingController _descriptionCtrl;
+  late TextEditingController _industryCtrl;
+  late TextEditingController _foundedYearCtrl;
+  late TextEditingController _headquartersCtrl;
+  late TextEditingController _instagramCtrl;
+  late TextEditingController _twitterCtrl;
+  late TextEditingController _linkedinCtrl;
+  late TextEditingController _productCategoriesCtrl;
+  late TextEditingController _targetAudienceCtrl;
+  late TextEditingController _campaignTypesCtrl;
+  String? _selectedCompanySize;
+
+  static const _companySizes = ['1-10', '11-50', '51-200', '200+'];
+
+  @override
+  void initState() {
+    super.initState();
+    final p = widget.profile;
+    _descriptionCtrl = TextEditingController(text: p.description ?? '');
+    _industryCtrl = TextEditingController(text: p.industry ?? '');
+    _foundedYearCtrl = TextEditingController(text: (p.foundedYear != null && p.foundedYear! > 0) ? p.foundedYear.toString() : '');
+    _headquartersCtrl = TextEditingController(text: p.headquarters ?? '');
+    _instagramCtrl = TextEditingController(text: p.instagramUrl ?? '');
+    _twitterCtrl = TextEditingController(text: p.twitterUrl ?? '');
+    _linkedinCtrl = TextEditingController(text: p.linkedinUrl ?? '');
+    _productCategoriesCtrl = TextEditingController(text: p.productCategories ?? '');
+    _targetAudienceCtrl = TextEditingController(text: p.targetAudience ?? '');
+    _campaignTypesCtrl = TextEditingController(text: p.campaignTypes ?? '');
+    _selectedCompanySize = p.companySize?.isNotEmpty == true ? p.companySize : null;
+  }
+
+  @override
+  void dispose() {
+    _descriptionCtrl.dispose();
+    _industryCtrl.dispose();
+    _foundedYearCtrl.dispose();
+    _headquartersCtrl.dispose();
+    _instagramCtrl.dispose();
+    _twitterCtrl.dispose();
+    _linkedinCtrl.dispose();
+    _productCategoriesCtrl.dispose();
+    _targetAudienceCtrl.dispose();
+    _campaignTypesCtrl.dispose();
+    super.dispose();
+  }
+
+  void _save() {
+    final p = widget.profile;
+    final updated = BrandProfile(
+      companyName: p.companyName,
+      contactName: p.contactName,
+      phone: p.phone,
+      roleInCompany: p.roleInCompany,
+      website: p.website,
+      logoUrl: p.logoUrl,
+      walletBalance: p.walletBalance,
+      subscriptionStatus: p.subscriptionStatus,
+      description: _descriptionCtrl.text.trim().isNotEmpty ? _descriptionCtrl.text.trim() : p.description,
+      industry: _industryCtrl.text.trim().isNotEmpty ? _industryCtrl.text.trim() : p.industry,
+      foundedYear: int.tryParse(_foundedYearCtrl.text.trim()) ?? p.foundedYear,
+      companySize: _selectedCompanySize ?? p.companySize,
+      headquarters: _headquartersCtrl.text.trim().isNotEmpty ? _headquartersCtrl.text.trim() : p.headquarters,
+      instagramUrl: _instagramCtrl.text.trim().isNotEmpty ? _instagramCtrl.text.trim() : p.instagramUrl,
+      twitterUrl: _twitterCtrl.text.trim().isNotEmpty ? _twitterCtrl.text.trim() : p.twitterUrl,
+      linkedinUrl: _linkedinCtrl.text.trim().isNotEmpty ? _linkedinCtrl.text.trim() : p.linkedinUrl,
+      productCategories: _productCategoriesCtrl.text.trim().isNotEmpty ? _productCategoriesCtrl.text.trim() : p.productCategories,
+      targetAudience: _targetAudienceCtrl.text.trim().isNotEmpty ? _targetAudienceCtrl.text.trim() : p.targetAudience,
+      campaignTypes: _campaignTypesCtrl.text.trim().isNotEmpty ? _campaignTypesCtrl.text.trim() : p.campaignTypes,
+    );
+    widget.onSave(updated);
+    Navigator.pop(context);
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Profile updated')),
+    );
+  }
+
+  Widget _field(String label, TextEditingController ctrl, {TextInputType keyboardType = TextInputType.text, int maxLines = 1}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: TextField(
+        controller: ctrl,
+        keyboardType: keyboardType,
+        maxLines: maxLines,
+        decoration: InputDecoration(labelText: label),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return DraggableScrollableSheet(
+      initialChildSize: 0.85,
+      maxChildSize: 0.95,
+      minChildSize: 0.5,
+      builder: (_, scrollController) => Container(
+        decoration: const BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          children: [
+            const SizedBox(height: 12),
+            Center(
+              child: Container(
+                width: 36, height: 4,
+                decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(2)),
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 20),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Edit Brand Details',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Expanded(
+              child: ListView(
+                controller: scrollController,
+                padding: EdgeInsets.fromLTRB(20, 0, 20, MediaQuery.of(context).viewInsets.bottom + 24),
+                children: [
+                  const Text('About', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textHint, letterSpacing: 0.8)),
+                  const SizedBox(height: 10),
+                  _field('Description', _descriptionCtrl, maxLines: 4),
+
+                  const Text('Details', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textHint, letterSpacing: 0.8)),
+                  const SizedBox(height: 10),
+                  _field('Industry', _industryCtrl),
+                  _field('Founded Year', _foundedYearCtrl, keyboardType: TextInputType.number),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Company Size', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 8,
+                          children: _companySizes.map((s) {
+                            final selected = _selectedCompanySize == s;
+                            return GestureDetector(
+                              onTap: () => setState(() => _selectedCompanySize = s),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                                decoration: BoxDecoration(
+                                  color: selected ? AppColors.primaryLight : AppColors.background,
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                    color: selected ? AppColors.primary.withOpacity(0.4) : AppColors.border,
+                                  ),
+                                ),
+                                child: Text(
+                                  s,
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                                    color: selected ? AppColors.primary : AppColors.textSecondary,
+                                  ),
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ],
+                    ),
+                  ),
+                  _field('Headquarters', _headquartersCtrl),
+
+                  const Text('Social Links', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textHint, letterSpacing: 0.8)),
+                  const SizedBox(height: 10),
+                  _field('Instagram URL', _instagramCtrl, keyboardType: TextInputType.url),
+                  _field('Twitter / X URL', _twitterCtrl, keyboardType: TextInputType.url),
+                  _field('LinkedIn URL', _linkedinCtrl, keyboardType: TextInputType.url),
+
+                  const Text('Campaign Focus', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textHint, letterSpacing: 0.8)),
+                  const SizedBox(height: 10),
+                  _field('Product Categories (comma-separated)', _productCategoriesCtrl),
+                  _field('Target Audience', _targetAudienceCtrl, maxLines: 2),
+                  _field('Campaign Types (comma-separated)', _campaignTypesCtrl),
+
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text('Cancel'),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: _save,
+                          child: const Text('Save'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

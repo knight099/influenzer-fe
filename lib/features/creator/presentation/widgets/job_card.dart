@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../data/user_profile_repository.dart';
 import '../../../wallet/presentation/subscription_prompt.dart';
+import '../../../brand/presentation/brand_details_screen.dart';
 
 class JobCard extends ConsumerWidget {
   final Map<String, dynamic> job;
@@ -51,44 +52,66 @@ class JobCard extends ConsumerWidget {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Brand avatar
-                  Container(
-                    width: 50, height: 50,
-                    decoration: BoxDecoration(
-                      gradient: brandLogo.isEmpty ? AppColors.subtleGradient : null,
-                      color: brandLogo.isNotEmpty ? AppColors.surfaceVariant : null,
-                      borderRadius: BorderRadius.circular(15),
-                      border: Border.all(color: AppColors.border),
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(14),
-                      child: brandLogo.isNotEmpty
-                          ? Image.network(
-                              brandLogo,
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => Center(
-                                child: ShaderMask(
-                                  shaderCallback: (b) => AppColors.brandGradient.createShader(b),
-                                  child: Text(
-                                    brandName.isNotEmpty ? brandName[0].toUpperCase() : 'B',
-                                    style: const TextStyle(
-                                      fontSize: 20, fontWeight: FontWeight.w800, color: Colors.white,
+                  // Brand avatar + name (tappable to view brand profile)
+                  GestureDetector(
+                    onTap: () {
+                      final brandId = job['brand_id']?.toString();
+                      if (brandId != null && brandId.isNotEmpty) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => BrandDetailsScreen(
+                              brandId: brandId,
+                              brandName: brandName,
+                              brandLogo: brandLogo.isNotEmpty ? brandLogo : null,
+                            ),
+                          ),
+                        );
+                      }
+                    },
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          width: 50, height: 50,
+                          decoration: BoxDecoration(
+                            gradient: brandLogo.isEmpty ? AppColors.subtleGradient : null,
+                            color: brandLogo.isNotEmpty ? AppColors.surfaceVariant : null,
+                            borderRadius: BorderRadius.circular(15),
+                            border: Border.all(color: AppColors.border),
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(14),
+                            child: brandLogo.isNotEmpty
+                                ? Image.network(
+                                    brandLogo,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (_, __, ___) => Center(
+                                      child: ShaderMask(
+                                        shaderCallback: (b) => AppColors.brandGradient.createShader(b),
+                                        child: Text(
+                                          brandName.isNotEmpty ? brandName[0].toUpperCase() : 'B',
+                                          style: const TextStyle(
+                                            fontSize: 20, fontWeight: FontWeight.w800, color: Colors.white,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  )
+                                : Center(
+                                    child: ShaderMask(
+                                      shaderCallback: (b) => AppColors.brandGradient.createShader(b),
+                                      child: Text(
+                                        brandName.isNotEmpty ? brandName[0].toUpperCase() : 'B',
+                                        style: const TextStyle(
+                                          fontSize: 20, fontWeight: FontWeight.w800, color: Colors.white,
+                                        ),
+                                      ),
                                     ),
                                   ),
-                                ),
-                              ),
-                            )
-                          : Center(
-                              child: ShaderMask(
-                                shaderCallback: (b) => AppColors.brandGradient.createShader(b),
-                                child: Text(
-                                  brandName.isNotEmpty ? brandName[0].toUpperCase() : 'B',
-                                  style: const TextStyle(
-                                    fontSize: 20, fontWeight: FontWeight.w800, color: Colors.white,
-                                  ),
-                                ),
-                              ),
-                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -106,20 +129,37 @@ class JobCard extends ConsumerWidget {
                           overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 4),
-                        Row(
-                          children: [
-                            const Icon(Icons.business_rounded, size: 13, color: AppColors.textHint),
-                            const SizedBox(width: 4),
-                            Flexible(
-                              child: Text(
-                                brandName,
-                                style: const TextStyle(
-                                  fontSize: 13, color: AppColors.textSecondary, fontWeight: FontWeight.w500,
+                        GestureDetector(
+                          onTap: () {
+                            final brandId = job['brand_id']?.toString();
+                            if (brandId != null && brandId.isNotEmpty) {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => BrandDetailsScreen(
+                                    brandId: brandId,
+                                    brandName: brandName,
+                                    brandLogo: brandLogo.isNotEmpty ? brandLogo : null,
+                                  ),
                                 ),
-                                overflow: TextOverflow.ellipsis,
+                              );
+                            }
+                          },
+                          child: Row(
+                            children: [
+                              const Icon(Icons.business_rounded, size: 13, color: AppColors.textHint),
+                              const SizedBox(width: 4),
+                              Flexible(
+                                child: Text(
+                                  brandName,
+                                  style: const TextStyle(
+                                    fontSize: 13, color: AppColors.textSecondary, fontWeight: FontWeight.w500,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ],
                     ),

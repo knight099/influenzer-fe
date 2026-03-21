@@ -13,6 +13,18 @@ class BrandProfile {
   final String? logoUrl;
   final double walletBalance;
   final String subscriptionStatus;
+  // Extended profile
+  final String? industry;
+  final String? description;
+  final int? foundedYear;
+  final String? companySize;
+  final String? headquarters;
+  final String? instagramUrl;
+  final String? twitterUrl;
+  final String? linkedinUrl;
+  final String? productCategories;
+  final String? targetAudience;
+  final String? campaignTypes;
 
   BrandProfile({
     this.companyName,
@@ -23,6 +35,17 @@ class BrandProfile {
     this.logoUrl,
     this.walletBalance = 0.0,
     this.subscriptionStatus = 'INACTIVE',
+    this.industry,
+    this.description,
+    this.foundedYear,
+    this.companySize,
+    this.headquarters,
+    this.instagramUrl,
+    this.twitterUrl,
+    this.linkedinUrl,
+    this.productCategories,
+    this.targetAudience,
+    this.campaignTypes,
   });
 
   factory BrandProfile.fromJson(Map<String, dynamic> json) {
@@ -35,6 +58,17 @@ class BrandProfile {
       logoUrl: json['logo_url']?.toString(),
       walletBalance: (json['wallet_balance'] ?? 0).toDouble(),
       subscriptionStatus: (json['is_subscribed'] == true) ? 'ACTIVE' : 'INACTIVE',
+      industry: json['industry'],
+      description: json['description'],
+      foundedYear: json['founded_year'] as int?,
+      companySize: json['company_size'],
+      headquarters: json['headquarters'],
+      instagramUrl: json['instagram_url'],
+      twitterUrl: json['twitter_url'],
+      linkedinUrl: json['linkedin_url'],
+      productCategories: json['product_categories'],
+      targetAudience: json['target_audience'],
+      campaignTypes: json['campaign_types'],
     );
   }
 
@@ -45,6 +79,17 @@ class BrandProfile {
       'phone': phone,
       'role_in_company': roleInCompany,
       'website': website,
+      'industry': industry,
+      'description': description,
+      'founded_year': foundedYear,
+      'company_size': companySize,
+      'headquarters': headquarters,
+      'instagram_url': instagramUrl,
+      'twitter_url': twitterUrl,
+      'linkedin_url': linkedinUrl,
+      'product_categories': productCategories,
+      'target_audience': targetAudience,
+      'campaign_types': campaignTypes,
     };
   }
 }
@@ -72,5 +117,10 @@ class BrandProfileRepository {
 
   Future<void> updateProfile(BrandProfile profile) async {
     await _dio.put('/api/brands/profile', data: profile.toJson());
+  }
+
+  Future<Map<String, dynamic>> getBrandProfile(String brandId) async {
+    final response = await _dio.get('/api/brands/$brandId');
+    return response.data as Map<String, dynamic>;
   }
 }

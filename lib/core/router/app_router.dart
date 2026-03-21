@@ -10,6 +10,7 @@ import '../../features/brand/presentation/create_campaign_screen.dart';
 import '../../features/brand/presentation/creator_details_screen.dart';
 import '../../features/brand/presentation/campaign_details_screen.dart';
 import '../../features/brand/presentation/submission_details_screen.dart';
+import '../../features/brand/presentation/brand_details_screen.dart';
 import '../../features/creator/presentation/creator_dashboard_screen.dart';
 import '../../features/creator/presentation/submit_proposal_screen.dart';
 import '../../features/creator/presentation/application_details_screen.dart';
@@ -113,6 +114,17 @@ GoRouter goRouter(Ref ref) {
         builder: (context, state) {
           final campaign = state.extra as Map<String, dynamic>;
           return InvitedCampaignDetailsScreen(campaign: campaign);
+        },
+      ),
+      GoRoute(
+        path: '/brand-details',
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>;
+          return BrandDetailsScreen(
+            brandId: extra['brand_id'] as String,
+            brandName: extra['brand_name'] as String?,
+            brandLogo: extra['brand_logo'] as String?,
+          );
         },
       ),
     ],
