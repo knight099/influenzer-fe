@@ -519,9 +519,7 @@ class _AnalyticsDashboard extends StatelessWidget {
             gradient: AppColors.instagramGradient,
             color: AppColors.instagram,
             followers: igFollowers,
-            engRate: igAnalytics['engagement_rate']?.toString() ?? '—',
-            avgViews: igAnalytics['avg_views'],
-            avgLikes: igAnalytics['avg_likes'],
+            analytics: igAnalytics,
             tier: igAnalytics['tier']?.toString() ?? '—',
           ),
         if (igAnalytics != null && ytAnalytics != null) const SizedBox(height: 12),
@@ -533,9 +531,7 @@ class _AnalyticsDashboard extends StatelessWidget {
             color: AppColors.youtube,
             followers: ytSubscribers,
             followersLabel: 'Subscribers',
-            engRate: ytAnalytics['engagement_rate']?.toString() ?? '—',
-            avgViews: ytAnalytics['avg_views'],
-            avgLikes: ytAnalytics['avg_likes'],
+            analytics: ytAnalytics,
             tier: ytAnalytics['tier']?.toString() ?? '—',
           ),
       ],
@@ -594,78 +590,27 @@ class _PlatformAnalyticsCard extends StatelessWidget {
   final Color color;
   final int followers;
   final String followersLabel;
-  final String engRate;
-  final dynamic avgViews;
-  final dynamic avgLikes;
+  final Map<String, dynamic> analytics;
   final String tier;
 
   const _PlatformAnalyticsCard({
     required this.platform, required this.icon, required this.gradient,
-    required this.color, required this.followers, required this.engRate,
-    this.avgViews, this.avgLikes, required this.tier,
-    this.followersLabel = 'Followers',
+    required this.color, required this.followers, required this.analytics,
+    required this.tier, this.followersLabel = 'Followers',
   });
 
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withValues(alpha: 0.25)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 36, height: 36,
-                decoration: BoxDecoration(gradient: gradient, borderRadius: BorderRadius.circular(10)),
-                child: Icon(icon, color: Colors.white, size: 18),
-              ),
-              const SizedBox(width: 10),
-              Text(platform, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
-              const Spacer(),
-              _TierBadge(tier: tier, color: color),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              _AnalyticMetric(
-                label: followersLabel,
-                value: _fmt(followers),
-                icon: Icons.people_rounded,
-                color: color,
-              ),
-              const SizedBox(width: 12),
-              _AnalyticMetric(
-                label: 'Engagement',
-                value: engRate == '—' ? '—' : '$engRate%',
-                icon: Icons.trending_up_rounded,
-                color: _engColor(engRate),
-              ),
-              const SizedBox(width: 12),
-              _AnalyticMetric(
-                label: 'Avg Views',
-                value: avgViews != null ? _fmt(avgViews is int ? avgViews : int.tryParse(avgViews.toString()) ?? 0) : '—',
-                icon: Icons.visibility_rounded,
-                color: AppColors.textSecondary,
-              ),
-              const SizedBox(width: 12),
-              _AnalyticMetric(
-                label: 'Avg Likes',
-                value: avgLikes != null ? _fmt(avgLikes is int ? avgLikes : int.tryParse(avgLikes.toString()) ?? 0) : '—',
-                icon: Icons.favorite_rounded,
-                color: AppColors.secondary,
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
+  int _toInt(dynamic v) {
+    if (v == null) return 0;
+    if (v is int) return v;
+    return int.tryParse(v.toString()) ?? 0;
+  }
+
+  String _fmt(dynamic v) {
+    final n = _toInt(v);
+    if (n >= 1000000) return '${(n / 1000000).toStringAsFixed(1)}M';
+    if (n >= 1000) return '${(n / 1000).toStringAsFixed(1)}K';
+    if (n == 0) return '—';
+    return n.toString();
   }
 
   Color _engColor(String rate) {
@@ -675,34 +620,247 @@ class _PlatformAnalyticsCard extends StatelessWidget {
     return AppColors.textHint;
   }
 
-  String _fmt(int n) {
-    if (n >= 1000000) return '${(n / 1000000).toStringAsFixed(1)}M';
-    if (n >= 1000) return '${(n / 1000).toStringAsFixed(1)}K';
-    return n.toString();
-  }
-}
-
-class _AnalyticMetric extends StatelessWidget {
-  final String label;
-  final String value;
-  final IconData icon;
-  final Color color;
-  const _AnalyticMetric({required this.label, required this.value, required this.icon, required this.color});
-
   @override
   Widget build(BuildContext context) {
-    return Expanded(
+    final engRate = analytics['engagement_rate']?.toString() ?? '0';
+    final engColor = _engColor(engRate);
+    final isInstagram = platform == 'Instagram';
+
+    // Primary metrics
+    final avgViews = analytics['avg_views'];
+    final avgLikes = analytics['avg_likes'];
+    final avgComments = analytics['avg_comments'];
+
+    // Instagram-only
+    final avgShares = analytics['avg_shares'];
+    final avgSaves = analytics['avg_saves'];
+    final avgReach = analytics['avg_reach'];
+    final reach28d = analytics['reach_28d'];
+    final impressions28d = analytics['impressions_28d'];
+    final profileViews28d = analytics['profile_views_28d'];
+
+    // YouTube-only
+    final totalViews = analytics['total_views'];
+    final videoCount = analytics['video_count'];
+
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
+        boxShadow: [BoxShadow(color: color.withValues(alpha: 0.06), blurRadius: 12, offset: const Offset(0, 4))],
+      ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 16, color: color),
-          const SizedBox(height: 4),
-          Text(value, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: color)),
-          Text(label, style: const TextStyle(fontSize: 9, color: AppColors.textHint), textAlign: TextAlign.center),
+          // ── Header ──
+          Container(
+            padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [color.withValues(alpha: 0.1), color.withValues(alpha: 0.02)],
+                begin: Alignment.centerLeft, end: Alignment.centerRight,
+              ),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 34, height: 34,
+                  decoration: BoxDecoration(gradient: gradient, borderRadius: BorderRadius.circular(10)),
+                  child: Icon(icon, color: Colors.white, size: 17),
+                ),
+                const SizedBox(width: 10),
+                Text(platform, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                const Spacer(),
+                _TierBadge(tier: tier, color: color),
+              ],
+            ),
+          ),
+
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+            child: Column(
+              children: [
+                // ── Hero row: Followers + Engagement ──
+                Row(
+                  children: [
+                    Expanded(
+                      child: _HeroMetric(
+                        label: followersLabel,
+                        value: _fmt(followers),
+                        icon: Icons.people_rounded,
+                        color: color,
+                      ),
+                    ),
+                    Container(width: 1, height: 44, color: AppColors.divider),
+                    Expanded(
+                      child: _HeroMetric(
+                        label: 'Engagement',
+                        value: engRate == '0' ? '—' : '$engRate%',
+                        icon: Icons.trending_up_rounded,
+                        color: engColor,
+                      ),
+                    ),
+                    if (!isInstagram) ...[
+                      Container(width: 1, height: 44, color: AppColors.divider),
+                      Expanded(
+                        child: _HeroMetric(
+                          label: 'Total Views',
+                          value: _fmt(totalViews),
+                          icon: Icons.visibility_rounded,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+
+                const SizedBox(height: 12),
+                Divider(height: 1, color: AppColors.divider),
+                const SizedBox(height: 12),
+
+                // ── Per-post averages ──
+                _SectionLabel2(label: 'Per Post Averages'),
+                const SizedBox(height: 8),
+                _MetricGrid(
+                  metrics: [
+                    _MetricItem(label: 'Avg Views', value: _fmt(avgViews), icon: Icons.play_arrow_rounded, color: color),
+                    _MetricItem(label: 'Avg Likes', value: _fmt(avgLikes), icon: Icons.favorite_rounded, color: const Color(0xFFE91E63)),
+                    _MetricItem(label: 'Avg Comments', value: _fmt(avgComments), icon: Icons.comment_rounded, color: const Color(0xFF0EA5E9)),
+                    if (isInstagram) ...[
+                      _MetricItem(label: 'Avg Shares', value: _fmt(avgShares), icon: Icons.share_rounded, color: const Color(0xFF8B5CF6)),
+                      _MetricItem(label: 'Avg Saves', value: _fmt(avgSaves), icon: Icons.bookmark_rounded, color: const Color(0xFFF59E0B)),
+                      _MetricItem(label: 'Avg Reach', value: _fmt(avgReach), icon: Icons.radar_rounded, color: AppColors.success),
+                    ] else ...[
+                      _MetricItem(label: 'Videos', value: _fmt(videoCount), icon: Icons.video_library_rounded, color: AppColors.youtube),
+                    ],
+                  ],
+                ),
+
+                // ── 28-day account insights (Instagram only) ──
+                if (isInstagram && (reach28d != null || impressions28d != null || profileViews28d != null)) ...[
+                  const SizedBox(height: 12),
+                  Divider(height: 1, color: AppColors.divider),
+                  const SizedBox(height: 12),
+                  _SectionLabel2(label: 'Last 28 Days (Account)'),
+                  const SizedBox(height: 8),
+                  _MetricGrid(
+                    metrics: [
+                      if (reach28d != null)
+                        _MetricItem(label: 'Reach', value: _fmt(reach28d), icon: Icons.wifi_tethering_rounded, color: AppColors.instagram),
+                      if (impressions28d != null)
+                        _MetricItem(label: 'Impressions', value: _fmt(impressions28d), icon: Icons.remove_red_eye_rounded, color: const Color(0xFF6366F1)),
+                      if (profileViews28d != null)
+                        _MetricItem(label: 'Profile Views', value: _fmt(profileViews28d), icon: Icons.person_search_rounded, color: const Color(0xFF0EA5E9)),
+                    ],
+                  ),
+                ],
+              ],
+            ),
+          ),
         ],
       ),
     );
   }
 }
+
+class _HeroMetric extends StatelessWidget {
+  final String label;
+  final String value;
+  final IconData icon;
+  final Color color;
+  const _HeroMetric({required this.label, required this.value, required this.icon, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 13, color: color.withValues(alpha: 0.7)),
+            const SizedBox(width: 4),
+            Text(label, style: TextStyle(fontSize: 10, color: color.withValues(alpha: 0.8), fontWeight: FontWeight.w500)),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Text(value, style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: color)),
+      ],
+    );
+  }
+}
+
+class _SectionLabel2 extends StatelessWidget {
+  final String label;
+  const _SectionLabel2({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Text(label,
+          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.textHint,
+              letterSpacing: 0.5)),
+    );
+  }
+}
+
+class _MetricItem {
+  final String label;
+  final String value;
+  final IconData icon;
+  final Color color;
+  const _MetricItem({required this.label, required this.value, required this.icon, required this.color});
+}
+
+class _MetricGrid extends StatelessWidget {
+  final List<_MetricItem> metrics;
+  const _MetricGrid({required this.metrics});
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: metrics.map((m) => _MetricTile(item: m)).toList(),
+    );
+  }
+}
+
+class _MetricTile extends StatelessWidget {
+  final _MetricItem item;
+  const _MetricTile({required this.item});
+
+  @override
+  Widget build(BuildContext context) {
+    final w = (MediaQuery.of(context).size.width - 40 - 28 - 16) / 3; // 3 per row
+    return SizedBox(
+      width: w,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+        decoration: BoxDecoration(
+          color: item.color.withValues(alpha: 0.07),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: item.color.withValues(alpha: 0.15)),
+        ),
+        child: Column(
+          children: [
+            Icon(item.icon, size: 16, color: item.color),
+            const SizedBox(height: 5),
+            Text(item.value,
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: item.color)),
+            const SizedBox(height: 2),
+            Text(item.label,
+                style: const TextStyle(fontSize: 9, color: AppColors.textHint),
+                textAlign: TextAlign.center),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 
 class _TierBadge extends StatelessWidget {
   final String tier;
