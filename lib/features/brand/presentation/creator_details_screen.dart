@@ -620,6 +620,17 @@ class _PlatformAnalyticsCard extends StatelessWidget {
     return AppColors.textHint;
   }
 
+  // Format seconds as "M:SS" or "H:MM:SS"
+  String _fmtDuration(dynamic v) {
+    final secs = _toInt(v);
+    if (secs == 0) return '—';
+    final h = secs ~/ 3600;
+    final m = (secs % 3600) ~/ 60;
+    final s = secs % 60;
+    if (h > 0) return '$h:${m.toString().padLeft(2,'0')}:${s.toString().padLeft(2,'0')}';
+    return '$m:${s.toString().padLeft(2,'0')}';
+  }
+
   @override
   Widget build(BuildContext context) {
     final engRate = analytics['engagement_rate']?.toString() ?? '0';
@@ -721,7 +732,7 @@ class _PlatformAnalyticsCard extends StatelessWidget {
                 const SizedBox(height: 12),
 
                 // ── Per-post averages ──
-                _SectionLabel2(label: 'Per Post Averages'),
+                _SectionLabel2(label: isInstagram ? 'Per Post Averages' : 'Per Video Averages'),
                 const SizedBox(height: 8),
                 _MetricGrid(
                   metrics: [
@@ -733,7 +744,9 @@ class _PlatformAnalyticsCard extends StatelessWidget {
                       _MetricItem(label: 'Avg Saves', value: _fmt(avgSaves), icon: Icons.bookmark_rounded, color: const Color(0xFFF59E0B)),
                       _MetricItem(label: 'Avg Reach', value: _fmt(avgReach), icon: Icons.radar_rounded, color: AppColors.success),
                     ] else ...[
-                      _MetricItem(label: 'Videos', value: _fmt(videoCount), icon: Icons.video_library_rounded, color: AppColors.youtube),
+                      _MetricItem(label: 'Avg Duration', value: _fmtDuration(analytics['avg_duration']), icon: Icons.timer_rounded, color: const Color(0xFF8B5CF6)),
+                      _MetricItem(label: 'Total Videos', value: _fmt(videoCount), icon: Icons.video_library_rounded, color: AppColors.youtube),
+                      _MetricItem(label: 'Total Views', value: _fmt(analytics['total_views']), icon: Icons.visibility_rounded, color: const Color(0xFF6366F1)),
                     ],
                   ],
                 ),
@@ -756,11 +769,126 @@ class _PlatformAnalyticsCard extends StatelessWidget {
                     ],
                   ),
                 ],
+
+                // ── YouTube Analytics API: 28-day data ──
+                if (!isInstagram) _YoutubeAnalytics28d(analytics: analytics, color: color),
               ],
             ),
           ),
         ],
       ),
+    );
+  }
+}
+
+// ── YouTube 28-day Analytics section ─────────────────────────────────────────
+
+class _YoutubeAnalytics28d extends StatelessWidget {
+  final Map<String, dynamic> analytics;
+  final Color color;
+  const _YoutubeAnalytics28d({required this.analytics, required this.color});
+
+  String _fmt(dynamic v) {
+    if (v == null) return '—';
+    double n;
+    if (v is double) n = v;
+    else if (v is int) n = v.toDouble();
+    else n = double.tryParse(v.toString()) ?? 0;
+    if (n == 0) return '—';
+    if (n >= 1000000) return '${(n / 1000000).toStringAsFixed(1)}M';
+    if (n >= 1000) return '${(n / 1000).toStringAsFixed(1)}K';
+    return n.toStringAsFixed(0);
+  }
+
+  String _fmtHours(dynamic v) {
+    if (v == null) return '—';
+    final mins = (v is double) ? v : double.tryParse(v.toString()) ?? 0.0;
+    if (mins == 0) return '—';
+    final hours = mins / 60;
+    if (hours >= 1000) return '${(hours / 1000).toStringAsFixed(1)}Kh';
+    return '${hours.toStringAsFixed(0)}h';
+  }
+
+  String _fmtDur(dynamic v) {
+    if (v == null) return '—';
+    final secs = (v is double) ? v.toInt() : (v is int ? v : int.tryParse(v.toString()) ?? 0);
+    if (secs == 0) return '—';
+    final m = secs ~/ 60;
+    final s = secs % 60;
+    return '$m:${s.toString().padLeft(2, '0')}';
+  }
+
+  String _fmtPct(dynamic v) {
+    if (v == null) return '—';
+    final pct = (v is double) ? v : double.tryParse(v.toString()) ?? 0.0;
+    if (pct == 0) return '—';
+    return '${pct.toStringAsFixed(1)}%';
+  }
+
+  String _fmtCtr(dynamic v) {
+    if (v == null) return '—';
+    final ctr = (v is double) ? v : double.tryParse(v.toString()) ?? 0.0;
+    if (ctr == 0) return '—';
+    return '${(ctr * 100).toStringAsFixed(2)}%';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final d = analytics['analytics_28d'] as Map<String, dynamic>?;
+    final channelAge = analytics['channel_age_years'];
+    final country = analytics['country'];
+    final hasChannelMeta = channelAge != null || country != null;
+    if (d == null && !hasChannelMeta) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (d != null) ...[
+          const SizedBox(height: 12),
+          Divider(height: 1, color: AppColors.divider),
+          const SizedBox(height: 12),
+          _SectionLabel2(label: 'Last 28 Days (YouTube Analytics)'),
+          const SizedBox(height: 8),
+          _MetricGrid(
+            metrics: [
+              _MetricItem(label: 'Watch Time', value: _fmtHours(d['estimatedMinutesWatched']), icon: Icons.access_time_rounded, color: AppColors.youtube),
+              _MetricItem(label: 'Avg View Duration', value: _fmtDur(d['averageViewDuration']), icon: Icons.timer_outlined, color: const Color(0xFF8B5CF6)),
+              _MetricItem(label: 'Avg % Viewed', value: _fmtPct(d['averageViewPercentage']), icon: Icons.data_usage_rounded, color: const Color(0xFF0EA5E9)),
+              _MetricItem(label: 'Impressions', value: _fmt(d['impressions']), icon: Icons.remove_red_eye_rounded, color: const Color(0xFF6366F1)),
+              _MetricItem(label: 'CTR', value: _fmtCtr(d['impressionClickThroughRate']), icon: Icons.ads_click_rounded, color: AppColors.success),
+              _MetricItem(label: 'Shares', value: _fmt(d['shares']), icon: Icons.share_rounded, color: const Color(0xFFE91E63)),
+              _MetricItem(label: 'Subs Gained', value: _fmt(d['subscribersGained']), icon: Icons.person_add_rounded, color: AppColors.success),
+              _MetricItem(label: 'Subs Lost', value: _fmt(d['subscribersLost']), icon: Icons.person_remove_rounded, color: const Color(0xFFEF4444)),
+              _MetricItem(label: 'Likes (28d)', value: _fmt(d['likes']), icon: Icons.thumb_up_rounded, color: const Color(0xFFF59E0B)),
+            ],
+          ),
+        ],
+        if (hasChannelMeta) ...[
+          const SizedBox(height: 12),
+          Divider(height: 1, color: AppColors.divider),
+          const SizedBox(height: 12),
+          _SectionLabel2(label: 'Channel Info'),
+          const SizedBox(height: 8),
+          _MetricGrid(
+            metrics: [
+              if (channelAge != null)
+                _MetricItem(
+                  label: 'Channel Age',
+                  value: '${channelAge}y',
+                  icon: Icons.cake_rounded,
+                  color: const Color(0xFF8B5CF6),
+                ),
+              if (country != null && country.toString().isNotEmpty)
+                _MetricItem(
+                  label: 'Country',
+                  value: country.toString(),
+                  icon: Icons.public_rounded,
+                  color: const Color(0xFF0EA5E9),
+                ),
+            ],
+          ),
+        ],
+      ],
     );
   }
 }

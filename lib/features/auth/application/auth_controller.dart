@@ -86,6 +86,7 @@ class AuthController extends _$AuthController {
           'email',
           'profile',
           'https://www.googleapis.com/auth/youtube.readonly',
+          'https://www.googleapis.com/auth/yt-analytics.readonly',
         ],
         forceCodeForRefreshToken: true,
       );

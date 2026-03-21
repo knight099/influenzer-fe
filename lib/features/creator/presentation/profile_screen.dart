@@ -93,7 +93,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with WidgetsBindi
     } else {
       const clientId = '47008398696-bsn5162rp1cl2nie455mmr6vu10fvcog.apps.googleusercontent.com';
       const redirectUri = 'http://localhost:8081/callback';
-      const scope = 'email profile https://www.googleapis.com/auth/youtube.readonly';
+      const scope = 'email profile https://www.googleapis.com/auth/youtube.readonly https://www.googleapis.com/auth/yt-analytics.readonly';
       const state = 'youtube';
       final uri = Uri.https('accounts.google.com', '/o/oauth2/v2/auth', {
         'client_id': clientId,
