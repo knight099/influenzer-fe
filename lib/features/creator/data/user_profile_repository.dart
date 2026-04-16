@@ -119,6 +119,37 @@ class UserProfile {
   final String? phone;
   final double minBudget;
 
+  // Professional identity
+  final String? headline;
+  final String? gender;
+  final DateTime? dateOfBirth;
+  final int profileComplete;
+
+  // Availability & logistics
+  final String availabilityStatus;
+  final int turnaroundDays;
+  final String? location;
+  final String? pinCode;
+  final bool willingToTravel;
+
+  // Audience demographics
+  final Map<String, dynamic>? audienceDemographics;
+
+  // Collaboration preferences
+  final Map<String, dynamic>? collaborationPrefs;
+
+  // Structured past work
+  final List<Map<String, dynamic>> pastWork;
+
+  // Portfolio items
+  final List<Map<String, dynamic>> portfolio;
+
+  // Performance metrics
+  final int totalCampaigns;
+  final int completedCampaigns;
+  final double avgRating;
+  final String? responseTime;
+
   UserProfile({
     required this.id,
     required this.email,
@@ -147,6 +178,24 @@ class UserProfile {
     this.city,
     this.phone,
     this.minBudget = 0.0,
+    // New fields
+    this.headline,
+    this.gender,
+    this.dateOfBirth,
+    this.profileComplete = 0,
+    this.availabilityStatus = 'available',
+    this.turnaroundDays = 0,
+    this.location,
+    this.pinCode,
+    this.willingToTravel = false,
+    this.audienceDemographics,
+    this.collaborationPrefs,
+    this.pastWork = const [],
+    this.portfolio = const [],
+    this.totalCampaigns = 0,
+    this.completedCampaigns = 0,
+    this.avgRating = 0.0,
+    this.responseTime,
   });
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
@@ -214,6 +263,20 @@ class UserProfile {
     // Parse extended creator profile fields from nested creator_profile object
     final cp = json['creator_profile'] as Map<String, dynamic>?;
 
+    // Parse past_work as List<Map>
+    final rawPastWork = cp?['past_work'] as List<dynamic>? ?? [];
+    final pastWork = rawPastWork.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+
+    // Parse portfolio as List<Map>
+    final rawPortfolio = cp?['portfolio'] as List<dynamic>? ?? [];
+    final portfolio = rawPortfolio.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+
+    // Parse date_of_birth
+    DateTime? dateOfBirth;
+    if (cp?['date_of_birth'] != null) {
+      dateOfBirth = DateTime.tryParse(cp!['date_of_birth'].toString());
+    }
+
     return UserProfile(
       id: json['id'] ?? '',
       email: json['email'] ?? '',
@@ -242,6 +305,24 @@ class UserProfile {
       city: cp?['city'] as String?,
       phone: cp?['phone'] as String?,
       minBudget: ((cp?['min_budget']) ?? 0).toDouble(),
+      // New fields
+      headline: cp?['headline'] as String?,
+      gender: cp?['gender'] as String?,
+      dateOfBirth: dateOfBirth,
+      profileComplete: (json['profile_complete'] as int?) ?? 0,
+      availabilityStatus: (cp?['availability_status'] as String?) ?? 'available',
+      turnaroundDays: (cp?['turnaround_days'] as int?) ?? 0,
+      location: cp?['location'] as String?,
+      pinCode: cp?['pin_code'] as String?,
+      willingToTravel: (cp?['willing_to_travel'] as bool?) ?? false,
+      audienceDemographics: cp?['audience_demographics'] as Map<String, dynamic>?,
+      collaborationPrefs: cp?['collaboration_prefs'] as Map<String, dynamic>?,
+      pastWork: pastWork,
+      portfolio: portfolio,
+      totalCampaigns: (json['total_campaigns'] as int?) ?? 0,
+      completedCampaigns: (json['completed_campaigns'] as int?) ?? 0,
+      avgRating: ((json['avg_rating']) ?? 0).toDouble(),
+      responseTime: json['response_time'] as String?,
     );
   }
 }

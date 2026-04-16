@@ -74,6 +74,25 @@ class _CreatorDetailsScreenState extends ConsumerState<CreatorDetailsScreen> {
     final hasBoth = instagramUsername != null && youtubeChannelTitle != null;
     final creatorId = creator['id']?.toString() ?? '';
 
+    // New fields from backend
+    final availabilityStatus = creator['availability_status']?.toString() ?? '';
+    final responseTime = creator['response_time']?.toString() ?? '';
+    final turnaroundDays = creator['turnaround_days'];
+    final willingToTravel = creator['willing_to_travel'];
+    final totalCampaigns = creator['total_campaigns'];
+    final completedCampaigns = creator['completed_campaigns'];
+    final avgRating = creator['avg_rating'];
+    final audienceDemographics = creator['audience_demographics'] as Map<String, dynamic>?;
+    final collaborationPrefs = creator['collaboration_prefs'] as Map<String, dynamic>?;
+    final pastWork = creator['past_work'] as List<dynamic>?;
+
+    final hasAvailabilityRow = availabilityStatus.isNotEmpty ||
+        responseTime.isNotEmpty ||
+        turnaroundDays != null ||
+        willingToTravel != null;
+
+    final hasPerformanceStats = totalCampaigns != null || completedCampaigns != null || avgRating != null;
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: CustomScrollView(
@@ -188,6 +207,27 @@ class _CreatorDetailsScreenState extends ConsumerState<CreatorDetailsScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
 
+                  // ── 1. Availability & Performance Badge Row ─────────────
+                  if (hasAvailabilityRow) ...[
+                    _AvailabilityBadgeRow(
+                      availabilityStatus: availabilityStatus,
+                      responseTime: responseTime,
+                      turnaroundDays: turnaroundDays,
+                      willingToTravel: willingToTravel,
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+
+                  // ── 2. Performance Stats Row ────────────────────────────
+                  if (hasPerformanceStats) ...[
+                    _PerformanceStatsRow(
+                      totalCampaigns: totalCampaigns,
+                      completedCampaigns: completedCampaigns,
+                      avgRating: avgRating,
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+
                   // ── Analytics Dashboard ──────────────────────────────────
                   _SectionHeader(label: 'Performance Analytics'),
                   const SizedBox(height: 12),
@@ -214,6 +254,14 @@ class _CreatorDetailsScreenState extends ConsumerState<CreatorDetailsScreen> {
                       child: Text(bio,
                         style: const TextStyle(fontSize: 14, color: AppColors.textSecondary, height: 1.6)),
                     ),
+                  ],
+
+                  // ── 3. Audience Demographics Card ───────────────────────
+                  if (audienceDemographics != null && audienceDemographics.isNotEmpty) ...[
+                    const SizedBox(height: 24),
+                    _SectionHeader(label: 'Audience Demographics'),
+                    const SizedBox(height: 12),
+                    _AudienceDemographicsCard(demographics: audienceDemographics),
                   ],
 
                   // ── Creator Details ──────────────────────────────────────
@@ -272,8 +320,14 @@ class _CreatorDetailsScreenState extends ConsumerState<CreatorDetailsScreen> {
                     ),
                   ],
 
-                  // ── Past Collaborations ──────────────────────────────────
-                  if (pastBrands.isNotEmpty) ...[
+                  // ── 4. Structured Past Work Section ─────────────────────
+                  if (pastWork != null && pastWork.isNotEmpty) ...[
+                    const SizedBox(height: 24),
+                    _SectionHeader(label: 'Past Work'),
+                    const SizedBox(height: 12),
+                    _PastWorkSection(pastWork: pastWork),
+                  ] else if (pastBrands.isNotEmpty) ...[
+                    // Fall back to existing past_brands chips
                     const SizedBox(height: 24),
                     _SectionHeader(label: 'Past Collaborations'),
                     const SizedBox(height: 12),
@@ -339,7 +393,7 @@ class _CreatorDetailsScreenState extends ConsumerState<CreatorDetailsScreen> {
                                   const SizedBox(width: 8),
                                   Text(label, style: const TextStyle(fontSize: 13, color: AppColors.textSecondary)),
                                 ]),
-                                Text('₹$amount',
+                                Text('\u20B9$amount',
                                   style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
                               ],
                             ),
@@ -347,6 +401,14 @@ class _CreatorDetailsScreenState extends ConsumerState<CreatorDetailsScreen> {
                         }).toList(),
                       ),
                     ),
+                  ],
+
+                  // ── 5. Collaboration Preferences Card ───────────────────
+                  if (collaborationPrefs != null && collaborationPrefs.isNotEmpty) ...[
+                    const SizedBox(height: 24),
+                    _SectionHeader(label: 'Collaboration Preferences'),
+                    const SizedBox(height: 12),
+                    _CollaborationPrefsCard(prefs: collaborationPrefs),
                   ],
 
                   // ── Social Links ─────────────────────────────────────────
@@ -476,6 +538,633 @@ class _CreatorDetailsScreenState extends ConsumerState<CreatorDetailsScreen> {
   }
 }
 
+// ── 1. Availability & Performance Badge Row ─────────────────────────────────
+
+class _AvailabilityBadgeRow extends StatelessWidget {
+  final String availabilityStatus;
+  final String responseTime;
+  final dynamic turnaroundDays;
+  final dynamic willingToTravel;
+
+  const _AvailabilityBadgeRow({
+    required this.availabilityStatus,
+    required this.responseTime,
+    this.turnaroundDays,
+    this.willingToTravel,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        if (availabilityStatus.isNotEmpty)
+          _availabilityBadge(availabilityStatus),
+        if (responseTime.isNotEmpty)
+          _infoBadge(
+            icon: Icons.speed_rounded,
+            label: 'Responds in $responseTime',
+            color: const Color(0xFF0EA5E9),
+          ),
+        if (turnaroundDays != null)
+          _infoBadge(
+            icon: Icons.schedule_rounded,
+            label: 'Delivers in $turnaroundDays ${_pluralDay(turnaroundDays)}',
+            color: const Color(0xFF8B5CF6),
+          ),
+        if (willingToTravel == true)
+          _infoBadge(
+            icon: Icons.flight_rounded,
+            label: 'Willing to travel',
+            color: const Color(0xFFF59E0B),
+          )
+        else if (willingToTravel == false)
+          _infoBadge(
+            icon: Icons.home_rounded,
+            label: 'Remote only',
+            color: AppColors.textHint,
+          ),
+      ],
+    );
+  }
+
+  String _pluralDay(dynamic days) {
+    final n = days is int ? days : int.tryParse(days.toString()) ?? 0;
+    return n == 1 ? 'day' : 'days';
+  }
+
+  Widget _availabilityBadge(String status) {
+    Color color;
+    IconData icon;
+    String label;
+    switch (status.toLowerCase()) {
+      case 'available':
+        color = AppColors.success;
+        icon = Icons.check_circle_rounded;
+        label = 'Available';
+        break;
+      case 'busy':
+        color = AppColors.warning;
+        icon = Icons.pause_circle_rounded;
+        label = 'Busy';
+        break;
+      case 'not_accepting':
+      case 'not accepting':
+        color = AppColors.error;
+        icon = Icons.cancel_rounded;
+        label = 'Not Accepting';
+        break;
+      default:
+        color = AppColors.textHint;
+        icon = Icons.circle_rounded;
+        label = status;
+    }
+    return _infoBadge(icon: icon, label: label, color: color);
+  }
+
+  Widget _infoBadge({
+    required IconData icon,
+    required String label,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: color),
+          const SizedBox(width: 5),
+          Text(
+            label,
+            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: color),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── 2. Performance Stats Row ────────────────────────────────────────────────
+
+class _PerformanceStatsRow extends StatelessWidget {
+  final dynamic totalCampaigns;
+  final dynamic completedCampaigns;
+  final dynamic avgRating;
+
+  const _PerformanceStatsRow({
+    this.totalCampaigns,
+    this.completedCampaigns,
+    this.avgRating,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final total = _toInt(totalCampaigns);
+    final completed = _toInt(completedCampaigns);
+    final completionRate = total > 0 ? ((completed / total) * 100).round() : 0;
+    final rating = _toDouble(avgRating);
+
+    return Row(
+      children: [
+        if (total > 0)
+          Expanded(child: _PerfStatTile(
+            icon: Icons.campaign_rounded,
+            value: total.toString(),
+            label: 'Campaigns',
+            color: AppColors.primary,
+          )),
+        if (total > 0 && completed > 0) const SizedBox(width: 8),
+        if (completed > 0)
+          Expanded(child: _PerfStatTile(
+            icon: Icons.check_circle_rounded,
+            value: completed.toString(),
+            label: 'Completed',
+            color: AppColors.success,
+          )),
+        if ((total > 0 || completed > 0) && total > 0) const SizedBox(width: 8),
+        if (total > 0)
+          Expanded(child: _PerfStatTile(
+            icon: Icons.pie_chart_rounded,
+            value: '$completionRate%',
+            label: 'Completion',
+            color: completionRate >= 80
+                ? AppColors.success
+                : completionRate >= 50
+                    ? AppColors.warning
+                    : AppColors.error,
+          )),
+        if ((total > 0 || completed > 0) && rating > 0) const SizedBox(width: 8),
+        if (rating > 0)
+          Expanded(child: _PerfStatTile(
+            icon: Icons.star_rounded,
+            value: rating.toStringAsFixed(1),
+            label: 'Avg Rating',
+            color: const Color(0xFFF59E0B),
+          )),
+      ],
+    );
+  }
+
+  int _toInt(dynamic v) {
+    if (v == null) return 0;
+    if (v is int) return v;
+    return int.tryParse(v.toString()) ?? 0;
+  }
+
+  double _toDouble(dynamic v) {
+    if (v == null) return 0;
+    if (v is double) return v;
+    if (v is int) return v.toDouble();
+    return double.tryParse(v.toString()) ?? 0;
+  }
+}
+
+class _PerfStatTile extends StatelessWidget {
+  final IconData icon;
+  final String value;
+  final String label;
+  final Color color;
+
+  const _PerfStatTile({
+    required this.icon,
+    required this.value,
+    required this.label,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, size: 18, color: color),
+          const SizedBox(height: 6),
+          Text(value,
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: color)),
+          const SizedBox(height: 2),
+          Text(label,
+              style: const TextStyle(fontSize: 10, color: AppColors.textHint),
+              textAlign: TextAlign.center),
+        ],
+      ),
+    );
+  }
+}
+
+// ── 3. Audience Demographics Card ───────────────────────────────────────────
+
+class _AudienceDemographicsCard extends StatelessWidget {
+  final Map<String, dynamic> demographics;
+  const _AudienceDemographicsCard({required this.demographics});
+
+  @override
+  Widget build(BuildContext context) {
+    final ageSplit = demographics['age_split'] as Map<String, dynamic>?;
+    final genderSplit = demographics['gender_split'] as Map<String, dynamic>?;
+    final topCities = demographics['top_cities'] as List<dynamic>?;
+    final topCountries = demographics['top_countries'] as List<dynamic>?;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ── Age Split ──
+          if (ageSplit != null && ageSplit.isNotEmpty) ...[
+            const _SectionLabel2(label: 'Age Distribution'),
+            const SizedBox(height: 10),
+            ...ageSplit.entries.map((e) {
+              final pct = _toDouble(e.value);
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Row(
+                  children: [
+                    SizedBox(
+                      width: 56,
+                      child: Text(
+                        e.key,
+                        style: const TextStyle(fontSize: 12, color: AppColors.textSecondary, fontWeight: FontWeight.w500),
+                      ),
+                    ),
+                    Expanded(
+                      child: Stack(
+                        children: [
+                          Container(
+                            height: 18,
+                            decoration: BoxDecoration(
+                              color: AppColors.primary.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(9),
+                            ),
+                          ),
+                          FractionallySizedBox(
+                            widthFactor: (pct / 100).clamp(0.0, 1.0),
+                            child: Container(
+                              height: 18,
+                              decoration: BoxDecoration(
+                                gradient: AppColors.brandGradient,
+                                borderRadius: BorderRadius.circular(9),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    SizedBox(
+                      width: 38,
+                      child: Text(
+                        '${pct.toStringAsFixed(0)}%',
+                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                        textAlign: TextAlign.right,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
+          ],
+
+          // ── Gender Split ──
+          if (genderSplit != null && genderSplit.isNotEmpty) ...[
+            if (ageSplit != null && ageSplit.isNotEmpty) const SizedBox(height: 16),
+            const _SectionLabel2(label: 'Gender Distribution'),
+            const SizedBox(height: 10),
+            _GenderSplitBar(genderSplit: genderSplit),
+          ],
+
+          // ── Top Cities ──
+          if (topCities != null && topCities.isNotEmpty) ...[
+            if ((ageSplit != null && ageSplit.isNotEmpty) ||
+                (genderSplit != null && genderSplit.isNotEmpty))
+              const SizedBox(height: 16),
+            const _SectionLabel2(label: 'Top Cities'),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 6, runSpacing: 6,
+              children: topCities
+                  .map((c) => _Chip(label: c.toString(), color: const Color(0xFF0EA5E9)))
+                  .toList(),
+            ),
+          ],
+
+          // ── Top Countries ──
+          if (topCountries != null && topCountries.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            const _SectionLabel2(label: 'Top Countries'),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 6, runSpacing: 6,
+              children: topCountries
+                  .map((c) => _Chip(label: c.toString(), color: const Color(0xFF8B5CF6)))
+                  .toList(),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  double _toDouble(dynamic v) {
+    if (v == null) return 0;
+    if (v is double) return v;
+    if (v is int) return v.toDouble();
+    return double.tryParse(v.toString()) ?? 0;
+  }
+}
+
+class _GenderSplitBar extends StatelessWidget {
+  final Map<String, dynamic> genderSplit;
+  const _GenderSplitBar({required this.genderSplit});
+
+  @override
+  Widget build(BuildContext context) {
+    final male = _toDouble(genderSplit['male'] ?? genderSplit['Male']);
+    final female = _toDouble(genderSplit['female'] ?? genderSplit['Female']);
+    final other = _toDouble(genderSplit['other'] ?? genderSplit['Other']);
+    final total = male + female + other;
+    if (total == 0) return const SizedBox.shrink();
+
+    const maleColor = Color(0xFF3B82F6);
+    const femaleColor = Color(0xFFEC4899);
+    const otherColor = Color(0xFF8B5CF6);
+
+    return Column(
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(6),
+          child: SizedBox(
+            height: 22,
+            child: Row(
+              children: [
+                if (male > 0)
+                  Expanded(
+                    flex: (male * 10).round(),
+                    child: Container(color: maleColor),
+                  ),
+                if (female > 0)
+                  Expanded(
+                    flex: (female * 10).round(),
+                    child: Container(color: femaleColor),
+                  ),
+                if (other > 0)
+                  Expanded(
+                    flex: (other * 10).round(),
+                    child: Container(color: otherColor),
+                  ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            if (male > 0) _genderLabel('Male', '${male.toStringAsFixed(0)}%', maleColor),
+            if (male > 0 && female > 0) const SizedBox(width: 16),
+            if (female > 0) _genderLabel('Female', '${female.toStringAsFixed(0)}%', femaleColor),
+            if ((male > 0 || female > 0) && other > 0) const SizedBox(width: 16),
+            if (other > 0) _genderLabel('Other', '${other.toStringAsFixed(0)}%', otherColor),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _genderLabel(String label, String pct, Color color) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 10, height: 10,
+          decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(3)),
+        ),
+        const SizedBox(width: 4),
+        Text(
+          '$label $pct',
+          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.textSecondary),
+        ),
+      ],
+    );
+  }
+
+  double _toDouble(dynamic v) {
+    if (v == null) return 0;
+    if (v is double) return v;
+    if (v is int) return v.toDouble();
+    return double.tryParse(v.toString()) ?? 0;
+  }
+}
+
+// ── 4. Past Work Section ────────────────────────────────────────────────────
+
+class _PastWorkSection extends StatelessWidget {
+  final List<dynamic> pastWork;
+  const _PastWorkSection({required this.pastWork});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: pastWork.map((entry) {
+        final work = entry as Map<String, dynamic>;
+        final brandName = work['brand_name']?.toString() ?? '';
+        final deliverableType = work['deliverable_type']?.toString() ?? '';
+        final platform = work['platform']?.toString() ?? '';
+        final date = work['date']?.toString() ?? '';
+        final link = work['link']?.toString() ?? '';
+
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 10),
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: AppColors.border),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 40, height: 40,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.work_outline_rounded, size: 18, color: AppColors.primary),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (brandName.isNotEmpty)
+                        Text(
+                          brandName,
+                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                        ),
+                      if (deliverableType.isNotEmpty || platform.isNotEmpty) ...[
+                        const SizedBox(height: 3),
+                        Text(
+                          [deliverableType, platform].where((s) => s.isNotEmpty).join(' \u2022 '),
+                          style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                        ),
+                      ],
+                      if (date.isNotEmpty) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          date,
+                          style: const TextStyle(fontSize: 11, color: AppColors.textHint),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                if (link.isNotEmpty)
+                  GestureDetector(
+                    onTap: () async {
+                      final uri = Uri.tryParse(link);
+                      if (uri != null && await canLaunchUrl(uri)) {
+                        launchUrl(uri, mode: LaunchMode.externalApplication);
+                      }
+                    },
+                    child: Container(
+                      width: 32, height: 32,
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(Icons.open_in_new_rounded, size: 14, color: AppColors.primary),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+}
+
+// ── 5. Collaboration Preferences Card ───────────────────────────────────────
+
+class _CollaborationPrefsCard extends StatelessWidget {
+  final Map<String, dynamic> prefs;
+  const _CollaborationPrefsCard({required this.prefs});
+
+  @override
+  Widget build(BuildContext context) {
+    final preferredCategories = prefs['preferred_categories'] as List<dynamic>?;
+    final contentTypes = prefs['content_types'] as List<dynamic>?;
+    final barterOpen = prefs['barter_open'];
+    final exclusivityOpen = prefs['exclusivity_open'];
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (preferredCategories != null && preferredCategories.isNotEmpty) ...[
+            const _SectionLabel2(label: 'Preferred Categories'),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 6, runSpacing: 6,
+              children: preferredCategories
+                  .map((c) => _Chip(label: c.toString(), color: AppColors.primary))
+                  .toList(),
+            ),
+          ],
+          if (contentTypes != null && contentTypes.isNotEmpty) ...[
+            if (preferredCategories != null && preferredCategories.isNotEmpty)
+              const SizedBox(height: 14),
+            const _SectionLabel2(label: 'Content Types'),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 6, runSpacing: 6,
+              children: contentTypes
+                  .map((c) => _Chip(label: c.toString(), color: AppColors.secondary))
+                  .toList(),
+            ),
+          ],
+          if (barterOpen != null || exclusivityOpen != null) ...[
+            if ((preferredCategories != null && preferredCategories.isNotEmpty) ||
+                (contentTypes != null && contentTypes.isNotEmpty))
+              const SizedBox(height: 14),
+            Row(
+              children: [
+                if (barterOpen != null)
+                  _collabIndicator(
+                    icon: barterOpen == true ? Icons.check_circle_rounded : Icons.cancel_rounded,
+                    label: 'Barter',
+                    enabled: barterOpen == true,
+                  ),
+                if (barterOpen != null && exclusivityOpen != null)
+                  const SizedBox(width: 12),
+                if (exclusivityOpen != null)
+                  _collabIndicator(
+                    icon: exclusivityOpen == true ? Icons.check_circle_rounded : Icons.cancel_rounded,
+                    label: 'Exclusivity',
+                    enabled: exclusivityOpen == true,
+                  ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _collabIndicator({
+    required IconData icon,
+    required String label,
+    required bool enabled,
+  }) {
+    final color = enabled ? AppColors.success : AppColors.textHint;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: color),
+          const SizedBox(width: 5),
+          Text(
+            enabled ? '$label Open' : '$label Closed',
+            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: color),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 // ── Analytics Dashboard ───────────────────────────────────────────────────────
 
 class _AnalyticsDashboard extends StatelessWidget {
@@ -520,7 +1209,7 @@ class _AnalyticsDashboard extends StatelessWidget {
             color: AppColors.instagram,
             followers: igFollowers,
             analytics: igAnalytics,
-            tier: igAnalytics['tier']?.toString() ?? '—',
+            tier: igAnalytics['tier']?.toString() ?? '\u2014',
           ),
         if (igAnalytics != null && ytAnalytics != null) const SizedBox(height: 12),
         if (ytAnalytics != null)
@@ -532,7 +1221,7 @@ class _AnalyticsDashboard extends StatelessWidget {
             followers: ytSubscribers,
             followersLabel: 'Subscribers',
             analytics: ytAnalytics,
-            tier: ytAnalytics['tier']?.toString() ?? '—',
+            tier: ytAnalytics['tier']?.toString() ?? '\u2014',
           ),
       ],
     );
@@ -609,7 +1298,7 @@ class _PlatformAnalyticsCard extends StatelessWidget {
     final n = _toInt(v);
     if (n >= 1000000) return '${(n / 1000000).toStringAsFixed(1)}M';
     if (n >= 1000) return '${(n / 1000).toStringAsFixed(1)}K';
-    if (n == 0) return '—';
+    if (n == 0) return '\u2014';
     return n.toString();
   }
 
@@ -623,7 +1312,7 @@ class _PlatformAnalyticsCard extends StatelessWidget {
   // Format seconds as "M:SS" or "H:MM:SS"
   String _fmtDuration(dynamic v) {
     final secs = _toInt(v);
-    if (secs == 0) return '—';
+    if (secs == 0) return '\u2014';
     final h = secs ~/ 3600;
     final m = (secs % 3600) ~/ 60;
     final s = secs % 60;
@@ -708,7 +1397,7 @@ class _PlatformAnalyticsCard extends StatelessWidget {
                     Expanded(
                       child: _HeroMetric(
                         label: 'Engagement',
-                        value: engRate == '0' ? '—' : '$engRate%',
+                        value: engRate == '0' ? '\u2014' : '$engRate%',
                         icon: Icons.trending_up_rounded,
                         color: engColor,
                       ),
@@ -789,46 +1478,46 @@ class _YoutubeAnalytics28d extends StatelessWidget {
   const _YoutubeAnalytics28d({required this.analytics, required this.color});
 
   String _fmt(dynamic v) {
-    if (v == null) return '—';
+    if (v == null) return '\u2014';
     double n;
     if (v is double) n = v;
     else if (v is int) n = v.toDouble();
     else n = double.tryParse(v.toString()) ?? 0;
-    if (n == 0) return '—';
+    if (n == 0) return '\u2014';
     if (n >= 1000000) return '${(n / 1000000).toStringAsFixed(1)}M';
     if (n >= 1000) return '${(n / 1000).toStringAsFixed(1)}K';
     return n.toStringAsFixed(0);
   }
 
   String _fmtHours(dynamic v) {
-    if (v == null) return '—';
+    if (v == null) return '\u2014';
     final mins = (v is double) ? v : double.tryParse(v.toString()) ?? 0.0;
-    if (mins == 0) return '—';
+    if (mins == 0) return '\u2014';
     final hours = mins / 60;
     if (hours >= 1000) return '${(hours / 1000).toStringAsFixed(1)}Kh';
     return '${hours.toStringAsFixed(0)}h';
   }
 
   String _fmtDur(dynamic v) {
-    if (v == null) return '—';
+    if (v == null) return '\u2014';
     final secs = (v is double) ? v.toInt() : (v is int ? v : int.tryParse(v.toString()) ?? 0);
-    if (secs == 0) return '—';
+    if (secs == 0) return '\u2014';
     final m = secs ~/ 60;
     final s = secs % 60;
     return '$m:${s.toString().padLeft(2, '0')}';
   }
 
   String _fmtPct(dynamic v) {
-    if (v == null) return '—';
+    if (v == null) return '\u2014';
     final pct = (v is double) ? v : double.tryParse(v.toString()) ?? 0.0;
-    if (pct == 0) return '—';
+    if (pct == 0) return '\u2014';
     return '${pct.toStringAsFixed(1)}%';
   }
 
   String _fmtCtr(dynamic v) {
-    if (v == null) return '—';
+    if (v == null) return '\u2014';
     final ctr = (v is double) ? v : double.tryParse(v.toString()) ?? 0.0;
-    if (ctr == 0) return '—';
+    if (ctr == 0) return '\u2014';
     return '${(ctr * 100).toStringAsFixed(2)}%';
   }
 
@@ -1343,7 +2032,7 @@ class _PlatformMediaCardState extends State<_PlatformMediaCard>
                       GestureDetector(
                         onTap: () => _launchUrl(widget.profileUrl!),
                         child: Text(
-                          'View profile →',
+                          'View profile \u2192',
                           style: TextStyle(
                             fontSize: 11,
                             color: widget.color,
@@ -1503,7 +2192,7 @@ class _MediaThumbnailCard extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      title.isNotEmpty ? title : '—',
+                      title.isNotEmpty ? title : '\u2014',
                       style: const TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
@@ -1758,7 +2447,7 @@ class _InviteToCampaignSheetState extends State<_InviteToCampaignSheet> {
                     ),
                     title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
                     subtitle: budget != null
-                        ? Text('₹$budget • $status', style: const TextStyle(fontSize: 12, color: AppColors.textSecondary))
+                        ? Text('\u20B9$budget \u2022 $status', style: const TextStyle(fontSize: 12, color: AppColors.textSecondary))
                         : Text(status, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
                     trailing: isSending
                         ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))

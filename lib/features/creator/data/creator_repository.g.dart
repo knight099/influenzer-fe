@@ -146,5 +146,4 @@ final class SpotlightCreatorsProvider
   }
 }
 
-String _$spotlightCreatorsHash() =>
-    r'a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0';
+String _$spotlightCreatorsHash() => r'21a01d2ed3c538c7d298fee7bb0472c1c508f9d4';
