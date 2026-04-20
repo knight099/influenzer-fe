@@ -72,7 +72,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
             return ListView.separated(
               padding: const EdgeInsets.symmetric(vertical: 8),
               itemCount: notifications.length,
-              separatorBuilder: (_, __) =>
+              separatorBuilder: (_, _) =>
                   const Divider(height: 1, indent: 72, endIndent: 16, color: AppColors.divider),
               itemBuilder: (context, index) => _NotifTile(
                 notification: notifications[index],
@@ -110,7 +110,7 @@ class _NotifTile extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       child: Container(
-        color: isUnread ? AppColors.primaryLight.withOpacity(0.4) : Colors.transparent,
+        color: isUnread ? AppColors.primaryLight.withValues(alpha: 0.4) : Colors.transparent,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -119,7 +119,7 @@ class _NotifTile extends StatelessWidget {
             Container(
               width: 44, height: 44,
               decoration: BoxDecoration(
-                color: meta.color.withOpacity(0.12),
+                color: meta.color.withValues(alpha: 0.12),
                 shape: BoxShape.circle,
               ),
               child: Icon(meta.icon, color: meta.color, size: 22),
@@ -262,7 +262,7 @@ class _NotifSkeleton extends StatelessWidget {
     return ListView.builder(
       padding: const EdgeInsets.symmetric(vertical: 8),
       itemCount: 6,
-      itemBuilder: (_, __) => Padding(
+      itemBuilder: (_, _) => Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -344,7 +344,7 @@ class NotificationBell extends ConsumerWidget {
                 );
               },
               loading: () => const SizedBox.shrink(),
-              error: (_, __) => const SizedBox.shrink(),
+              error: (_, _) => const SizedBox.shrink(),
             ),
           ],
         ),

@@ -344,7 +344,7 @@ class _WalletBanner extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '₹${profile.walletBalance ?? 0}',
+                  '₹${profile.walletBalance}',
                   style: const TextStyle(
                     fontSize: 26, fontWeight: FontWeight.w800, color: Colors.white,
                   ),

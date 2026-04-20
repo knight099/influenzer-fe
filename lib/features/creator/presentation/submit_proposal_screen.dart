@@ -201,7 +201,7 @@ class _SubmitProposalScreenState extends ConsumerState<SubmitProposalScreen> {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                             decoration: BoxDecoration(
-                              color: _platformColor(platform).withOpacity(0.1),
+                              color: _platformColor(platform).withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: Row(
@@ -240,9 +240,9 @@ class _SubmitProposalScreenState extends ConsumerState<SubmitProposalScreen> {
                       Container(
                         padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(
-                          color: AppColors.primary.withOpacity(0.04),
+                          color: AppColors.primary.withValues(alpha: 0.04),
                           borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: AppColors.primary.withOpacity(0.12)),
+                          border: Border.all(color: AppColors.primary.withValues(alpha: 0.12)),
                         ),
                         child: Column(
                           children: [
@@ -286,7 +286,7 @@ class _SubmitProposalScreenState extends ConsumerState<SubmitProposalScreen> {
                             width: 50,
                             height: 54,
                             decoration: BoxDecoration(
-                              color: AppColors.primary.withOpacity(0.08),
+                              color: AppColors.primary.withValues(alpha: 0.08),
                               borderRadius: const BorderRadius.horizontal(left: Radius.circular(13)),
                             ),
                             child: const Center(
@@ -383,9 +383,9 @@ class _SubmitProposalScreenState extends ConsumerState<SubmitProposalScreen> {
                     Container(
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color: AppColors.primary.withOpacity(0.05),
+                        color: AppColors.primary.withValues(alpha: 0.05),
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AppColors.primary.withOpacity(0.15)),
+                        border: Border.all(color: AppColors.primary.withValues(alpha: 0.15)),
                       ),
                       child: const Column(
                         crossAxisAlignment: CrossAxisAlignment.start,

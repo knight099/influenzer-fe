@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../core/theme/app_colors.dart';
 import '../data/payment_repository.dart';
-import '../../auth/application/auth_controller.dart';
 import '../../brand/data/brand_profile_repository.dart';
 import '../../creator/data/user_profile_repository.dart';
 
@@ -88,7 +87,7 @@ class _TransactionHistoryScreenState extends ConsumerState<TransactionHistoryScr
 
                 return ListView.separated(
                   itemCount: transactions.length,
-                  separatorBuilder: (_, __) => const Divider(height: 1),
+                  separatorBuilder: (_, _) => const Divider(height: 1),
                   itemBuilder: (context, index) {
                     final tx = transactions[index];
                     final amount = (tx['amount'] ?? 0).toDouble();

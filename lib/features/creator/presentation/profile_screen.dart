@@ -466,7 +466,7 @@ class _CreatorHero extends StatelessWidget {
                   width: 160, height: 160,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Colors.white.withOpacity(0.08),
+                    color: Colors.white.withValues(alpha: 0.08),
                   ),
                 ),
               ),
@@ -476,7 +476,7 @@ class _CreatorHero extends StatelessWidget {
                   width: 80, height: 80,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Colors.white.withOpacity(0.06),
+                    color: Colors.white.withValues(alpha: 0.06),
                   ),
                 ),
               ),
@@ -502,7 +502,7 @@ class _CreatorHero extends StatelessWidget {
                       border: Border.all(color: AppColors.surface, width: 4),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.12),
+                          color: Colors.black.withValues(alpha: 0.12),
                           blurRadius: 16, offset: const Offset(0, 6),
                         ),
                       ],
@@ -512,7 +512,7 @@ class _CreatorHero extends StatelessWidget {
                           ? Image.network(
                               profile.avatarUrl!,
                               fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => _AvatarFallback(name: name),
+                              errorBuilder: (_, _, _) => _AvatarFallback(name: name),
                             )
                           : _AvatarFallback(name: name),
                     ),
@@ -528,7 +528,7 @@ class _CreatorHero extends StatelessWidget {
                       color: isSubscribed ? AppColors.successLight : AppColors.primaryLight,
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                        color: isSubscribed ? AppColors.success.withOpacity(0.3) : AppColors.primary.withOpacity(0.2),
+                        color: isSubscribed ? AppColors.success.withValues(alpha: 0.3) : AppColors.primary.withValues(alpha: 0.2),
                       ),
                     ),
                     child: Row(
@@ -632,9 +632,9 @@ class _AvailabilityBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.12),
+        color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -742,16 +742,16 @@ class _StatSummaryTile extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: item.color.withOpacity(0.07),
+        color: item.color.withValues(alpha: 0.07),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: item.color.withOpacity(0.15)),
+        border: Border.all(color: item.color.withValues(alpha: 0.15)),
       ),
       child: Row(
         children: [
           Container(
             width: 36, height: 36,
             decoration: BoxDecoration(
-              color: item.color.withOpacity(0.12),
+              color: item.color.withValues(alpha: 0.12),
               shape: BoxShape.circle,
             ),
             child: Icon(item.icon, color: item.color, size: 18),
@@ -807,7 +807,7 @@ class _PlatformCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: AppColors.border),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 3)),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 10, offset: const Offset(0, 3)),
         ],
       ),
       child: Column(
@@ -836,7 +836,7 @@ class _PlatformCard extends StatelessWidget {
                   child: Container(
                     padding: const EdgeInsets.all(6),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
+                      color: Colors.white.withValues(alpha: 0.2),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(Icons.refresh_rounded, color: Colors.white, size: 16),
@@ -908,7 +908,7 @@ class _YouTubeStatsContent extends StatelessWidget {
                   ? Image.network(
                       stats.thumbnail!,
                       width: 52, height: 52, fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => _YouTubePlaceholder(),
+                      errorBuilder: (_, _, _) => _YouTubePlaceholder(),
                     )
                   : _YouTubePlaceholder(),
             ),
@@ -983,7 +983,7 @@ class _InstagramStatsContent extends StatelessWidget {
                   ? Image.network(
                       stats.profilePictureUrl!,
                       width: 52, height: 52, fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => _InstagramPlaceholder(),
+                      errorBuilder: (_, _, _) => _InstagramPlaceholder(),
                     )
                   : _InstagramPlaceholder(),
             ),
@@ -1139,7 +1139,7 @@ class _ProfileCompletionBanner extends StatelessWidget {
             child: LinearProgressIndicator(
               value: percent / 100.0,
               minHeight: 6,
-              backgroundColor: Colors.white.withOpacity(0.2),
+              backgroundColor: Colors.white.withValues(alpha: 0.2),
               valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
             ),
           ),
@@ -1245,9 +1245,9 @@ class _PerformanceMetric extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.08),
+          color: color.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: color.withOpacity(0.15)),
+          border: Border.all(color: color.withValues(alpha: 0.15)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1297,7 +1297,7 @@ class _QuickFactsStrip extends StatelessWidget {
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 20),
         itemCount: chips.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        separatorBuilder: (_, _) => const SizedBox(width: 8),
         itemBuilder: (_, i) => chips[i],
       ),
     );
@@ -1598,7 +1598,7 @@ class _RateChip extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.successLight,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.success.withOpacity(0.2)),
+        border: Border.all(color: AppColors.success.withValues(alpha: 0.2)),
       ),
       child: Column(
         children: [
@@ -1638,7 +1638,7 @@ class _AudienceDemographicsCard extends StatelessWidget {
               children: [
                 Container(
                   width: 40, height: 40,
-                  decoration: BoxDecoration(color: const Color(0xFF0EA5E9).withOpacity(0.12), borderRadius: BorderRadius.circular(12)),
+                  decoration: BoxDecoration(color: const Color(0xFF0EA5E9).withValues(alpha: 0.12), borderRadius: BorderRadius.circular(12)),
                   child: const Icon(Icons.people_alt_rounded, color: Color(0xFF0EA5E9), size: 20),
                 ),
                 const SizedBox(width: 12),
@@ -1675,7 +1675,7 @@ class _AudienceDemographicsCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Age split
-                  if (demo!['age_split'] != null) ...[
+                  if (demo['age_split'] != null) ...[
                     const Text('Age Distribution',
                         style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.textHint)),
                     const SizedBox(height: 8),
@@ -1787,7 +1787,7 @@ class _GenderStat extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.08),
+          color: color.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(10),
         ),
         child: Column(
@@ -2015,7 +2015,7 @@ class _CollaborationPrefsCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  if (_hasNonEmpty(prefs!, 'preferred_categories')) ...[
+                  if (_hasNonEmpty(prefs, 'preferred_categories')) ...[
                     const Text('Preferred Categories',
                         style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.textHint)),
                     const SizedBox(height: 6),
@@ -2084,7 +2084,7 @@ class _ToggleIndicator extends StatelessWidget {
       decoration: BoxDecoration(
         color: isActive ? AppColors.successLight : AppColors.errorLight,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: isActive ? AppColors.success.withOpacity(0.3) : AppColors.error.withOpacity(0.3)),
+        border: Border.all(color: isActive ? AppColors.success.withValues(alpha: 0.3) : AppColors.error.withValues(alpha: 0.3)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -2362,9 +2362,9 @@ class _InfoChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -2841,7 +2841,7 @@ class _SettingsRow extends StatelessWidget {
                 Container(
                   width: 40, height: 40,
                   decoration: BoxDecoration(
-                    color: iconColor.withOpacity(0.1),
+                    color: iconColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(icon, color: iconColor, size: 20),
@@ -3427,7 +3427,7 @@ class _EditRateCardSheetState extends State<_EditRateCardSheet> {
                           Switch(
                             value: _perBarter,
                             onChanged: (v) => setState(() => _perBarter = v),
-                            activeColor: AppColors.success,
+                            activeThumbColor: AppColors.success,
                           ),
                         ],
                       ),
@@ -4013,7 +4013,7 @@ class _EditCollaborationPrefsSheetState extends State<_EditCollaborationPrefsShe
           Icon(icon, size: 18, color: value ? AppColors.success : AppColors.textHint),
           const SizedBox(width: 10),
           Expanded(child: Text(label, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary))),
-          Switch(value: value, onChanged: onChanged, activeColor: AppColors.success),
+          Switch(value: value, onChanged: onChanged, activeThumbColor: AppColors.success),
         ],
       ),
     );
@@ -4349,7 +4349,7 @@ class _HelpSupportSheetState extends State<_HelpSupportSheet> {
                         color: isOpen ? AppColors.primaryLight : AppColors.background,
                         borderRadius: BorderRadius.circular(14),
                         border: Border.all(
-                          color: isOpen ? AppColors.primary.withOpacity(0.3) : AppColors.border,
+                          color: isOpen ? AppColors.primary.withValues(alpha: 0.3) : AppColors.border,
                         ),
                       ),
                       child: InkWell(
@@ -4465,7 +4465,7 @@ class _ContactTile extends StatelessWidget {
             Container(
               width: 44, height: 44,
               decoration: BoxDecoration(
-                color: iconColor.withOpacity(0.1),
+                color: iconColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(icon, color: iconColor, size: 22),
@@ -4517,7 +4517,7 @@ void _showAbout(BuildContext context) {
               gradient: AppColors.brandGradient,
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
-                BoxShadow(color: AppColors.primary.withOpacity(0.3), blurRadius: 20, offset: const Offset(0, 8)),
+                BoxShadow(color: AppColors.primary.withValues(alpha: 0.3), blurRadius: 20, offset: const Offset(0, 8)),
               ],
             ),
             child: const Icon(Icons.bolt_rounded, color: Colors.white, size: 38),
@@ -4587,7 +4587,7 @@ class _AboutLink extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppColors.primaryLight,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.primary.withOpacity(0.2)),
+          border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
         ),
         child: Center(
           child: Text(

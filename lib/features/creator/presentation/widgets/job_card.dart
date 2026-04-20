@@ -86,7 +86,7 @@ class JobCard extends ConsumerWidget {
                                 ? Image.network(
                                     brandLogo,
                                     fit: BoxFit.cover,
-                                    errorBuilder: (_, __, ___) => Center(
+                                    errorBuilder: (_, _, _) => Center(
                                       child: ShaderMask(
                                         shaderCallback: (b) => AppColors.brandGradient.createShader(b),
                                         child: Text(
@@ -373,7 +373,7 @@ class JobCard extends ConsumerWidget {
                             borderRadius: BorderRadius.circular(15),
                             child: brandLogo.isNotEmpty
                                 ? Image.network(brandLogo, fit: BoxFit.cover,
-                                    errorBuilder: (_, __, ___) => Center(
+                                    errorBuilder: (_, _, _) => Center(
                                       child: ShaderMask(
                                         shaderCallback: (b) => AppColors.brandGradient.createShader(b),
                                         child: Text(brandName[0].toUpperCase(),

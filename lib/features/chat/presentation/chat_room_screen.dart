@@ -4,10 +4,8 @@ import '../../../core/theme/app_colors.dart';
 import '../data/chat_repository.dart';
 
 import 'dart:async';
-import 'package:influenzer_app/features/auth/application/auth_controller.dart';
 import 'package:influenzer_app/core/network/websocket_service.dart';
 import 'dart:convert';
-import 'package:influenzer_app/features/creator/data/user_profile_repository.dart';
 import 'package:influenzer_app/core/network/api_client.dart';
 
 class ChatRoomScreen extends ConsumerStatefulWidget {
