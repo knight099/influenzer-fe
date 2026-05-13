@@ -57,7 +57,7 @@ class _MyApplicationsScreenState extends ConsumerState<MyApplicationsScreen> {
 
               // Applications section header
               if (applications.isNotEmpty)
-                const Padding(
+                Padding(
                   padding: EdgeInsets.only(bottom: 12),
                   child: Text(
                     'My Applications',
@@ -170,10 +170,10 @@ class _InvitationsSection extends StatelessWidget {
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                   child: Row(
                     children: [
-                      const Icon(Icons.campaign_rounded,
+                      Icon(Icons.campaign_rounded,
                           color: AppColors.primary, size: 20),
                       const SizedBox(width: 10),
-                      const Expanded(
+                      Expanded(
                         child: Text(
                           'Campaign Invitations',
                           style: TextStyle(
@@ -199,7 +199,7 @@ class _InvitationsSection extends StatelessWidget {
                           ),
                           child: Text(
                             '${invitations.length}',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
                               color: AppColors.primary,
@@ -227,7 +227,7 @@ class _InvitationsSection extends StatelessWidget {
                     child: Center(child: CircularProgressIndicator()),
                   )
                 else if (snapshot.hasError)
-                  const Padding(
+                  Padding(
                     padding: EdgeInsets.all(24),
                     child: Center(
                       child: Text(
@@ -237,7 +237,7 @@ class _InvitationsSection extends StatelessWidget {
                     ),
                   )
                 else if (invitations.isEmpty)
-                  const Padding(
+                  Padding(
                     padding: EdgeInsets.all(24),
                     child: Center(
                       child: Text(
@@ -278,7 +278,7 @@ class _InvitationsSection extends StatelessWidget {
                                       .withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(10),
                                 ),
-                                child: const Icon(Icons.campaign_rounded,
+                                child: Icon(Icons.campaign_rounded,
                                     color: AppColors.primary, size: 20),
                               ),
                               const SizedBox(width: 12),
@@ -289,7 +289,7 @@ class _InvitationsSection extends StatelessWidget {
                                   children: [
                                     Text(
                                       title,
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontWeight: FontWeight.w600,
                                         fontSize: 14,
                                         color: AppColors.textPrimary,
@@ -302,7 +302,7 @@ class _InvitationsSection extends StatelessWidget {
                                         if (platform.isNotEmpty)
                                           platform.toUpperCase(),
                                       ].join(' · '),
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontSize: 12,
                                         color: AppColors.textSecondary,
                                       ),
@@ -313,7 +313,7 @@ class _InvitationsSection extends StatelessWidget {
                               const SizedBox(width: 8),
                               _CampaignStatusBadge(status: status),
                               const SizedBox(width: 4),
-                              const Icon(Icons.chevron_right,
+                              Icon(Icons.chevron_right,
                                   color: AppColors.textSecondary, size: 18),
                             ],
                           ),

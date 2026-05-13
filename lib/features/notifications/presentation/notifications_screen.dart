@@ -50,8 +50,8 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
               children: [
                 Container(
                   width: 64, height: 64,
-                  decoration: const BoxDecoration(color: AppColors.errorLight, shape: BoxShape.circle),
-                  child: const Icon(Icons.error_outline_rounded, color: AppColors.error, size: 30),
+                  decoration: BoxDecoration(color: AppColors.errorLight, shape: BoxShape.circle),
+                  child: Icon(Icons.error_outline_rounded, color: AppColors.error, size: 30),
                 ),
                 const SizedBox(height: 16),
                 const Text('Failed to load notifications',
@@ -73,7 +73,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
               padding: const EdgeInsets.symmetric(vertical: 8),
               itemCount: notifications.length,
               separatorBuilder: (_, _) =>
-                  const Divider(height: 1, indent: 72, endIndent: 16, color: AppColors.divider),
+                  Divider(height: 1, indent: 72, endIndent: 16, color: AppColors.divider),
               itemBuilder: (context, index) => _NotifTile(
                 notification: notifications[index],
                 onTap: () => _onTap(notifications[index]),
@@ -146,7 +146,7 @@ class _NotifTile extends StatelessWidget {
                       if (isUnread)
                         Container(
                           width: 8, height: 8,
-                          decoration: const BoxDecoration(
+                          decoration: BoxDecoration(
                             color: AppColors.primary,
                             shape: BoxShape.circle,
                           ),
@@ -156,14 +156,14 @@ class _NotifTile extends StatelessWidget {
                   const SizedBox(height: 3),
                   Text(
                     notification.body,
-                    style: const TextStyle(fontSize: 13, color: AppColors.textSecondary, height: 1.4),
+                    style: TextStyle(fontSize: 13, color: AppColors.textSecondary, height: 1.4),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 6),
                   Text(
                     _formatTime(notification.createdAt),
-                    style: const TextStyle(fontSize: 11, color: AppColors.textHint),
+                    style: TextStyle(fontSize: 11, color: AppColors.textHint),
                   ),
                 ],
               ),
@@ -232,15 +232,15 @@ class _EmptyNotifications extends StatelessWidget {
                 gradient: AppColors.subtleGradient,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.notifications_off_rounded, size: 40, color: AppColors.primary),
+              child: Icon(Icons.notifications_off_rounded, size: 40, color: AppColors.primary),
             ),
             const SizedBox(height: 20),
-            const Text(
+            Text(
               'No notifications yet',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
             ),
             const SizedBox(height: 8),
-            const Text(
+            Text(
               'You\'ll be notified about proposals,\nmessages, and campaign updates here.',
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 14, color: AppColors.textSecondary, height: 1.5),
@@ -318,7 +318,7 @@ class NotificationBell extends ConsumerWidget {
         ),
         child: Stack(
           children: [
-            const Center(
+            Center(
               child: Icon(Icons.notifications_outlined, color: AppColors.textSecondary, size: 22),
             ),
             countAsync.when(
@@ -328,7 +328,7 @@ class NotificationBell extends ConsumerWidget {
                   top: 6, right: 6,
                   child: Container(
                     width: 16, height: 16,
-                    decoration: const BoxDecoration(
+                    decoration: BoxDecoration(
                       color: AppColors.error,
                       shape: BoxShape.circle,
                     ),

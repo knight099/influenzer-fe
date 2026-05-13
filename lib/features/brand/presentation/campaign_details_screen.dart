@@ -313,7 +313,7 @@ class _CampaignDetailsScreenState extends ConsumerState<CampaignDetailsScreen> {
                   shape: BoxShape.circle,
                   border: Border.all(color: AppColors.border),
                 ),
-                child: const Icon(Icons.arrow_back_ios_rounded, size: 16, color: AppColors.textPrimary),
+                child: Icon(Icons.arrow_back_ios_rounded, size: 16, color: AppColors.textPrimary),
               ),
               onPressed: () => context.pop(),
             ),
@@ -343,7 +343,7 @@ class _CampaignDetailsScreenState extends ConsumerState<CampaignDetailsScreen> {
                             Expanded(
                               child: Text(
                                 title,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 22,
                                   fontWeight: FontWeight.w800,
                                   color: AppColors.textPrimary,
@@ -416,7 +416,7 @@ class _CampaignDetailsScreenState extends ConsumerState<CampaignDetailsScreen> {
                   // Description
                   if (description.isNotEmpty) ...[
                     const SizedBox(height: 24),
-                    const Text(
+                    Text(
                       'About',
                       style: TextStyle(
                         fontSize: 16,
@@ -427,7 +427,7 @@ class _CampaignDetailsScreenState extends ConsumerState<CampaignDetailsScreen> {
                     const SizedBox(height: 8),
                     Text(
                       description,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 14,
                         color: AppColors.textSecondary,
                         height: 1.6,
@@ -438,7 +438,7 @@ class _CampaignDetailsScreenState extends ConsumerState<CampaignDetailsScreen> {
                   // Campaign Brief
                   if (requirements.isNotEmpty) ...[
                     const SizedBox(height: 24),
-                    const Text(
+                    Text(
                       'Campaign Brief',
                       style: TextStyle(
                         fontSize: 16,
@@ -477,7 +477,7 @@ class _CampaignDetailsScreenState extends ConsumerState<CampaignDetailsScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
+                      Text(
                         'Submissions',
                         style: TextStyle(
                           fontSize: 16,
@@ -487,7 +487,7 @@ class _CampaignDetailsScreenState extends ConsumerState<CampaignDetailsScreen> {
                       ),
                       GestureDetector(
                         onTap: _refreshSubmissions,
-                        child: const Row(
+                        child: Row(
                           children: [
                             Icon(Icons.refresh_rounded, size: 16, color: AppColors.textHint),
                             SizedBox(width: 4),
@@ -548,17 +548,17 @@ class _CampaignDetailsScreenState extends ConsumerState<CampaignDetailsScreen> {
                               color: Color(0xFFFFEBEE),
                               shape: BoxShape.circle,
                             ),
-                            child: const Icon(Icons.wifi_off_rounded, color: AppColors.error, size: 28),
+                            child: Icon(Icons.wifi_off_rounded, color: AppColors.error, size: 28),
                           ),
                           const SizedBox(height: 12),
-                          const Text('Failed to load submissions',
+                          Text('Failed to load submissions',
                               style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
                           const SizedBox(height: 6),
                           Text('${snapshot.error}',
                               textAlign: TextAlign.center,
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                              style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
                           const SizedBox(height: 16),
                           OutlinedButton.icon(
                             onPressed: _refreshSubmissions,
@@ -701,7 +701,7 @@ class _ManageCampaignSheetState extends ConsumerState<_ManageCampaignSheet> {
       expand: false,
       builder: (context, scrollController) {
         return Container(
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             color: AppColors.background,
             borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
           ),
@@ -720,7 +720,7 @@ class _ManageCampaignSheetState extends ConsumerState<_ManageCampaignSheet> {
                 padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
                 child: Row(
                   children: [
-                    const Text(
+                    Text(
                       'Manage Campaign',
                       style: TextStyle(
                         fontSize: 18,
@@ -775,7 +775,7 @@ class _ManageCampaignSheetState extends ConsumerState<_ManageCampaignSheet> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
+                          Text(
                             'Pay Approved Creator',
                             style: TextStyle(
                               fontSize: 14,
@@ -784,7 +784,7 @@ class _ManageCampaignSheetState extends ConsumerState<_ManageCampaignSheet> {
                             ),
                           ),
                           const SizedBox(height: 4),
-                          const Text(
+                          Text(
                             'Select an approved creator to send payment',
                             style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
                           ),
@@ -823,11 +823,11 @@ class _ManageCampaignSheetState extends ConsumerState<_ManageCampaignSheet> {
                                           color: AppColors.border,
                                           borderRadius: BorderRadius.circular(10),
                                         ),
-                                        child: const Icon(Icons.person_off_outlined,
+                                        child: Icon(Icons.person_off_outlined,
                                             size: 18, color: AppColors.textHint),
                                       ),
                                       const SizedBox(width: 12),
-                                      const Text(
+                                      Text(
                                         'No approved submissions yet',
                                         style: TextStyle(
                                           fontSize: 13,
@@ -872,7 +872,7 @@ class _ManageCampaignSheetState extends ConsumerState<_ManageCampaignSheet> {
                                           child: (avatar == null || avatar.isEmpty)
                                               ? Text(
                                                   name.isNotEmpty ? name[0].toUpperCase() : '?',
-                                                  style: const TextStyle(
+                                                  style: TextStyle(
                                                     fontWeight: FontWeight.bold,
                                                     color: AppColors.textPrimary,
                                                   ),
@@ -885,13 +885,13 @@ class _ManageCampaignSheetState extends ConsumerState<_ManageCampaignSheet> {
                                             crossAxisAlignment: CrossAxisAlignment.start,
                                             children: [
                                               Text(name,
-                                                  style: const TextStyle(
+                                                  style: TextStyle(
                                                     fontWeight: FontWeight.w600,
                                                     fontSize: 13,
                                                     color: AppColors.textPrimary,
                                                   )),
                                               Text('₹$bid · $status',
-                                                  style: const TextStyle(
+                                                  style: TextStyle(
                                                     fontSize: 11,
                                                     color: AppColors.textSecondary,
                                                   )),
@@ -1025,11 +1025,11 @@ class _SheetActionTile extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(subtitle,
-                      style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                      style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right_rounded, color: AppColors.textHint, size: 20),
+            Icon(Icons.chevron_right_rounded, color: AppColors.textHint, size: 20),
           ],
         ),
       ),
@@ -1067,7 +1067,7 @@ class _StatCard extends StatelessWidget {
             const SizedBox(height: 2),
             Text(
               label,
-              style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+              style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
             ),
           ],
         ),
@@ -1152,7 +1152,7 @@ class _BriefRow extends StatelessWidget {
           SizedBox(
             width: 100,
             child: Text(label,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 13,
                   color: AppColors.textHint,
                   fontWeight: FontWeight.w500,
@@ -1215,7 +1215,7 @@ class _SubmissionCard extends StatelessWidget {
                   child: (creatorAvatar == null || creatorAvatar.isEmpty)
                       ? Text(
                           creatorName.isNotEmpty ? creatorName[0].toUpperCase() : '?',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
                             color: AppColors.textPrimary,
@@ -1230,7 +1230,7 @@ class _SubmissionCard extends StatelessWidget {
                     children: [
                       Text(
                         creatorName,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontWeight: FontWeight.w700,
                           fontSize: 15,
                           color: AppColors.textPrimary,
@@ -1239,7 +1239,7 @@ class _SubmissionCard extends StatelessWidget {
                       const SizedBox(height: 2),
                       Text(
                         createdAt.isNotEmpty ? _formatDate(createdAt) : '',
-                        style: const TextStyle(fontSize: 12, color: AppColors.textHint),
+                        style: TextStyle(fontSize: 12, color: AppColors.textHint),
                       ),
                     ],
                   ),
@@ -1252,7 +1252,7 @@ class _SubmissionCard extends StatelessWidget {
                       const SizedBox(height: 4),
                       Text(
                         '₹$bidAmount',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w700,
                           color: AppColors.primary,
@@ -1338,10 +1338,10 @@ class _EmptySubmissions extends StatelessWidget {
                 gradient: AppColors.subtleGradient,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.inbox_rounded, size: 30, color: AppColors.primary),
+              child: Icon(Icons.inbox_rounded, size: 30, color: AppColors.primary),
             ),
             const SizedBox(height: 14),
-            const Text(
+            Text(
               'No submissions yet',
               style: TextStyle(
                 fontSize: 16,
@@ -1350,7 +1350,7 @@ class _EmptySubmissions extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 6),
-            const Text(
+            Text(
               'Creators who apply to this campaign\nwill appear here',
               textAlign: TextAlign.center,
               style: TextStyle(
@@ -1382,7 +1382,7 @@ class _SubmissionCardSkeleton extends StatelessWidget {
         children: [
           Container(
             width: 48, height: 48,
-            decoration: const BoxDecoration(color: AppColors.border, shape: BoxShape.circle),
+            decoration: BoxDecoration(color: AppColors.border, shape: BoxShape.circle),
           ),
           const SizedBox(width: 12),
           Expanded(

@@ -453,9 +453,9 @@ class _SocialStatsSectionState extends State<_SocialStatsSection> {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.bar_chart_rounded, size: 16, color: AppColors.primary),
+                Icon(Icons.bar_chart_rounded, size: 16, color: AppColors.primary),
                 const SizedBox(width: 6),
-                const Text('Social Stats',
+                Text('Social Stats',
                     style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.primary)),
                 const SizedBox(width: 4),
                 Icon(_expanded ? Icons.expand_less : Icons.expand_more,
@@ -558,7 +558,7 @@ class _PlatformRow extends StatelessWidget {
             const SizedBox(width: 8),
             Text(
               '· $secondaryValue $secondaryLabel',
-              style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+              style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
             ),
             if (onTap != null) ...[
               const SizedBox(width: 6),

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../../core/network/api_client.dart';
 import '../../../core/theme/app_colors.dart';
 import '../application/auth_controller.dart';
 import 'instagram_auth_webview.dart';
@@ -33,7 +34,7 @@ class SocialLinkScreen extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Text(
+                Text(
                   'Link your social profiles to get verified and find better work.',
                   style: TextStyle(fontSize: 16, color: AppColors.textSecondary),
                 ),
@@ -45,6 +46,12 @@ class SocialLinkScreen extends ConsumerWidget {
                   onTap: authState.isLoading
                       ? () {}
                       : () async {
+                          if (AuthTokenHolder.token == null) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Please log in first before linking social accounts')),
+                            );
+                            return;
+                          }
                           final result =
                               await Navigator.of(context).push<InstagramAuthResult>(
                             MaterialPageRoute(
@@ -59,7 +66,7 @@ class SocialLinkScreen extends ConsumerWidget {
                                 .connectSocial(
                               'instagram',
                               result!.code!,
-                              redirectUri: 'https://influenzer.onrender.com/callback/',
+                              redirectUri: 'https://qrdba2mpab.ap-south-1.awsapprunner.com/callback/',
                             );
                             if (context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
@@ -86,6 +93,12 @@ class SocialLinkScreen extends ConsumerWidget {
                   onTap: authState.isLoading
                       ? () {}
                       : () {
+                          if (AuthTokenHolder.token == null) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Please log in first before linking social accounts')),
+                            );
+                            return;
+                          }
                           if (!kIsWeb) {
                             ref.read(authControllerProvider.notifier).connectYouTube();
                           } else {

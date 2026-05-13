@@ -41,7 +41,7 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Column(
+                Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
@@ -70,7 +70,7 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(color: AppColors.border),
                     ),
-                    child: const Icon(Icons.refresh_rounded,
+                    child: Icon(Icons.refresh_rounded,
                         size: 18, color: AppColors.textSecondary),
                   ),
                 ),
@@ -104,15 +104,15 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
                           Container(
                             width: 64,
                             height: 64,
-                            decoration: const BoxDecoration(
+                            decoration: BoxDecoration(
                               color: AppColors.errorLight,
                               shape: BoxShape.circle,
                             ),
-                            child: const Icon(Icons.wifi_off_rounded,
+                            child: Icon(Icons.wifi_off_rounded,
                                 color: AppColors.error, size: 30),
                           ),
                           const SizedBox(height: 16),
-                          const Text(
+                          Text(
                             'Couldn\'t load messages',
                             style: TextStyle(
                                 fontSize: 16,
@@ -123,7 +123,7 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
                           Text(
                             '${snapshot.error}',
                             textAlign: TextAlign.center,
-                            style: const TextStyle(
+                            style: TextStyle(
                                 fontSize: 13, color: AppColors.textSecondary),
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
@@ -152,17 +152,17 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
                           Container(
                             width: 72,
                             height: 72,
-                            decoration: const BoxDecoration(
+                            decoration: BoxDecoration(
                               gradient: AppColors.subtleGradient,
                               shape: BoxShape.circle,
                             ),
-                            child: const Icon(
+                            child: Icon(
                                 Icons.chat_bubble_outline_rounded,
                                 size: 34,
                                 color: AppColors.primary),
                           ),
                           const SizedBox(height: 16),
-                          const Text(
+                          Text(
                             'No conversations yet',
                             style: TextStyle(
                               fontSize: 17,
@@ -171,7 +171,7 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
                             ),
                           ),
                           const SizedBox(height: 6),
-                          const Text(
+                          Text(
                             'Start a conversation by chatting\nwith a brand or creator',
                             textAlign: TextAlign.center,
                             style: TextStyle(
@@ -294,7 +294,7 @@ class _ConversationTile extends StatelessWidget {
                 children: [
                   Text(
                     name,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
                       color: AppColors.textPrimary,
@@ -327,11 +327,11 @@ class _ConversationTile extends StatelessWidget {
                 if (updatedAt != null && updatedAt.isNotEmpty)
                   Text(
                     _formatTime(updatedAt),
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontSize: 11, color: AppColors.textHint),
                   ),
                 const SizedBox(height: 4),
-                const Icon(Icons.chevron_right_rounded,
+                Icon(Icons.chevron_right_rounded,
                     size: 16, color: AppColors.textHint),
               ],
             ),
@@ -373,7 +373,7 @@ class _ConversationSkeleton extends StatelessWidget {
           Container(
             width: 50,
             height: 50,
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
                 color: AppColors.border, shape: BoxShape.circle),
           ),
           const SizedBox(width: 14),

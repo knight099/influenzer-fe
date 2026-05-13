@@ -1,71 +1,89 @@
 import 'package:flutter/material.dart';
 
+/// Aurora Glass — light + dark (getColabbb `globals.css`). [setBrightness] is driven from the app root from [ThemeMode].
 class AppColors {
-  // Primary brand gradient — violet to rose (brand identity)
-  static const Color primary = Color(0xFF7C3AED);
-  static const Color primaryLight = Color(0xFF1C1040); // Dark violet chip bg
-  static const Color secondary = Color(0xFFEC4899);
-  static const Color secondaryLight = Color(0xFF250B2B); // Dark rose chip bg
+  AppColors._();
 
-  // Dark glass backgrounds
-  static const Color background = Color(0xFF06060E);      // Near-black with purple soul
-  static const Color surface = Color(0xFF0E0E22);         // Dark surface for cards
-  static const Color surfaceVariant = Color(0xFF160E30);  // Purple-tinted variant
+  static Brightness _brightness = Brightness.dark;
+  static Brightness get brightness => _brightness;
+  static void setBrightness(Brightness b) {
+    _brightness = b;
+  }
 
-  // Glass surfaces (for BackdropFilter use)
-  static const Color glassCard = Color(0x0FFFFFFF);       // ~6% white
-  static const Color glassBorder = Color(0x1AFFFFFF);     // ~10% white border
-  static const Color glassOverlay = Color(0x0AFFFFFF);    // ~4% white overlay
+  static bool get _l => _brightness == Brightness.light;
 
-  // Text — high contrast for dark backgrounds
-  static const Color textPrimary = Color(0xFFEEEEFF);     // Near-white, slightly blue
-  static const Color textSecondary = Color(0xFF9898BB);   // Muted lavender
-  static const Color textHint = Color(0xFF5C5C7F);        // Subtle purple-grey
+  static Color get primary => _l ? const Color(0xFF5847E8) : const Color(0xFF8F7DFF);
+  static Color get primaryVivid => _l ? const Color(0xFF5847E8) : const Color(0xFF6A55FF);
+  static Color get primaryLight => _l ? const Color(0xFFE0D9FF) : const Color(0xFF2A2447);
+  static Color get secondary => const Color(0xFF8FD4C1);
+  static Color get secondaryLight => _l ? const Color(0xFFD4F2E8) : const Color(0xFF152E32);
 
-  // Status — vibrant on dark
-  static const Color success = Color(0xFF10B981);
-  static const Color successLight = Color(0xFF071A0E);    // Dark green tint
-  static const Color warning = Color(0xFFF59E0B);
-  static const Color warningLight = Color(0xFF1E1505);    // Dark amber tint
-  static const Color error = Color(0xFFEF4444);
-  static const Color errorLight = Color(0xFF1F0808);      // Dark red tint
+  static Color get background => _l ? const Color(0xFFF2EFFA) : const Color(0xFF0B0A1A);
+  static Color get background2 => _l ? const Color(0xFFE6E1F5) : const Color(0xFF12102A);
 
-  // Platform colors
-  static const Color instagram = Color(0xFFE1306C);
-  static const Color instagramLight = Color(0xFF220010);  // Dark instagram tint
+  static Color get surface => _l ? const Color(0xFAFFFFFF) : const Color(0xFA231E41);
+  static Color get surfaceSolid => _l ? const Color(0xFFFCFAFF) : const Color(0xFF231E41);
+  static Color get surfaceVariant => _l ? const Color(0xFFF0EBF8) : const Color(0xFF2A2452);
+
+  static Color get glassCard => _l ? const Color(0x8CFFFFFF) : const Color(0x8C1E1937);
+  static Color get glassBorder => _l ? const Color(0x4DFFFFFF) : const Color(0x1AFFFFFF);
+  static Color get glassOverlay => _l ? const Color(0x0D131326) : const Color(0x0DFFFFFF);
+
+  static Color get textPrimary => _l ? const Color(0xFF131326) : const Color(0xFFEEE8FF);
+  static Color get textSecondary => _l ? const Color(0xB3131926) : const Color(0xFFB8B5C8);
+  static Color get textHint => _l ? const Color(0x73131926) : const Color(0xFF6A6788);
+
+  static Color get success => _l ? const Color(0xFF059669) : const Color(0xFF34D399);
+  static Color get successLight => _l ? const Color(0xFFD1FAE5) : const Color(0xFF0D1F16);
+  static Color get warning => const Color(0xFFFBBF24);
+  static Color get warningLight => _l ? const Color(0xFFFEF3C7) : const Color(0xFF1E1505);
+  static Color get error => _l ? const Color(0xFFDC2626) : const Color(0xFFF87171);
+  static Color get errorLight => _l ? const Color(0xFFFEE2E2) : const Color(0xFF1F0A0A);
+
+  static Color get instagram => const Color(0xFFE1306C);
+  static Color get instagramLight => _l ? const Color(0xFFFCE7EF) : const Color(0xFF220010);
   static const Color youtube = Color(0xFFFF0000);
-  static const Color youtubeLight = Color(0xFF1F0000);    // Dark youtube tint
+  static Color get youtubeLight => _l ? const Color(0xFFFFE4E4) : const Color(0xFF1F0000);
 
-  // Divider & border — subtle white lines on dark
-  static const Color border = Color(0x1AFFFFFF);          // 10% white
-  static const Color divider = Color(0x0DFFFFFF);         // 5% white
+  static Color get border => _l ? const Color(0x1A131326) : const Color(0x1AFFFFFF);
+  static Color get divider => _l ? const Color(0x14131926) : const Color(0x0DFFFFFF);
 
-  // Gradient presets
-  static const LinearGradient brandGradient = LinearGradient(
-    colors: [Color(0xFF7C3AED), Color(0xFFEC4899)],
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-  );
+  static Color get blobViolet => _l ? const Color(0xFF9B8BFF) : const Color(0xFF6A55FF);
+  static Color get blobTeal => _l ? const Color(0xFF8FD4C1) : const Color(0xFF2A5A6A);
+  static Color get blobIndigo => _l ? const Color(0xFFC4B0FF) : const Color(0xFF2A2470);
+  static Color get blobSoft => _l ? const Color(0xFFD9D0F0) : const Color(0xFFC4B0FF);
 
-  static const LinearGradient brandGradientVertical = LinearGradient(
-    colors: [Color(0xFF7C3AED), Color(0xFFEC4899)],
-    begin: Alignment.topCenter,
-    end: Alignment.bottomCenter,
-  );
+  static LinearGradient get brandGradient => LinearGradient(
+        colors: _l
+            ? const [Color(0xFF5847E8), Color(0xFF8F7DFF), Color(0xFF8FD4C1)]
+            : const [Color(0xFF6A55FF), Color(0xFF8F7DFF), Color(0xFF8FD4C1)],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      );
 
-  // Dark subtle gradient for empty icon containers
-  static const LinearGradient subtleGradient = LinearGradient(
-    colors: [Color(0xFF1A1040), Color(0xFF2A0E40)],
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-  );
+  static LinearGradient get brandGradientVertical => LinearGradient(
+        colors: _l
+            ? const [Color(0xFF5847E8), Color(0xFF8F7DFF), Color(0xFF8FD4C1)]
+            : const [Color(0xFF6A55FF), Color(0xFF8F7DFF), Color(0xFF8FD4C1)],
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+      );
 
-  // App background gradient (subtle depth)
-  static const LinearGradient backgroundGradient = LinearGradient(
-    colors: [Color(0xFF060612), Color(0xFF0E0824)],
-    begin: Alignment.topCenter,
-    end: Alignment.bottomCenter,
-  );
+  static LinearGradient get subtleGradient => LinearGradient(
+        colors: _l
+            ? const [Color(0xFFE6E1F5), Color(0xFFD9D0F0)]
+            : const [Color(0xFF1A1640), Color(0xFF2A2470)],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      );
+
+  static LinearGradient get backgroundGradient => LinearGradient(
+        colors: _l
+            ? const [Color(0xFFF2EFFA), Color(0xFFE6E1F5), Color(0xFFF2EFFA)]
+            : const [Color(0xFF0B0A1A), Color(0xFF12102A), Color(0xFF0B0A1A)],
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+      );
 
   static const LinearGradient youtubeGradient = LinearGradient(
     colors: [Color(0xFFFF0000), Color(0xFFFF6B6B)],
@@ -79,10 +97,11 @@ class AppColors {
     end: Alignment.bottomRight,
   );
 
-  // Selected nav item gradient overlay (15% opacity)
-  static const LinearGradient navSelectedGradient = LinearGradient(
-    colors: [Color(0x267C3AED), Color(0x26EC4899)],
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-  );
+  static LinearGradient get navSelectedGradient => LinearGradient(
+        colors: _l
+            ? const [Color(0x405847E8), Color(0x408FD4C1)]
+            : const [Color(0x268F7DFF), Color(0x268FD4C1)],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      );
 }

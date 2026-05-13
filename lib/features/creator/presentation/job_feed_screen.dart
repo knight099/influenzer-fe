@@ -78,7 +78,7 @@ class _JobFeedScreenState extends ConsumerState<JobFeedScreen> {
                           profileAsync.when(
                             data: (p) => Text(
                               'Hello, ${p.name?.split(' ').first ?? 'Creator'} 👋',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.textPrimary,
                               ),
                             ),
@@ -89,7 +89,7 @@ class _JobFeedScreenState extends ConsumerState<JobFeedScreen> {
                             ),
                           ),
                           const SizedBox(height: 4),
-                          const Text(
+                          Text(
                             'Discover your next collab',
                             style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
                           ),
@@ -136,10 +136,10 @@ class _JobFeedScreenState extends ConsumerState<JobFeedScreen> {
                         Expanded(
                           child: TextField(
                             controller: _searchController,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 14, color: AppColors.textPrimary,
                             ),
-                            decoration: const InputDecoration(
+                            decoration: InputDecoration(
                               hintText: 'Search jobs, brands...',
                               hintStyle: TextStyle(color: AppColors.textHint, fontSize: 14),
                               border: InputBorder.none,
@@ -152,7 +152,7 @@ class _JobFeedScreenState extends ConsumerState<JobFeedScreen> {
                         if (_searchQuery.isNotEmpty)
                           GestureDetector(
                             onTap: () => _searchController.clear(),
-                            child: const Padding(
+                            child: Padding(
                               padding: EdgeInsets.symmetric(horizontal: 12),
                               child: Icon(Icons.close_rounded, size: 18, color: AppColors.textHint),
                             ),
@@ -219,7 +219,7 @@ class _JobFeedScreenState extends ConsumerState<JobFeedScreen> {
                     children: [
                       Text(
                         _searchQuery.isNotEmpty ? 'Search results' : 'Recommended for you',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary,
                         ),
                       ),
@@ -236,7 +236,7 @@ class _JobFeedScreenState extends ConsumerState<JobFeedScreen> {
                             ),
                             child: Text(
                               '$count job${count == 1 ? '' : 's'}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 12,
                                 color: AppColors.primary,
                                 fontWeight: FontWeight.w600,
@@ -284,10 +284,10 @@ class _JobFeedScreenState extends ConsumerState<JobFeedScreen> {
                             color: AppColors.errorLight,
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(Icons.wifi_off_rounded, color: AppColors.error, size: 30),
+                          child: Icon(Icons.wifi_off_rounded, color: AppColors.error, size: 30),
                         ),
                         const SizedBox(height: 16),
-                        const Text(
+                        Text(
                           'Couldn\'t load jobs',
                           style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
                         ),
@@ -295,7 +295,7 @@ class _JobFeedScreenState extends ConsumerState<JobFeedScreen> {
                         Text(
                           '${snapshot.error}',
                           textAlign: TextAlign.center,
-                          style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                          style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -322,16 +322,16 @@ class _JobFeedScreenState extends ConsumerState<JobFeedScreen> {
                       children: [
                         Container(
                           width: 72, height: 72,
-                          decoration: const BoxDecoration(
+                          decoration: BoxDecoration(
                             gradient: AppColors.navSelectedGradient,
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(Icons.search_off_rounded, size: 34, color: AppColors.primary),
+                          child: Icon(Icons.search_off_rounded, size: 34, color: AppColors.primary),
                         ),
                         const SizedBox(height: 16),
                         Text(
                           _searchQuery.isNotEmpty ? 'No results found' : 'No jobs found',
-                          style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                          style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
                         ),
                         const SizedBox(height: 6),
                         Text(
@@ -339,7 +339,7 @@ class _JobFeedScreenState extends ConsumerState<JobFeedScreen> {
                               ? 'Try a different keyword or clear the search'
                               : 'Try a different filter or\ncheck back later',
                           textAlign: TextAlign.center,
-                          style: const TextStyle(fontSize: 13, color: AppColors.textSecondary, height: 1.5),
+                          style: TextStyle(fontSize: 13, color: AppColors.textSecondary, height: 1.5),
                         ),
                         if (_searchQuery.isNotEmpty) ...[
                           const SizedBox(height: 16),

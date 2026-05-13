@@ -73,7 +73,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Icon(Icons.lock_outline, size: 64, color: AppColors.primary),
+            Icon(Icons.lock_outline, size: 64, color: AppColors.primary),
             const SizedBox(height: 24),
             const Text(
               'Escrow Deposit',

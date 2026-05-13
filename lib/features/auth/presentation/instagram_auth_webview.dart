@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import '../../../core/theme/app_colors.dart';
@@ -18,35 +19,41 @@ class InstagramAuthResult {
 class InstagramAuthWebView extends StatefulWidget {
   final String authUrl;
   final String redirectUri;
+  final String? expectedState;
 
   const InstagramAuthWebView({
     super.key,
     required this.authUrl,
     required this.redirectUri,
+    this.expectedState,
   });
 
   /// Convenience constructor that builds the Instagram OAuth URL.
   factory InstagramAuthWebView.instagram({Key? key}) {
     const clientId = '816744758013078';
-    const redirectUri = 'https://influenzer.onrender.com/callback/';
+    const redirectUri = 'https://qrdba2mpab.ap-south-1.awsapprunner.com/callback/';
     const scope =
         'instagram_business_basic,instagram_business_manage_messages,'
         'instagram_business_manage_comments,instagram_business_content_publish,'
         'instagram_business_manage_insights';
+
+    // Generate a random state nonce for CSRF protection
+    final random = Random.secure();
+    final stateNonce = 'instagram_${List.generate(16, (_) => random.nextInt(256).toRadixString(16).padLeft(2, '0')).join()}';
 
     final uri = Uri.https('www.instagram.com', '/oauth/authorize', {
       'client_id': clientId,
       'redirect_uri': redirectUri,
       'scope': scope,
       'response_type': 'code',
-      'state': 'instagram',
-      'force_reauth': 'true',
+      'state': stateNonce,
     });
 
     return InstagramAuthWebView(
       key: key,
       authUrl: uri.toString(),
       redirectUri: redirectUri,
+      expectedState: stateNonce,
     );
   }
 
@@ -82,6 +89,16 @@ class _InstagramAuthWebViewState extends State<InstagramAuthWebView> {
               final uri = Uri.parse(url);
               final code = uri.queryParameters['code'];
               final error = uri.queryParameters['error'];
+              final returnedState = uri.queryParameters['state'];
+
+              // Validate CSRF state nonce if we set one
+              if (widget.expectedState != null &&
+                  returnedState != widget.expectedState) {
+                Navigator.of(context).pop(
+                  const InstagramAuthResult.failure('State mismatch — possible CSRF attack'),
+                );
+                return NavigationDecision.prevent;
+              }
 
               if (code != null) {
                 Navigator.of(context).pop(InstagramAuthResult.success(code));
@@ -107,7 +124,7 @@ class _InstagramAuthWebViewState extends State<InstagramAuthWebView> {
         backgroundColor: AppColors.surface,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.close_rounded, color: AppColors.textPrimary),
+          icon: Icon(Icons.close_rounded, color: AppColors.textPrimary),
           onPressed: () => Navigator.of(context).pop(
             const InstagramAuthResult.failure('Cancelled'),
           ),
@@ -126,7 +143,7 @@ class _InstagramAuthWebViewState extends State<InstagramAuthWebView> {
               child: const Icon(Icons.camera_alt_rounded, size: 14, color: Colors.white),
             ),
             const SizedBox(width: 8),
-            const Text(
+            Text(
               'Connect Instagram',
               style: TextStyle(
                 fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary,
@@ -140,7 +157,7 @@ class _InstagramAuthWebViewState extends State<InstagramAuthWebView> {
                 preferredSize: const Size.fromHeight(3),
                 child: LinearProgressIndicator(
                   backgroundColor: AppColors.border,
-                  valueColor: const AlwaysStoppedAnimation(AppColors.instagram),
+                  valueColor: AlwaysStoppedAnimation(AppColors.instagram),
                   minHeight: 3,
                 ),
               )

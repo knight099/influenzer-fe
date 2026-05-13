@@ -127,7 +127,7 @@ class _SubscriptionPromptState extends ConsumerState<SubscriptionPrompt> {
             return Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.star_rounded, size: 64, color: AppColors.primary),
+                Icon(Icons.star_rounded, size: 64, color: AppColors.primary),
                 const SizedBox(height: 16),
                 Text(
                   'Upgrade to $name',
@@ -155,7 +155,7 @@ class _SubscriptionPromptState extends ConsumerState<SubscriptionPrompt> {
                     children: [
                       Text(
                         '${currency == 'INR' ? '₹' : currency} $amount',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 32,
                           fontWeight: FontWeight.bold,
                           color: AppColors.primary,
@@ -163,7 +163,7 @@ class _SubscriptionPromptState extends ConsumerState<SubscriptionPrompt> {
                       ),
                        Text(
                         '/$interval',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 16,
                           color: AppColors.textSecondary,
                           fontWeight: FontWeight.w600,

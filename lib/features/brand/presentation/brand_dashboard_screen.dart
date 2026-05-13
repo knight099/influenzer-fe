@@ -120,7 +120,7 @@ class _BrandHomeTab extends ConsumerWidget {
                           profileAsync.when(
                             data: (p) => Text(
                               'Hi, ${p.companyName ?? 'Brand'} 👋',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 22,
                                 fontWeight: FontWeight.w800,
                                 color: AppColors.textPrimary,
@@ -136,7 +136,7 @@ class _BrandHomeTab extends ConsumerWidget {
                             ),
                           ),
                           const SizedBox(height: 4),
-                          const Text(
+                          Text(
                             'Manage your campaigns',
                             style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
                           ),
@@ -324,7 +324,7 @@ class _CampaignCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(13),
                 border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
               ),
-              child: const Icon(Icons.campaign_rounded, color: AppColors.primary, size: 22),
+              child: Icon(Icons.campaign_rounded, color: AppColors.primary, size: 22),
             ),
             const SizedBox(width: 14),
             Expanded(
@@ -333,7 +333,7 @@ class _CampaignCard extends StatelessWidget {
                 children: [
                   Text(
                     campaign['title'] ?? 'Untitled Campaign',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.w600, fontSize: 15, color: AppColors.textPrimary,
                     ),
                     maxLines: 1,
@@ -342,14 +342,14 @@ class _CampaignCard extends StatelessWidget {
                   const SizedBox(height: 3),
                   Text(
                     'Budget: ₹${campaign['budget'] ?? 0}',
-                    style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                    style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
                   ),
                 ],
               ),
             ),
             _CampaignStatusChip(status: (campaign['status'] ?? 'OPEN').toString()),
             const SizedBox(width: 8),
-            const Icon(Icons.arrow_forward_ios_rounded, size: 13, color: AppColors.textHint),
+            Icon(Icons.arrow_forward_ios_rounded, size: 13, color: AppColors.textHint),
           ],
         ),
       ),
@@ -379,15 +379,15 @@ class _EmptyCampaigns extends StatelessWidget {
               shape: BoxShape.circle,
               border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
             ),
-            child: const Icon(Icons.campaign_outlined, size: 32, color: AppColors.primary),
+            child: Icon(Icons.campaign_outlined, size: 32, color: AppColors.primary),
           ),
           const SizedBox(height: 16),
-          const Text(
+          Text(
             'No campaigns yet',
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
           ),
           const SizedBox(height: 6),
-          const Text(
+          Text(
             'Create your first campaign\nto start reaching creators',
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 13, color: AppColors.textSecondary, height: 1.5),
@@ -433,9 +433,9 @@ class _ErrorCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          const Icon(Icons.error_outline_rounded, color: AppColors.error, size: 20),
+          Icon(Icons.error_outline_rounded, color: AppColors.error, size: 20),
           const SizedBox(width: 10),
-          Text(message, style: const TextStyle(color: AppColors.error, fontSize: 13)),
+          Text(message, style: TextStyle(color: AppColors.error, fontSize: 13)),
         ],
       ),
     );
@@ -455,7 +455,7 @@ class _SectionHeader extends StatelessWidget {
       children: [
         Text(
           title,
-          style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+          style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
         ),
         TextButton(
           onPressed: onViewAll,

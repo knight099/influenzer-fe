@@ -7,34 +7,40 @@ import 'package:firebase_core/firebase_core.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/app_colors.dart';
+import 'core/theme/theme_mode_provider.dart';
 import 'core/network/api_client.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   usePathUrlStrategy();
 
-  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-    statusBarColor: Colors.transparent,
-    statusBarIconBrightness: Brightness.light,
-    statusBarBrightness: Brightness.dark,
-    systemNavigationBarColor: AppColors.background,
-    systemNavigationBarIconBrightness: Brightness.light,
-  ));
+  final prefs = await SharedPreferences.getInstance();
+  await loadInitialThemeFromPrefs(prefs);
+  AppColors.setBrightness(brightnessFor(kInitialUserThemeMode));
+  _applySystemChrome();
 
-  // Initialize Firebase (requires google-services.json on Android)
   try {
     await Firebase.initializeApp();
   } catch (e) {
     debugPrint('[Firebase] Init skipped: $e');
   }
 
-  // Restore auth token from storage on app startup
   await _initializeAuth();
 
   runApp(const ProviderScope(child: InfluenzerApp()));
 }
 
-/// Initialize auth by restoring token from SharedPreferences
+void _applySystemChrome() {
+  final dark = AppColors.brightness == Brightness.dark;
+  SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+    statusBarColor: Colors.transparent,
+    statusBarIconBrightness: dark ? Brightness.light : Brightness.dark,
+    statusBarBrightness: dark ? Brightness.dark : Brightness.light,
+    systemNavigationBarColor: AppColors.background,
+    systemNavigationBarIconBrightness: dark ? Brightness.light : Brightness.dark,
+  ));
+}
+
 Future<void> _initializeAuth() async {
   try {
     final prefs = await SharedPreferences.getInstance();
@@ -54,13 +60,17 @@ class InfluenzerApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(goRouterProvider);
+    final mode = ref.watch(themeModeProvider);
+    AppColors.setBrightness(brightnessFor(mode));
+    WidgetsBinding.instance.addPostFrameCallback((_) => _applySystemChrome());
 
     return MaterialApp.router(
-      title: 'Influenzer',
-      theme: AppTheme.lightTheme,
+      title: 'GetColabb',
+      theme: AppTheme.auroraLight,
+      darkTheme: AppTheme.auroraDark,
+      themeMode: mode,
       routerConfig: router,
       debugShowCheckedModeBanner: false,
     );
   }
 }
-

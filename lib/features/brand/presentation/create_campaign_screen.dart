@@ -265,7 +265,7 @@ class _CreateCampaignScreenState extends ConsumerState<CreateCampaignScreen> {
                         padding: const EdgeInsets.symmetric(
                           horizontal: 24, vertical: 16,
                         ),
-                        side: const BorderSide(color: AppColors.border),
+                        side: BorderSide(color: AppColors.border),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
                         ),
@@ -359,7 +359,7 @@ class _StepBasics extends StatelessWidget {
               border: Border.all(color: AppColors.primary.withOpacity(0.15)),
             ),
             child: Row(
-              children: const [
+              children: [
                 Icon(Icons.lightbulb_outline_rounded,
                     color: AppColors.primary, size: 18),
                 SizedBox(width: 10),
@@ -733,7 +733,7 @@ class _StepReview extends StatelessWidget {
                           children: [
                             Text(
                               title.isEmpty ? 'Untitled Campaign' : title,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.w800,
                                 color: AppColors.textPrimary,
@@ -742,7 +742,7 @@ class _StepReview extends StatelessWidget {
                             const SizedBox(height: 4),
                             Text(
                               _platformLabel,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 13,
                                 color: AppColors.primary,
                                 fontWeight: FontWeight.w600,
@@ -832,7 +832,7 @@ class _StepReview extends StatelessWidget {
               border: Border.all(color: Colors.green.withOpacity(0.2)),
             ),
             child: Row(
-              children: const [
+              children: [
                 Icon(Icons.notifications_active_outlined,
                     color: Colors.green, size: 18),
                 SizedBox(width: 10),
@@ -873,13 +873,13 @@ class _ReviewRow extends StatelessWidget {
           width: 90,
           child: Text(
             label,
-            style: const TextStyle(fontSize: 12, color: AppColors.textHint),
+            style: TextStyle(fontSize: 12, color: AppColors.textHint),
           ),
         ),
         Expanded(
           child: Text(
             value,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
               color: AppColors.textPrimary,
@@ -924,7 +924,7 @@ class _StepHeader extends StatelessWidget {
             children: [
               Text(
                 title,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w800,
                   color: AppColors.textPrimary,
@@ -932,7 +932,7 @@ class _StepHeader extends StatelessWidget {
               ),
               Text(
                 subtitle,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 13,
                   color: AppColors.textSecondary,
                 ),
@@ -955,7 +955,7 @@ class _FieldLabel extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 8),
       child: Text(
         text,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 13,
           fontWeight: FontWeight.w700,
           color: AppColors.textPrimary,
@@ -968,20 +968,20 @@ class _FieldLabel extends StatelessWidget {
 InputDecoration _inputDeco(String hint) {
   return InputDecoration(
     hintText: hint,
-    hintStyle: const TextStyle(color: AppColors.textHint, fontSize: 14),
+    hintStyle: TextStyle(color: AppColors.textHint, fontSize: 14),
     filled: true,
     fillColor: AppColors.surface,
     border: OutlineInputBorder(
       borderRadius: BorderRadius.circular(14),
-      borderSide: const BorderSide(color: AppColors.border),
+      borderSide: BorderSide(color: AppColors.border),
     ),
     enabledBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(14),
-      borderSide: const BorderSide(color: AppColors.border),
+      borderSide: BorderSide(color: AppColors.border),
     ),
     focusedBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(14),
-      borderSide: const BorderSide(color: AppColors.primary, width: 2),
+      borderSide: BorderSide(color: AppColors.primary, width: 2),
     ),
     contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
   );

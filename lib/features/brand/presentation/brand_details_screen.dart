@@ -69,7 +69,7 @@ class _BrandDetailsScreenState extends ConsumerState<BrandDetailsScreen> {
             flexibleSpace: FlexibleSpaceBar(
               collapseMode: CollapseMode.parallax,
               background: Container(
-                decoration: const BoxDecoration(gradient: AppColors.brandGradient),
+                decoration: BoxDecoration(gradient: AppColors.brandGradient),
                 child: Stack(
                   children: [
                     Positioned(
@@ -153,9 +153,9 @@ class _BrandDetailsScreenState extends ConsumerState<BrandDetailsScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.error_outline_rounded, color: AppColors.error, size: 40),
+                    Icon(Icons.error_outline_rounded, color: AppColors.error, size: 40),
                     const SizedBox(height: 12),
-                    const Text('Failed to load brand', style: TextStyle(color: AppColors.textSecondary)),
+                    Text('Failed to load brand', style: TextStyle(color: AppColors.textSecondary)),
                     const SizedBox(height: 12),
                     ElevatedButton(onPressed: _load, child: const Text('Retry')),
                   ],
@@ -187,7 +187,7 @@ class _BrandDetailsScreenState extends ConsumerState<BrandDetailsScreen> {
         _card([
           Padding(
             padding: const EdgeInsets.all(16),
-            child: Text(desc, style: const TextStyle(fontSize: 14, color: AppColors.textSecondary, height: 1.65)),
+            child: Text(desc, style: TextStyle(fontSize: 14, color: AppColors.textSecondary, height: 1.65)),
           ),
         ]),
         const SizedBox(height: 20),
@@ -278,7 +278,7 @@ class _BrandDetailsScreenState extends ConsumerState<BrandDetailsScreen> {
       padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
       child: Text(
         label,
-        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textHint, letterSpacing: 0.8),
+        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textHint, letterSpacing: 0.8),
       ),
     );
   }
@@ -300,7 +300,7 @@ class _BrandDetailsScreenState extends ConsumerState<BrandDetailsScreen> {
   Widget _detailRow(IconData icon, Color color, String label, String value, bool divider) {
     return Column(
       children: [
-        if (divider) const Divider(height: 1, indent: 16, endIndent: 16, color: AppColors.divider),
+        if (divider) Divider(height: 1, indent: 16, endIndent: 16, color: AppColors.divider),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           child: Row(
@@ -314,9 +314,9 @@ class _BrandDetailsScreenState extends ConsumerState<BrandDetailsScreen> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(label, style: const TextStyle(fontSize: 11, color: AppColors.textSecondary, fontWeight: FontWeight.w500)),
+                  Text(label, style: TextStyle(fontSize: 11, color: AppColors.textSecondary, fontWeight: FontWeight.w500)),
                   const SizedBox(height: 2),
-                  Text(value, style: const TextStyle(fontSize: 14, color: AppColors.textPrimary, fontWeight: FontWeight.w600)),
+                  Text(value, style: TextStyle(fontSize: 14, color: AppColors.textPrimary, fontWeight: FontWeight.w600)),
                 ],
               ),
             ],
@@ -330,7 +330,7 @@ class _BrandDetailsScreenState extends ConsumerState<BrandDetailsScreen> {
     final tags = value.split(',').map((t) => t.trim()).where((t) => t.isNotEmpty).toList();
     return Column(
       children: [
-        if (divider) const Divider(height: 1, indent: 16, endIndent: 16, color: AppColors.divider),
+        if (divider) Divider(height: 1, indent: 16, endIndent: 16, color: AppColors.divider),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           child: Row(
@@ -346,7 +346,7 @@ class _BrandDetailsScreenState extends ConsumerState<BrandDetailsScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(label, style: const TextStyle(fontSize: 11, color: AppColors.textSecondary, fontWeight: FontWeight.w500)),
+                    Text(label, style: TextStyle(fontSize: 11, color: AppColors.textSecondary, fontWeight: FontWeight.w500)),
                     const SizedBox(height: 6),
                     Wrap(
                       spacing: 6,
@@ -374,7 +374,7 @@ class _BrandDetailsScreenState extends ConsumerState<BrandDetailsScreen> {
   Widget _linkRow(IconData icon, Color color, String label, String url, bool showDivider) {
     return Column(
       children: [
-        if (showDivider) const Divider(height: 1, indent: 16, endIndent: 16, color: AppColors.divider),
+        if (showDivider) Divider(height: 1, indent: 16, endIndent: 16, color: AppColors.divider),
         InkWell(
           onTap: () async {
             String target = url;
@@ -401,7 +401,7 @@ class _BrandDetailsScreenState extends ConsumerState<BrandDetailsScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(label, style: const TextStyle(fontSize: 11, color: AppColors.textSecondary, fontWeight: FontWeight.w500)),
+                      Text(label, style: TextStyle(fontSize: 11, color: AppColors.textSecondary, fontWeight: FontWeight.w500)),
                       const SizedBox(height: 2),
                       Text(
                         url,

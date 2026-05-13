@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:influenzer_app/features/auth/application/auth_controller.dart';
+import 'package:influenzer_app/core/network/mock_config.dart';
+import 'package:influenzer_app/core/network/api_client.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../notifications/data/notification_repository.dart';
 import '../../notifications/notification_service.dart';
@@ -13,6 +15,7 @@ class LoginScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authControllerProvider);
+    final useMockData = ref.watch(useMockDataProvider);
     final size = MediaQuery.of(context).size;
 
     return Scaffold(
@@ -59,7 +62,39 @@ class LoginScreen extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const SizedBox(height: 48),
+                  const SizedBox(height: 16),
+                  
+                  // Mock Mode Toggle
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Text(
+                        'Dev Mode',
+                        style: TextStyle(
+                          color: !useMockData ? AppColors.primary : AppColors.textHint,
+                          fontSize: 12,
+                          fontWeight: !useMockData ? FontWeight.bold : FontWeight.normal,
+                        ),
+                      ),
+                      Switch(
+                        value: useMockData,
+                        onChanged: (val) {
+                          ref.read(useMockDataProvider.notifier).setMock(val);
+                        },
+                        activeColor: AppColors.primary,
+                      ),
+                      Text(
+                        'Mock Mode',
+                        style: TextStyle(
+                          color: useMockData ? AppColors.primary : AppColors.textHint,
+                          fontSize: 12,
+                          fontWeight: useMockData ? FontWeight.bold : FontWeight.normal,
+                        ),
+                      ),
+                    ],
+                  ),
+                  
+                  const SizedBox(height: 8),
 
                   // Logo pill — glass style
                   ClipRRect(
@@ -82,17 +117,26 @@ class LoginScreen extends ConsumerWidget {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Container(
-                              width: 28, height: 28,
-                              decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.2),
-                                shape: BoxShape.circle,
+                            ClipOval(
+                              child: Image.asset(
+                                'lib/core/assets/images/aurora_brand_mark.png',
+                                width: 28,
+                                height: 28,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) => Container(
+                                  width: 28,
+                                  height: 28,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withValues(alpha: 0.2),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(Icons.groups_rounded, color: Colors.white, size: 18),
+                                ),
                               ),
-                              child: const Icon(Icons.bolt, color: Colors.white, size: 18),
                             ),
                             const SizedBox(width: 8),
                             const Text(
-                              'Influenzer',
+                              'GetColabb',
                               style: TextStyle(
                                 color: Colors.white,
                                 fontSize: 15,
@@ -170,28 +214,69 @@ class LoginScreen extends ConsumerWidget {
 
                   const Spacer(),
 
-                  // Google Sign-In button — glass with glow
-                  _GlassGoogleButton(
-                    isLoading: authState.isLoading,
-                    onPressed: () async {
-                      final userData = await ref
-                          .read(authControllerProvider.notifier)
-                          .signInWithGoogle();
-                      if (context.mounted && userData != null) {
-                        final notifRepo = ref.read(notificationRepositoryProvider);
-                        NotificationService.instance.init(notifRepo).ignore();
-
-                        final role = userData['role']?.toString().toUpperCase();
-                        if (role == 'BRAND') {
-                          context.go('/brand-dashboard');
-                        } else if (role == 'CREATOR') {
-                          context.go('/creator-dashboard');
-                        } else {
-                          context.go('/role-selection');
+                  if (useMockData) ...[
+                    // Mock Login Creator
+                    _GlassGoogleButton(
+                      isLoading: authState.isLoading,
+                      label: 'Login as Mock Creator',
+                      onPressed: () async {
+                        try {
+                          final dioClient = ref.read(dioProvider);
+                          final response = await dioClient.post('/auth/mock-login', data: {'role': 'CREATOR'});
+                          final data = response.data;
+                          if (data != null && data is Map<String, dynamic>) {
+                            AuthTokenHolder.setToken(data['token']);
+                            if (context.mounted) context.go('/creator-dashboard');
+                          }
+                        } catch (e) {
+                          debugPrint('Mock login error: $e');
                         }
-                      }
-                    },
-                  ),
+                      },
+                    ),
+                    const SizedBox(height: 14),
+                    // Mock Login Brand
+                    _GlassGoogleButton(
+                      isLoading: authState.isLoading,
+                      label: 'Login as Mock Brand',
+                      onPressed: () async {
+                        try {
+                          final dioClient = ref.read(dioProvider);
+                          final response = await dioClient.post('/auth/mock-login', data: {'role': 'BRAND'});
+                          final data = response.data;
+                          if (data != null && data is Map<String, dynamic>) {
+                            AuthTokenHolder.setToken(data['token']);
+                            if (context.mounted) context.go('/brand-dashboard');
+                          }
+                        } catch (e) {
+                          debugPrint('Mock login error: $e');
+                        }
+                      },
+                    ),
+                  ] else ...[
+                    // Google Sign-In button — glass with glow
+                    _GlassGoogleButton(
+                      isLoading: authState.isLoading,
+                      label: 'Continue with Google',
+                      onPressed: () async {
+                        final userData = await ref
+                            .read(authControllerProvider.notifier)
+                            .signInWithGoogle();
+                        if (context.mounted && userData != null) {
+                          final notifRepo = ref.read(notificationRepositoryProvider);
+                          NotificationService.instance.init(notifRepo).ignore();
+
+                          final role = userData['role']?.toString().toUpperCase();
+                          if (role == 'BRAND') {
+                            context.go('/brand-dashboard');
+                          } else if (role == 'CREATOR') {
+                            context.go('/creator-dashboard');
+                          } else {
+                            context.go('/role-selection');
+                          }
+                        }
+                      },
+                    ),
+                  ],
 
                   const SizedBox(height: 14),
 
@@ -292,7 +377,7 @@ class _GlassProofChip extends StatelessWidget {
               const SizedBox(width: 5),
               Text(
                 label,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
                   color: AppColors.textPrimary,
@@ -308,9 +393,10 @@ class _GlassProofChip extends StatelessWidget {
 
 class _GlassGoogleButton extends StatelessWidget {
   final bool isLoading;
+  final String label;
   final VoidCallback onPressed;
 
-  const _GlassGoogleButton({required this.isLoading, required this.onPressed});
+  const _GlassGoogleButton({required this.isLoading, this.label = 'Continue with Google', required this.onPressed});
 
   @override
   Widget build(BuildContext context) {
@@ -360,8 +446,8 @@ class _GlassGoogleButton extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(width: 12),
-                        const Text(
-                          'Continue with Google',
+                        Text(
+                          label,
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,

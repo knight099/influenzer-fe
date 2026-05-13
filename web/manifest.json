@@ -1,11 +1,11 @@
 {
-    "name": "influenzer_app",
-    "short_name": "influenzer_app",
+    "name": "GetColabb",
+    "short_name": "GetColabb",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#0B0A1A",
+    "theme_color": "#8F7DFF",
+    "description": "Where brands meet creators — Aurora",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

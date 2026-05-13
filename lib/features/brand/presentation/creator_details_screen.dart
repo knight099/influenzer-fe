@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/utils/num_utils.dart';
 import '../data/campaign_repository.dart';
+import '../../creator/presentation/widgets/analytics_dashboard.dart';
 import '../../creator/data/creator_repository.dart';
 
 class CreatorDetailsScreen extends ConsumerStatefulWidget {
@@ -38,7 +40,8 @@ class _CreatorDetailsScreenState extends ConsumerState<CreatorDetailsScreen> {
   @override
   Widget build(BuildContext context) {
     final creator = widget.creator;
-    final name = creator['name'] ?? 'Unknown Creator';
+    final name = (creator['name']?.toString().isNotEmpty == true)
+        ? creator['name'].toString() : 'Unknown Creator';
     final niche = (creator['niche']?.toString().trim().isNotEmpty == true)
         ? creator['niche'].toString() : 'Creator';
     final city = creator['city']?.toString() ?? '';
@@ -53,24 +56,27 @@ class _CreatorDetailsScreenState extends ConsumerState<CreatorDetailsScreen> {
 
     final instagramUsername = creator['instagram_username'];
     final instagramUrl = creator['instagram_url'];
-    final instagramFollowers = creator['instagram_followers'] ?? 0;
-    final instFollowers = instagramFollowers is int
-        ? instagramFollowers : int.tryParse(instagramFollowers.toString()) ?? 0;
+    final instFollowers = toInt(creator['instagram_followers']);
 
     final youtubeChannelTitle = creator['youtube_channel_title'];
     final youtubeUrl = creator['youtube_url'];
-    final ytSubscribers = int.tryParse(creator['youtube_subscribers']?.toString() ?? '0') ?? 0;
+    final ytSubscribers = toInt(creator['youtube_subscribers']);
 
     final instagramMediaCount = creator['cached_stats']?['instagram']?['media_count'];
     final youtubeVideoCount = creator['cached_stats']?['youtube']?['video_count'];
 
-    String? avatarUrl = creator['avatar_url'];
-    if (creator['cached_stats'] != null) {
-      final cs = creator['cached_stats'];
-      avatarUrl = cs['instagram']?['profile_picture'] ?? cs['youtube']?['thumbnail'] ?? avatarUrl;
+    String? avatarUrl = isNonEmptyString(creator['avatar_url'])
+        ? creator['avatar_url'] as String : null;
+    final cs = creator['cached_stats'];
+    if (cs is Map) {
+      final ig = cs['instagram'];
+      final yt = cs['youtube'];
+      final candidate = (ig is Map ? ig['profile_picture'] : null) ??
+          (yt is Map ? yt['thumbnail'] : null);
+      if (isNonEmptyString(candidate)) avatarUrl = candidate as String;
     }
 
-    final minBudget = creator['min_budget'] ?? 0;
+    final minBudget = toInt(creator['min_budget']);
     final hasBoth = instagramUsername != null && youtubeChannelTitle != null;
     final creatorId = creator['id']?.toString() ?? '';
 
@@ -116,7 +122,7 @@ class _CreatorDetailsScreenState extends ConsumerState<CreatorDetailsScreen> {
             flexibleSpace: FlexibleSpaceBar(
               collapseMode: CollapseMode.parallax,
               background: Container(
-                decoration: const BoxDecoration(gradient: AppColors.brandGradient),
+                decoration: BoxDecoration(gradient: AppColors.brandGradient),
                 child: SafeArea(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -152,7 +158,7 @@ class _CreatorDetailsScreenState extends ConsumerState<CreatorDetailsScreen> {
                                   borderRadius: BorderRadius.circular(8),
                                   boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.15), blurRadius: 4)],
                                 ),
-                                child: const Text('Multi', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: AppColors.primary)),
+                                child: Text('Multi', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: AppColors.primary)),
                               ),
                             ),
                         ],
@@ -231,7 +237,7 @@ class _CreatorDetailsScreenState extends ConsumerState<CreatorDetailsScreen> {
                   // ── Analytics Dashboard ──────────────────────────────────
                   _SectionHeader(label: 'Performance Analytics'),
                   const SizedBox(height: 12),
-                  _AnalyticsDashboard(
+                  AnalyticsDashboard(
                     analytics: _analytics,
                     loading: _analyticsLoading,
                     igFollowers: instFollowers,
@@ -252,7 +258,7 @@ class _CreatorDetailsScreenState extends ConsumerState<CreatorDetailsScreen> {
                         border: Border.all(color: AppColors.border),
                       ),
                       child: Text(bio,
-                        style: const TextStyle(fontSize: 14, color: AppColors.textSecondary, height: 1.6)),
+                        style: TextStyle(fontSize: 14, color: AppColors.textSecondary, height: 1.6)),
                     ),
                   ],
 
@@ -354,9 +360,9 @@ class _CreatorDetailsScreenState extends ConsumerState<CreatorDetailsScreen> {
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      const Icon(Icons.business_rounded, size: 12, color: AppColors.primary),
+                                      Icon(Icons.business_rounded, size: 12, color: AppColors.primary),
                                       const SizedBox(width: 5),
-                                      Text(b, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.primary)),
+                                      Text(b, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.primary)),
                                     ],
                                   ),
                                 ))
@@ -389,12 +395,12 @@ class _CreatorDetailsScreenState extends ConsumerState<CreatorDetailsScreen> {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Row(children: [
-                                  const Icon(Icons.receipt_long_rounded, size: 14, color: AppColors.textHint),
+                                  Icon(Icons.receipt_long_rounded, size: 14, color: AppColors.textHint),
                                   const SizedBox(width: 8),
-                                  Text(label, style: const TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+                                  Text(label, style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
                                 ]),
                                 Text('\u20B9$amount',
-                                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
                               ],
                             ),
                           );
@@ -443,7 +449,7 @@ class _CreatorDetailsScreenState extends ConsumerState<CreatorDetailsScreen> {
                             child: Row(mainAxisSize: MainAxisSize.min, children: [
                               Icon(icon, size: 14, color: AppColors.primary),
                               const SizedBox(width: 6),
-                              Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+                              Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
                             ]),
                           ),
                         );
@@ -755,7 +761,7 @@ class _PerfStatTile extends StatelessWidget {
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: color)),
           const SizedBox(height: 2),
           Text(label,
-              style: const TextStyle(fontSize: 10, color: AppColors.textHint),
+              style: TextStyle(fontSize: 10, color: AppColors.textHint),
               textAlign: TextAlign.center),
         ],
       ),
@@ -789,7 +795,7 @@ class _AudienceDemographicsCard extends StatelessWidget {
         children: [
           // ── Age Split ──
           if (ageSplit != null && ageSplit.isNotEmpty) ...[
-            const _SectionLabel2(label: 'Age Distribution'),
+            const SectionLabel2(label: 'Age Distribution'),
             const SizedBox(height: 10),
             ...ageSplit.entries.map((e) {
               final pct = _toDouble(e.value);
@@ -801,7 +807,7 @@ class _AudienceDemographicsCard extends StatelessWidget {
                       width: 56,
                       child: Text(
                         e.key,
-                        style: const TextStyle(fontSize: 12, color: AppColors.textSecondary, fontWeight: FontWeight.w500),
+                        style: TextStyle(fontSize: 12, color: AppColors.textSecondary, fontWeight: FontWeight.w500),
                       ),
                     ),
                     Expanded(
@@ -832,7 +838,7 @@ class _AudienceDemographicsCard extends StatelessWidget {
                       width: 38,
                       child: Text(
                         '${pct.toStringAsFixed(0)}%',
-                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
                         textAlign: TextAlign.right,
                       ),
                     ),
@@ -845,7 +851,7 @@ class _AudienceDemographicsCard extends StatelessWidget {
           // ── Gender Split ──
           if (genderSplit != null && genderSplit.isNotEmpty) ...[
             if (ageSplit != null && ageSplit.isNotEmpty) const SizedBox(height: 16),
-            const _SectionLabel2(label: 'Gender Distribution'),
+            const SectionLabel2(label: 'Gender Distribution'),
             const SizedBox(height: 10),
             _GenderSplitBar(genderSplit: genderSplit),
           ],
@@ -855,7 +861,7 @@ class _AudienceDemographicsCard extends StatelessWidget {
             if ((ageSplit != null && ageSplit.isNotEmpty) ||
                 (genderSplit != null && genderSplit.isNotEmpty))
               const SizedBox(height: 16),
-            const _SectionLabel2(label: 'Top Cities'),
+            const SectionLabel2(label: 'Top Cities'),
             const SizedBox(height: 8),
             Wrap(
               spacing: 6, runSpacing: 6,
@@ -868,7 +874,7 @@ class _AudienceDemographicsCard extends StatelessWidget {
           // ── Top Countries ──
           if (topCountries != null && topCountries.isNotEmpty) ...[
             const SizedBox(height: 16),
-            const _SectionLabel2(label: 'Top Countries'),
+            const SectionLabel2(label: 'Top Countries'),
             const SizedBox(height: 8),
             Wrap(
               spacing: 6, runSpacing: 6,
@@ -959,7 +965,7 @@ class _GenderSplitBar extends StatelessWidget {
         const SizedBox(width: 4),
         Text(
           '$label $pct',
-          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.textSecondary),
+          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.textSecondary),
         ),
       ],
     );
@@ -1008,7 +1014,7 @@ class _PastWorkSection extends StatelessWidget {
                     color: AppColors.primary.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Icon(Icons.work_outline_rounded, size: 18, color: AppColors.primary),
+                  child: Icon(Icons.work_outline_rounded, size: 18, color: AppColors.primary),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -1018,20 +1024,20 @@ class _PastWorkSection extends StatelessWidget {
                       if (brandName.isNotEmpty)
                         Text(
                           brandName,
-                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
                         ),
                       if (deliverableType.isNotEmpty || platform.isNotEmpty) ...[
                         const SizedBox(height: 3),
                         Text(
                           [deliverableType, platform].where((s) => s.isNotEmpty).join(' \u2022 '),
-                          style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                          style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
                         ),
                       ],
                       if (date.isNotEmpty) ...[
                         const SizedBox(height: 2),
                         Text(
                           date,
-                          style: const TextStyle(fontSize: 11, color: AppColors.textHint),
+                          style: TextStyle(fontSize: 11, color: AppColors.textHint),
                         ),
                       ],
                     ],
@@ -1051,7 +1057,7 @@ class _PastWorkSection extends StatelessWidget {
                         color: AppColors.primary.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: const Icon(Icons.open_in_new_rounded, size: 14, color: AppColors.primary),
+                      child: Icon(Icons.open_in_new_rounded, size: 14, color: AppColors.primary),
                     ),
                   ),
               ],
@@ -1088,7 +1094,7 @@ class _CollaborationPrefsCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (preferredCategories != null && preferredCategories.isNotEmpty) ...[
-            const _SectionLabel2(label: 'Preferred Categories'),
+            const SectionLabel2(label: 'Preferred Categories'),
             const SizedBox(height: 8),
             Wrap(
               spacing: 6, runSpacing: 6,
@@ -1100,7 +1106,7 @@ class _CollaborationPrefsCard extends StatelessWidget {
           if (contentTypes != null && contentTypes.isNotEmpty) ...[
             if (preferredCategories != null && preferredCategories.isNotEmpty)
               const SizedBox(height: 14),
-            const _SectionLabel2(label: 'Content Types'),
+            const SectionLabel2(label: 'Content Types'),
             const SizedBox(height: 8),
             Wrap(
               spacing: 6, runSpacing: 6,
@@ -1165,566 +1171,7 @@ class _CollaborationPrefsCard extends StatelessWidget {
   }
 }
 
-// ── Analytics Dashboard ───────────────────────────────────────────────────────
 
-class _AnalyticsDashboard extends StatelessWidget {
-  final Map<String, dynamic>? analytics;
-  final bool loading;
-  final int igFollowers;
-  final int ytSubscribers;
-
-  const _AnalyticsDashboard({
-    this.analytics, required this.loading,
-    required this.igFollowers, required this.ytSubscribers,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    if (loading) {
-      return Container(
-        height: 120,
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.border),
-        ),
-        child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-      );
-    }
-
-    final igAnalytics = analytics?['instagram'] as Map<String, dynamic>?;
-    final ytAnalytics = analytics?['youtube'] as Map<String, dynamic>?;
-
-    if (igAnalytics == null && ytAnalytics == null) {
-      return _buildBasicStats();
-    }
-
-    return Column(
-      children: [
-        if (igAnalytics != null)
-          _PlatformAnalyticsCard(
-            platform: 'Instagram',
-            icon: Icons.camera_alt_rounded,
-            gradient: AppColors.instagramGradient,
-            color: AppColors.instagram,
-            followers: igFollowers,
-            analytics: igAnalytics,
-            tier: igAnalytics['tier']?.toString() ?? '\u2014',
-          ),
-        if (igAnalytics != null && ytAnalytics != null) const SizedBox(height: 12),
-        if (ytAnalytics != null)
-          _PlatformAnalyticsCard(
-            platform: 'YouTube',
-            icon: Icons.play_circle_rounded,
-            gradient: AppColors.youtubeGradient,
-            color: AppColors.youtube,
-            followers: ytSubscribers,
-            followersLabel: 'Subscribers',
-            analytics: ytAnalytics,
-            tier: ytAnalytics['tier']?.toString() ?? '\u2014',
-          ),
-      ],
-    );
-  }
-
-  Widget _buildBasicStats() {
-    final hasIG = igFollowers > 0;
-    final hasYT = ytSubscribers > 0;
-    if (!hasIG && !hasYT) {
-      return Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.border),
-        ),
-        child: const Row(
-          children: [
-            Icon(Icons.bar_chart_rounded, color: AppColors.textHint, size: 20),
-            SizedBox(width: 10),
-            Text('No social platforms connected yet',
-                style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
-          ],
-        ),
-      );
-    }
-    return Row(
-      children: [
-        if (hasIG)
-          Expanded(child: _SimpleStatBox(
-            label: 'IG Followers', value: _fmt(igFollowers),
-            color: AppColors.instagram, icon: Icons.camera_alt_rounded,
-          )),
-        if (hasIG && hasYT) const SizedBox(width: 12),
-        if (hasYT)
-          Expanded(child: _SimpleStatBox(
-            label: 'YT Subscribers', value: _fmt(ytSubscribers),
-            color: AppColors.youtube, icon: Icons.play_circle_rounded,
-          )),
-      ],
-    );
-  }
-
-  String _fmt(int n) {
-    if (n >= 1000000) return '${(n / 1000000).toStringAsFixed(1)}M';
-    if (n >= 1000) return '${(n / 1000).toStringAsFixed(1)}K';
-    return n.toString();
-  }
-}
-
-class _PlatformAnalyticsCard extends StatelessWidget {
-  final String platform;
-  final IconData icon;
-  final LinearGradient gradient;
-  final Color color;
-  final int followers;
-  final String followersLabel;
-  final Map<String, dynamic> analytics;
-  final String tier;
-
-  const _PlatformAnalyticsCard({
-    required this.platform, required this.icon, required this.gradient,
-    required this.color, required this.followers, required this.analytics,
-    required this.tier, this.followersLabel = 'Followers',
-  });
-
-  int _toInt(dynamic v) {
-    if (v == null) return 0;
-    if (v is int) return v;
-    return int.tryParse(v.toString()) ?? 0;
-  }
-
-  String _fmt(dynamic v) {
-    final n = _toInt(v);
-    if (n >= 1000000) return '${(n / 1000000).toStringAsFixed(1)}M';
-    if (n >= 1000) return '${(n / 1000).toStringAsFixed(1)}K';
-    if (n == 0) return '\u2014';
-    return n.toString();
-  }
-
-  Color _engColor(String rate) {
-    final r = double.tryParse(rate) ?? 0;
-    if (r >= 5) return AppColors.success;
-    if (r >= 2) return Colors.orange;
-    return AppColors.textHint;
-  }
-
-  // Format seconds as "M:SS" or "H:MM:SS"
-  String _fmtDuration(dynamic v) {
-    final secs = _toInt(v);
-    if (secs == 0) return '\u2014';
-    final h = secs ~/ 3600;
-    final m = (secs % 3600) ~/ 60;
-    final s = secs % 60;
-    if (h > 0) return '$h:${m.toString().padLeft(2,'0')}:${s.toString().padLeft(2,'0')}';
-    return '$m:${s.toString().padLeft(2,'0')}';
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final engRate = analytics['engagement_rate']?.toString() ?? '0';
-    final engColor = _engColor(engRate);
-    final isInstagram = platform == 'Instagram';
-
-    // Primary metrics
-    final avgViews = analytics['avg_views'];
-    final avgLikes = analytics['avg_likes'];
-    final avgComments = analytics['avg_comments'];
-
-    // Instagram-only
-    final avgShares = analytics['avg_shares'];
-    final avgSaves = analytics['avg_saves'];
-    final avgReach = analytics['avg_reach'];
-    final reach28d = analytics['reach_28d'];
-    final impressions28d = analytics['impressions_28d'];
-    final profileViews28d = analytics['profile_views_28d'];
-
-    // YouTube-only
-    final totalViews = analytics['total_views'];
-    final videoCount = analytics['video_count'];
-
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: color.withValues(alpha: 0.2)),
-        boxShadow: [BoxShadow(color: color.withValues(alpha: 0.06), blurRadius: 12, offset: const Offset(0, 4))],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // ── Header ──
-          Container(
-            padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [color.withValues(alpha: 0.1), color.withValues(alpha: 0.02)],
-                begin: Alignment.centerLeft, end: Alignment.centerRight,
-              ),
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 34, height: 34,
-                  decoration: BoxDecoration(gradient: gradient, borderRadius: BorderRadius.circular(10)),
-                  child: Icon(icon, color: Colors.white, size: 17),
-                ),
-                const SizedBox(width: 10),
-                Text(platform, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
-                const Spacer(),
-                _TierBadge(tier: tier, color: color),
-              ],
-            ),
-          ),
-
-          Padding(
-            padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
-            child: Column(
-              children: [
-                // ── Hero row: Followers + Engagement ──
-                Row(
-                  children: [
-                    Expanded(
-                      child: _HeroMetric(
-                        label: followersLabel,
-                        value: _fmt(followers),
-                        icon: Icons.people_rounded,
-                        color: color,
-                      ),
-                    ),
-                    Container(width: 1, height: 44, color: AppColors.divider),
-                    Expanded(
-                      child: _HeroMetric(
-                        label: 'Engagement',
-                        value: engRate == '0' ? '\u2014' : '$engRate%',
-                        icon: Icons.trending_up_rounded,
-                        color: engColor,
-                      ),
-                    ),
-                    if (!isInstagram) ...[
-                      Container(width: 1, height: 44, color: AppColors.divider),
-                      Expanded(
-                        child: _HeroMetric(
-                          label: 'Total Views',
-                          value: _fmt(totalViews),
-                          icon: Icons.visibility_rounded,
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-
-                const SizedBox(height: 12),
-                Divider(height: 1, color: AppColors.divider),
-                const SizedBox(height: 12),
-
-                // ── Per-post averages ──
-                _SectionLabel2(label: isInstagram ? 'Per Post Averages' : 'Per Video Averages'),
-                const SizedBox(height: 8),
-                _MetricGrid(
-                  metrics: [
-                    _MetricItem(label: 'Avg Views', value: _fmt(avgViews), icon: Icons.play_arrow_rounded, color: color),
-                    _MetricItem(label: 'Avg Likes', value: _fmt(avgLikes), icon: Icons.favorite_rounded, color: const Color(0xFFE91E63)),
-                    _MetricItem(label: 'Avg Comments', value: _fmt(avgComments), icon: Icons.comment_rounded, color: const Color(0xFF0EA5E9)),
-                    if (isInstagram) ...[
-                      _MetricItem(label: 'Avg Shares', value: _fmt(avgShares), icon: Icons.share_rounded, color: const Color(0xFF8B5CF6)),
-                      _MetricItem(label: 'Avg Saves', value: _fmt(avgSaves), icon: Icons.bookmark_rounded, color: const Color(0xFFF59E0B)),
-                      _MetricItem(label: 'Avg Reach', value: _fmt(avgReach), icon: Icons.radar_rounded, color: AppColors.success),
-                    ] else ...[
-                      _MetricItem(label: 'Avg Duration', value: _fmtDuration(analytics['avg_duration']), icon: Icons.timer_rounded, color: const Color(0xFF8B5CF6)),
-                      _MetricItem(label: 'Total Videos', value: _fmt(videoCount), icon: Icons.video_library_rounded, color: AppColors.youtube),
-                      _MetricItem(label: 'Total Views', value: _fmt(analytics['total_views']), icon: Icons.visibility_rounded, color: const Color(0xFF6366F1)),
-                    ],
-                  ],
-                ),
-
-                // ── 28-day account insights (Instagram only) ──
-                if (isInstagram && (reach28d != null || impressions28d != null || profileViews28d != null)) ...[
-                  const SizedBox(height: 12),
-                  Divider(height: 1, color: AppColors.divider),
-                  const SizedBox(height: 12),
-                  _SectionLabel2(label: 'Last 28 Days (Account)'),
-                  const SizedBox(height: 8),
-                  _MetricGrid(
-                    metrics: [
-                      if (reach28d != null)
-                        _MetricItem(label: 'Reach', value: _fmt(reach28d), icon: Icons.wifi_tethering_rounded, color: AppColors.instagram),
-                      if (impressions28d != null)
-                        _MetricItem(label: 'Impressions', value: _fmt(impressions28d), icon: Icons.remove_red_eye_rounded, color: const Color(0xFF6366F1)),
-                      if (profileViews28d != null)
-                        _MetricItem(label: 'Profile Views', value: _fmt(profileViews28d), icon: Icons.person_search_rounded, color: const Color(0xFF0EA5E9)),
-                    ],
-                  ),
-                ],
-
-                // ── YouTube Analytics API: 28-day data ──
-                if (!isInstagram) _YoutubeAnalytics28d(analytics: analytics, color: color),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ── YouTube 28-day Analytics section ─────────────────────────────────────────
-
-class _YoutubeAnalytics28d extends StatelessWidget {
-  final Map<String, dynamic> analytics;
-  final Color color;
-  const _YoutubeAnalytics28d({required this.analytics, required this.color});
-
-  String _fmt(dynamic v) {
-    if (v == null) return '\u2014';
-    double n;
-    if (v is double) n = v;
-    else if (v is int) n = v.toDouble();
-    else n = double.tryParse(v.toString()) ?? 0;
-    if (n == 0) return '\u2014';
-    if (n >= 1000000) return '${(n / 1000000).toStringAsFixed(1)}M';
-    if (n >= 1000) return '${(n / 1000).toStringAsFixed(1)}K';
-    return n.toStringAsFixed(0);
-  }
-
-  String _fmtHours(dynamic v) {
-    if (v == null) return '\u2014';
-    final mins = (v is double) ? v : double.tryParse(v.toString()) ?? 0.0;
-    if (mins == 0) return '\u2014';
-    final hours = mins / 60;
-    if (hours >= 1000) return '${(hours / 1000).toStringAsFixed(1)}Kh';
-    return '${hours.toStringAsFixed(0)}h';
-  }
-
-  String _fmtDur(dynamic v) {
-    if (v == null) return '\u2014';
-    final secs = (v is double) ? v.toInt() : (v is int ? v : int.tryParse(v.toString()) ?? 0);
-    if (secs == 0) return '\u2014';
-    final m = secs ~/ 60;
-    final s = secs % 60;
-    return '$m:${s.toString().padLeft(2, '0')}';
-  }
-
-  String _fmtPct(dynamic v) {
-    if (v == null) return '\u2014';
-    final pct = (v is double) ? v : double.tryParse(v.toString()) ?? 0.0;
-    if (pct == 0) return '\u2014';
-    return '${pct.toStringAsFixed(1)}%';
-  }
-
-  String _fmtCtr(dynamic v) {
-    if (v == null) return '\u2014';
-    final ctr = (v is double) ? v : double.tryParse(v.toString()) ?? 0.0;
-    if (ctr == 0) return '\u2014';
-    return '${(ctr * 100).toStringAsFixed(2)}%';
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final d = analytics['analytics_28d'] as Map<String, dynamic>?;
-    final channelAge = analytics['channel_age_years'];
-    final country = analytics['country'];
-    final hasChannelMeta = channelAge != null || country != null;
-    if (d == null && !hasChannelMeta) return const SizedBox.shrink();
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        if (d != null) ...[
-          const SizedBox(height: 12),
-          Divider(height: 1, color: AppColors.divider),
-          const SizedBox(height: 12),
-          _SectionLabel2(label: 'Last 28 Days (YouTube Analytics)'),
-          const SizedBox(height: 8),
-          _MetricGrid(
-            metrics: [
-              _MetricItem(label: 'Watch Time', value: _fmtHours(d['estimatedMinutesWatched']), icon: Icons.access_time_rounded, color: AppColors.youtube),
-              _MetricItem(label: 'Avg View Duration', value: _fmtDur(d['averageViewDuration']), icon: Icons.timer_outlined, color: const Color(0xFF8B5CF6)),
-              _MetricItem(label: 'Avg % Viewed', value: _fmtPct(d['averageViewPercentage']), icon: Icons.data_usage_rounded, color: const Color(0xFF0EA5E9)),
-              _MetricItem(label: 'Impressions', value: _fmt(d['impressions']), icon: Icons.remove_red_eye_rounded, color: const Color(0xFF6366F1)),
-              _MetricItem(label: 'CTR', value: _fmtCtr(d['impressionClickThroughRate']), icon: Icons.ads_click_rounded, color: AppColors.success),
-              _MetricItem(label: 'Shares', value: _fmt(d['shares']), icon: Icons.share_rounded, color: const Color(0xFFE91E63)),
-              _MetricItem(label: 'Subs Gained', value: _fmt(d['subscribersGained']), icon: Icons.person_add_rounded, color: AppColors.success),
-              _MetricItem(label: 'Subs Lost', value: _fmt(d['subscribersLost']), icon: Icons.person_remove_rounded, color: const Color(0xFFEF4444)),
-              _MetricItem(label: 'Likes (28d)', value: _fmt(d['likes']), icon: Icons.thumb_up_rounded, color: const Color(0xFFF59E0B)),
-            ],
-          ),
-        ],
-        if (hasChannelMeta) ...[
-          const SizedBox(height: 12),
-          Divider(height: 1, color: AppColors.divider),
-          const SizedBox(height: 12),
-          _SectionLabel2(label: 'Channel Info'),
-          const SizedBox(height: 8),
-          _MetricGrid(
-            metrics: [
-              if (channelAge != null)
-                _MetricItem(
-                  label: 'Channel Age',
-                  value: '${channelAge}y',
-                  icon: Icons.cake_rounded,
-                  color: const Color(0xFF8B5CF6),
-                ),
-              if (country != null && country.toString().isNotEmpty)
-                _MetricItem(
-                  label: 'Country',
-                  value: country.toString(),
-                  icon: Icons.public_rounded,
-                  color: const Color(0xFF0EA5E9),
-                ),
-            ],
-          ),
-        ],
-      ],
-    );
-  }
-}
-
-class _HeroMetric extends StatelessWidget {
-  final String label;
-  final String value;
-  final IconData icon;
-  final Color color;
-  const _HeroMetric({required this.label, required this.value, required this.icon, required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 13, color: color.withValues(alpha: 0.7)),
-            const SizedBox(width: 4),
-            Text(label, style: TextStyle(fontSize: 10, color: color.withValues(alpha: 0.8), fontWeight: FontWeight.w500)),
-          ],
-        ),
-        const SizedBox(height: 4),
-        Text(value, style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: color)),
-      ],
-    );
-  }
-}
-
-class _SectionLabel2 extends StatelessWidget {
-  final String label;
-  const _SectionLabel2({required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: Text(label,
-          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.textHint,
-              letterSpacing: 0.5)),
-    );
-  }
-}
-
-class _MetricItem {
-  final String label;
-  final String value;
-  final IconData icon;
-  final Color color;
-  const _MetricItem({required this.label, required this.value, required this.icon, required this.color});
-}
-
-class _MetricGrid extends StatelessWidget {
-  final List<_MetricItem> metrics;
-  const _MetricGrid({required this.metrics});
-
-  @override
-  Widget build(BuildContext context) {
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: metrics.map((m) => _MetricTile(item: m)).toList(),
-    );
-  }
-}
-
-class _MetricTile extends StatelessWidget {
-  final _MetricItem item;
-  const _MetricTile({required this.item});
-
-  @override
-  Widget build(BuildContext context) {
-    final w = (MediaQuery.of(context).size.width - 40 - 28 - 16) / 3; // 3 per row
-    return SizedBox(
-      width: w,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
-        decoration: BoxDecoration(
-          color: item.color.withValues(alpha: 0.07),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: item.color.withValues(alpha: 0.15)),
-        ),
-        child: Column(
-          children: [
-            Icon(item.icon, size: 16, color: item.color),
-            const SizedBox(height: 5),
-            Text(item.value,
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: item.color)),
-            const SizedBox(height: 2),
-            Text(item.label,
-                style: const TextStyle(fontSize: 9, color: AppColors.textHint),
-                textAlign: TextAlign.center),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-
-class _TierBadge extends StatelessWidget {
-  final String tier;
-  final Color color;
-  const _TierBadge({required this.tier, required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withValues(alpha: 0.4)),
-      ),
-      child: Text(tier, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: color)),
-    );
-  }
-}
-
-class _SimpleStatBox extends StatelessWidget {
-  final String label;
-  final String value;
-  final Color color;
-  final IconData icon;
-  const _SimpleStatBox({required this.label, required this.value, required this.color, required this.icon});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: color.withValues(alpha: 0.2)),
-      ),
-      child: Column(
-        children: [
-          Icon(icon, size: 20, color: color),
-          const SizedBox(height: 6),
-          Text(value, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: color)),
-          Text(label, style: const TextStyle(fontSize: 10, color: AppColors.textHint)),
-        ],
-      ),
-    );
-  }
-}
 
 // ── Shared detail widgets ─────────────────────────────────────────────────────
 
@@ -1739,7 +1186,7 @@ class _SectionHeader extends StatelessWidget {
         Container(width: 3, height: 16, decoration: BoxDecoration(
           gradient: AppColors.brandGradient, borderRadius: BorderRadius.circular(2))),
         const SizedBox(width: 8),
-        Text(label, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+        Text(label, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
       ],
     );
   }
@@ -1760,10 +1207,10 @@ class _DetailRow extends StatelessWidget {
         Icon(icon, size: 16, color: AppColors.textHint),
         const SizedBox(width: 8),
         SizedBox(width: 80, child: Text(label,
-            style: const TextStyle(fontSize: 12, color: AppColors.textHint, fontWeight: FontWeight.w500))),
+            style: TextStyle(fontSize: 12, color: AppColors.textHint, fontWeight: FontWeight.w500))),
         Expanded(
           child: value != null
-              ? Text(value!, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textPrimary))
+              ? Text(value!, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textPrimary))
               : child ?? const SizedBox.shrink(),
         ),
       ],
@@ -1930,7 +1377,7 @@ class _PlatformMediaCardState extends State<_PlatformMediaCard>
                       children: [
                         Text(
                           widget.platform,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w700,
                             color: AppColors.textPrimary,
@@ -1938,7 +1385,7 @@ class _PlatformMediaCardState extends State<_PlatformMediaCard>
                         ),
                         Text(
                           widget.handle,
-                          style: const TextStyle(
+                          style: TextStyle(
                               fontSize: 12, color: AppColors.textSecondary),
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -2001,7 +1448,7 @@ class _PlatformMediaCardState extends State<_PlatformMediaCard>
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
                 child: Text(
                   'Could not load ${widget.platform} content',
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 12, color: AppColors.textSecondary),
                 ),
               )
@@ -2010,7 +1457,7 @@ class _PlatformMediaCardState extends State<_PlatformMediaCard>
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
                 child: Text(
                   'No recent ${widget.platform} content found.',
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 12, color: AppColors.textSecondary),
                 ),
               )
@@ -2193,7 +1640,7 @@ class _MediaThumbnailCard extends StatelessWidget {
                   children: [
                     Text(
                       title.isNotEmpty ? title : '\u2014',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
                         color: AppColors.textPrimary,
@@ -2219,12 +1666,12 @@ class _MediaThumbnailCard extends StatelessWidget {
                           const SizedBox(width: 8),
                         ],
                         if (likeCount != null && likeCount != 0) ...[
-                          const Icon(Icons.favorite_rounded,
+                          Icon(Icons.favorite_rounded,
                               size: 10, color: AppColors.secondary),
                           const SizedBox(width: 3),
                           Text(
                             _formatCount(likeCount),
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.w600,
                               color: AppColors.secondary,
@@ -2371,7 +1818,7 @@ class _InviteToCampaignSheetState extends State<_InviteToCampaignSheet> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -2393,14 +1840,14 @@ class _InviteToCampaignSheetState extends State<_InviteToCampaignSheet> {
           const SizedBox(height: 16),
           Text(
             'Invite to Campaign',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.textPrimary,
             ),
           ),
           const SizedBox(height: 4),
           Text(
             'Select a campaign to invite ${widget.creatorName}',
-            style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
+            style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
           ),
           const SizedBox(height: 16),
           if (_loading)
@@ -2411,10 +1858,10 @@ class _InviteToCampaignSheetState extends State<_InviteToCampaignSheet> {
           else if (_error != null)
             Center(child: Padding(
               padding: const EdgeInsets.all(24),
-              child: Text('Failed to load campaigns', style: const TextStyle(color: AppColors.textSecondary)),
+              child: Text('Failed to load campaigns', style: TextStyle(color: AppColors.textSecondary)),
             ))
           else if (_campaigns == null || _campaigns!.isEmpty)
-            const Center(child: Padding(
+            Center(child: Padding(
               padding: EdgeInsets.all(24),
               child: Text('No eligible campaigns.\nCreate a new campaign or this creator has already been invited/applied.', textAlign: TextAlign.center,
                 style: TextStyle(color: AppColors.textSecondary, height: 1.5)),
@@ -2443,16 +1890,16 @@ class _InviteToCampaignSheetState extends State<_InviteToCampaignSheet> {
                         color: AppColors.primary.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: const Icon(Icons.campaign_rounded, color: AppColors.primary, size: 20),
+                      child: Icon(Icons.campaign_rounded, color: AppColors.primary, size: 20),
                     ),
                     title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
                     subtitle: budget != null
-                        ? Text('\u20B9$budget \u2022 $status', style: const TextStyle(fontSize: 12, color: AppColors.textSecondary))
-                        : Text(status, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                        ? Text('\u20B9$budget \u2022 $status', style: TextStyle(fontSize: 12, color: AppColors.textSecondary))
+                        : Text(status, style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
                     trailing: isSending
                         ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
                         : isUnavailable
-                            ? const Text('Already applied',
+                            ? Text('Already applied',
                                 style: TextStyle(fontSize: 12, color: AppColors.textSecondary))
                             : TextButton(
                                 onPressed: _sendingId != null ? null : () => _invite(id, title),

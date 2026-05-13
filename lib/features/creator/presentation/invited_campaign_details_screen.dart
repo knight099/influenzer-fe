@@ -50,7 +50,7 @@ class InvitedCampaignDetailsScreen extends StatelessWidget {
                       Expanded(
                         child: Text(
                           title,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 22,
                             fontWeight: FontWeight.bold,
                             color: AppColors.textPrimary,
@@ -89,7 +89,7 @@ class InvitedCampaignDetailsScreen extends StatelessWidget {
 
             if (description.isNotEmpty) ...[
               const SizedBox(height: 24),
-              const Text(
+              Text(
                 'About this Campaign',
                 style: TextStyle(
                   fontSize: 16,
@@ -100,7 +100,7 @@ class InvitedCampaignDetailsScreen extends StatelessWidget {
               const SizedBox(height: 8),
               Text(
                 description,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
                   color: AppColors.textSecondary,
                   height: 1.6,
@@ -110,7 +110,7 @@ class InvitedCampaignDetailsScreen extends StatelessWidget {
 
             if (requirements.isNotEmpty) ...[
               const SizedBox(height: 24),
-              const Text(
+              Text(
                 'Campaign Brief',
                 style: TextStyle(
                   fontSize: 16,
@@ -205,7 +205,7 @@ class _BriefRow extends StatelessWidget {
           SizedBox(
             width: 100,
             child: Text(label,
-                style: const TextStyle(fontSize: 13, color: AppColors.textHint, fontWeight: FontWeight.w500)),
+                style: TextStyle(fontSize: 13, color: AppColors.textHint, fontWeight: FontWeight.w500)),
           ),
           Expanded(
             child: Text(value,
@@ -242,7 +242,7 @@ class _InfoRow extends StatelessWidget {
         const SizedBox(width: 8),
         Text(
           '$label: ',
-          style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
+          style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
         ),
         Text(
           value,

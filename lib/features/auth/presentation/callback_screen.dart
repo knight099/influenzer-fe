@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../application/auth_controller.dart';
 
 class CallbackScreen extends ConsumerStatefulWidget {
@@ -14,136 +13,101 @@ class CallbackScreen extends ConsumerStatefulWidget {
 }
 
 class _CallbackScreenState extends ConsumerState<CallbackScreen> {
+  String _status = 'processing';
+  String? _errorMessage;
+
   @override
   void initState() {
     super.initState();
-    // Defer the callback until after the widget tree is built
-    // to avoid modifying providers during build phase
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _handleCallback();
     });
   }
 
   Future<void> _handleCallback() async {
-    // Check for ngrok/web environment to decide whether to handle code or redirect
-    final currentUri = Uri.base;
-    final isNgrok = currentUri.host.contains('ngrok') && currentUri.scheme == 'https';
-
-    // If on ngrok, we are likely in the browser on mobile after Instagram redirect.
-    // We should try to open the app via deep link.
-    if (isNgrok) {
-      debugPrint('[Callback] Detected ngrok origin. Waiting for user action or auto-redirect...');
-      // We don't auto-redirect immediately to allow user to see the button if auto-launch fails
-      return;
-    }
-
     final code = widget.queryParams['code'];
-    final stateParam = widget.queryParams['state']; // We use 'state' to know which provider it was
+    final stateParam = widget.queryParams['state'];
 
     if (code != null && stateParam != null) {
-      // Platform is passed in 'state' parameter (e.g. 'instagram', 'youtube')
-      final provider = stateParam; 
-      
+      final provider = stateParam;
+
       // Use the correct redirect URI based on provider
-      final redirectUri = provider == 'instagram' 
-          ? 'https://influenzer.onrender.com/callback/'
-          : 'http://localhost:8081/callback';
-      
+      final redirectUri = provider == 'instagram'
+          ? 'https://qrdba2mpab.ap-south-1.awsapprunner.com/callback/'
+          : null; // YouTube native flow uses null → backend defaults to "postmessage"
+
       try {
-        // Call the controller to connect
-        await ref.read(authControllerProvider.notifier).connectSocial(provider, code, redirectUri: redirectUri);
-        
-        // Check for error in state
+        await ref.read(authControllerProvider.notifier).connectSocial(
+              provider,
+              code,
+              redirectUri: redirectUri,
+            );
+
         final state = ref.read(authControllerProvider);
         if (state.hasError) {
           throw state.error!;
         }
-        
+
         if (mounted) {
-           // Determine where to go next
-           // For now, go back to social link or dashboard
-           context.go('/creator-dashboard'); 
-           ScaffoldMessenger.of(context).showSnackBar(
-             SnackBar(content: Text('Connected $provider successfully!')),
-           );
+          context.go('/creator-dashboard');
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Connected $provider successfully!')),
+          );
         }
       } catch (e) {
         if (mounted) {
           String errorMessage = 'Failed to connect $provider';
-          if (e.toString().contains('401') || e.toString().contains('Authorization')) {
-            errorMessage = 'Please log in first before linking social accounts';
+          if (e.toString().contains('401') ||
+              e.toString().contains('Authorization')) {
+            errorMessage =
+                'Please log in first before linking social accounts';
           }
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(errorMessage), backgroundColor: Colors.red),
-          );
-          context.go('/creator-dashboard');
+          setState(() {
+            _status = 'error';
+            _errorMessage = errorMessage;
+          });
+          // Auto-navigate after brief delay
+          Future.delayed(const Duration(seconds: 2), () {
+            if (mounted) context.go('/creator-dashboard');
+          });
         }
       }
     } else {
-       if (mounted) {
-         ScaffoldMessenger.of(context).showSnackBar(
-           const SnackBar(content: Text('Authorization failed: No code received')),
-         );
-         context.go('/creator-dashboard');
-       }
+      if (mounted) {
+        setState(() {
+          _status = 'error';
+          _errorMessage = 'Authorization failed: No code received';
+        });
+        Future.delayed(const Duration(seconds: 2), () {
+          if (mounted) context.go('/creator-dashboard');
+        });
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final isNgrok = Uri.base.host.contains('ngrok');
-    
     return Scaffold(
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const CircularProgressIndicator(),
-            const SizedBox(height: 16),
-            const Text('Finalizing connection...'),
-            if (isNgrok) ...[
-              const SizedBox(height: 24),
-              const Text('Successfully authorized!', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            if (_status == 'processing') ...[
+              const CircularProgressIndicator(),
               const SizedBox(height: 16),
-              ElevatedButton.icon(
-                icon: const Icon(Icons.touch_app),
-                label: const Text('Open in App'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                ),
-                onPressed: () async {
-                  // Construct Deep Link: influenzer://callback?code=...&state=...
-                  // We copy the query parameters from the current URL
-                  final deepLink = Uri(
-                    scheme: 'influenzer',
-                    host: 'callback',
-                    queryParameters: widget.queryParams,
-                  );
-                  debugPrint('Launching deep link: $deepLink');
-                  
-                  if (await canLaunchUrl(deepLink)) {
-                    await launchUrl(deepLink);
-                  } else {
-                     ScaffoldMessenger.of(context).showSnackBar(
-                       const SnackBar(content: Text('Could not open app. Is it installed?')),
-                     );
-                  }
-                },
+              const Text('Finalizing connection...'),
+            ] else if (_status == 'error') ...[
+              const Icon(Icons.error_outline, size: 48, color: Colors.red),
+              const SizedBox(height: 16),
+              Text(
+                _errorMessage ?? 'An error occurred',
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 16),
               ),
-              const SizedBox(height: 16),
-              TextButton(
-                onPressed: () {
-                   final currentUri = Uri.base;
-                   final localhostUri = currentUri.replace(
-                     scheme: 'http',
-                     host: 'localhost',
-                     port: 8081,
-                   );
-                   launchUrl(localhostUri, webOnlyWindowName: '_self');
-                }, 
-                child: const Text('Continue in Browser (Dev Only)'),
+              const SizedBox(height: 8),
+              const Text(
+                'Redirecting...',
+                style: TextStyle(color: Colors.grey),
               ),
             ],
           ],

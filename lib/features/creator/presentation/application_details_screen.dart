@@ -43,13 +43,13 @@ class ApplicationDetailsScreen extends StatelessWidget {
                 padding: const EdgeInsets.all(16.0),
                 child: Row(
                   children: [
-                    const Icon(Icons.monetization_on, color: AppColors.primary),
+                    Icon(Icons.monetization_on, color: AppColors.primary),
                     const SizedBox(width: 8),
                     const Text('Your Bid:', style: TextStyle(fontSize: 16)),
                     const SizedBox(width: 8),
                     Text(
                       '₹$bidAmount',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 18, 
                         fontWeight: FontWeight.bold,
                         color: AppColors.primary

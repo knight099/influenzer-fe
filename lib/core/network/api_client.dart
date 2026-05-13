@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:talker_dio_logger/talker_dio_logger.dart';
+import 'package:influenzer_app/core/network/mock_interceptor.dart';
 
 part 'api_client.g.dart';
 
@@ -19,7 +20,7 @@ class AuthTokenHolder {
   }
 }
 
-@riverpod
+@Riverpod(keepAlive: true)
 Dio dio(Ref ref) {
   final dio = Dio(
     BaseOptions(
@@ -46,6 +47,9 @@ Dio dio(Ref ref) {
       },
     ),
   );
+
+  // Add Mock Interceptor
+  dio.interceptors.add(MockInterceptor(ref));
 
   // Add Logging Interceptor
   dio.interceptors.add(

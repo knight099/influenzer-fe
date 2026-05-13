@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/widgets/theme_settings_tile.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../auth/presentation/instagram_auth_webview.dart';
 import '../data/user_profile_repository.dart';
@@ -11,6 +12,7 @@ import '../data/creator_repository.dart';
 import '../../auth/application/auth_controller.dart';
 import '../../notifications/presentation/notifications_screen.dart';
 import '../../wallet/data/payment_repository.dart';
+import 'widgets/analytics_dashboard.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -20,10 +22,28 @@ class ProfileScreen extends ConsumerStatefulWidget {
 }
 
 class _ProfileScreenState extends ConsumerState<ProfileScreen> with WidgetsBindingObserver {
+  Map<String, dynamic>? _analytics;
+  bool _analyticsLoading = true;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _loadAnalytics();
+  }
+
+  Future<void> _loadAnalytics() async {
+    try {
+      final user = await ref.read(userProfileProvider.future);
+      if (user.id.isNotEmpty) {
+        final data = await ref.read(creatorRepositoryProvider).getCreatorAnalytics(user.id);
+        if (mounted) setState(() { _analytics = data; _analyticsLoading = false; });
+      } else {
+        if (mounted) setState(() => _analyticsLoading = false);
+      }
+    } catch (e) {
+      if (mounted) setState(() => _analyticsLoading = false);
+    }
   }
 
   @override
@@ -62,7 +82,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with WidgetsBindi
         ref.invalidate(userProfileProvider);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
+            SnackBar(
               content: Text('Instagram connected successfully!'),
               backgroundColor: AppColors.success,
             ),
@@ -133,16 +153,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with WidgetsBindi
             children: [
               Container(
                 width: 64, height: 64,
-                decoration: const BoxDecoration(color: AppColors.errorLight, shape: BoxShape.circle),
-                child: const Icon(Icons.error_outline_rounded, color: AppColors.error, size: 30),
+                decoration: BoxDecoration(color: AppColors.errorLight, shape: BoxShape.circle),
+                child: Icon(Icons.error_outline_rounded, color: AppColors.error, size: 30),
               ),
               const SizedBox(height: 16),
-              const Text('Failed to load profile',
+              Text('Failed to load profile',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
               const SizedBox(height: 6),
               Text('$err',
                   textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                  style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
                   maxLines: 2),
               const SizedBox(height: 20),
               ElevatedButton.icon(
@@ -262,6 +282,34 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with WidgetsBindi
               ),
             ),
 
+            // ── Performance Analytics ──
+            if (profile.instagramConnected || profile.youtubeConnected) ...[
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 24, 20, 12),
+                  child: Row(
+                    children: [
+                      Container(width: 3, height: 16, decoration: BoxDecoration(
+                        gradient: AppColors.brandGradient, borderRadius: BorderRadius.circular(2))),
+                      const SizedBox(width: 8),
+                      Text('Performance Analytics', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                    ],
+                  ),
+                ),
+              ),
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: AnalyticsDashboard(
+                    analytics: _analytics,
+                    loading: _analyticsLoading,
+                    igFollowers: _parseInt(profile.instagramStats?.followersCount),
+                    ytSubscribers: _parseInt(profile.youtubeStats?.subscriberCount),
+                  ),
+                ),
+              ),
+            ],
+
             // ── 6. Audience Demographics ──
             SliverToBoxAdapter(
               child: Padding(
@@ -353,6 +401,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with WidgetsBindi
         ),
       ),
     );
+  }
+
+  int _parseInt(String? val) {
+    if (val == null) return 0;
+    return int.tryParse(val.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
   }
 
   // ── Edit sheet launchers ──
@@ -455,7 +508,7 @@ class _CreatorHero extends StatelessWidget {
         // Cover
         Container(
           height: 160,
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             gradient: AppColors.brandGradient,
           ),
           child: Stack(
@@ -558,14 +611,14 @@ class _CreatorHero extends StatelessWidget {
               // Name
               Text(
                 name,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.textPrimary,
                 ),
               ),
               const SizedBox(height: 4),
               Text(
                 profile.email,
-                style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
               ),
               const SizedBox(height: 10),
 
@@ -578,7 +631,7 @@ class _CreatorHero extends StatelessWidget {
                 ),
                 child: Text(
                   profile.role.toUpperCase(),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.primary,
                     letterSpacing: 0.5,
                   ),
@@ -590,7 +643,7 @@ class _CreatorHero extends StatelessWidget {
                 const SizedBox(height: 12),
                 Text(
                   profile.headline!,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.textSecondary,
                     height: 1.4,
                   ),
@@ -658,7 +711,7 @@ class _AvatarFallback extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(gradient: AppColors.brandGradient),
+      decoration: BoxDecoration(gradient: AppColors.brandGradient),
       child: Center(
         child: Text(
           name.isNotEmpty ? name[0].toUpperCase() : 'C',
@@ -768,7 +821,7 @@ class _StatSummaryTile extends StatelessWidget {
               ),
               Text(
                 item.label,
-                style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
               ),
             ],
           ),
@@ -854,9 +907,9 @@ class _PlatformCard extends StatelessWidget {
                 children: [
                   Row(
                     children: [
-                      const Icon(Icons.error_outline_rounded, color: AppColors.error, size: 18),
+                      Icon(Icons.error_outline_rounded, color: AppColors.error, size: 18),
                       const SizedBox(width: 8),
-                      const Expanded(
+                      Expanded(
                         child: Text(
                           'Stats unavailable. Please reconnect.',
                           style: TextStyle(fontSize: 13, color: AppColors.error),
@@ -873,7 +926,7 @@ class _PlatformCard extends StatelessWidget {
                       label: Text('Reconnect $title'),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppColors.error,
-                        side: const BorderSide(color: AppColors.error),
+                        side: BorderSide(color: AppColors.error),
                       ),
                     ),
                   ),
@@ -919,12 +972,12 @@ class _YouTubeStatsContent extends StatelessWidget {
                 children: [
                   Text(
                     stats.channelTitle ?? 'YouTube Channel',
-                    style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15, color: AppColors.textPrimary),
+                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15, color: AppColors.textPrimary),
                   ),
                   if (stats.channelUrl != null)
                     Text(
                       stats.channelUrl!,
-                      style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                      style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
                       overflow: TextOverflow.ellipsis,
                     ),
                 ],
@@ -946,7 +999,7 @@ class _YouTubeStatsContent extends StatelessWidget {
     );
   }
 
-  Widget _divider() => Container(width: 1, height: 36, color: AppColors.divider, margin: const EdgeInsets.symmetric(horizontal: 8));
+  Widget _divider() => Container(width: 1, height: 36, color: AppColors.divider, margin: EdgeInsets.symmetric(horizontal: 8));
 
   String _fmt(String? v) {
     if (v == null) return '0';
@@ -963,7 +1016,7 @@ class _YouTubePlaceholder extends StatelessWidget {
     return Container(
       width: 52, height: 52,
       decoration: BoxDecoration(color: AppColors.youtubeLight, borderRadius: BorderRadius.circular(10)),
-      child: const Icon(Icons.play_circle_rounded, color: AppColors.youtube, size: 28),
+      child: Icon(Icons.play_circle_rounded, color: AppColors.youtube, size: 28),
     );
   }
 }
@@ -994,12 +1047,12 @@ class _InstagramStatsContent extends StatelessWidget {
                 children: [
                   Text(
                     '@${stats.username ?? 'instagram'}',
-                    style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15, color: AppColors.textPrimary),
+                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15, color: AppColors.textPrimary),
                   ),
                   if (stats.biography != null && stats.biography!.isNotEmpty)
                     Text(
                       stats.biography!,
-                      style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                      style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -1022,7 +1075,7 @@ class _InstagramStatsContent extends StatelessWidget {
     );
   }
 
-  Widget _divider() => Container(width: 1, height: 36, color: AppColors.divider, margin: const EdgeInsets.symmetric(horizontal: 8));
+  Widget _divider() => Container(width: 1, height: 36, color: AppColors.divider, margin: EdgeInsets.symmetric(horizontal: 8));
 
   String _fmt(String? v) {
     if (v == null) return '0';
@@ -1038,7 +1091,7 @@ class _InstagramPlaceholder extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: 52, height: 52,
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         gradient: AppColors.instagramGradient,
         shape: BoxShape.circle,
       ),
@@ -1066,7 +1119,7 @@ class _StatItem extends StatelessWidget {
           const SizedBox(height: 2),
           Text(
             label,
-            style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+            style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
             textAlign: TextAlign.center,
           ),
         ],
@@ -1080,7 +1133,7 @@ class _StatsPlaceholder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Row(
+    return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Icon(Icons.sync_rounded, color: AppColors.textHint, size: 16),
@@ -1188,10 +1241,10 @@ class _PerformanceSnapshotCard extends StatelessWidget {
                   color: AppColors.primaryLight,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(Icons.bar_chart_rounded, color: AppColors.primary, size: 20),
+                child: Icon(Icons.bar_chart_rounded, color: AppColors.primary, size: 20),
               ),
               const SizedBox(width: 12),
-              const Text('Performance Snapshot',
+              Text('Performance Snapshot',
                   style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
             ],
           ),
@@ -1254,7 +1307,7 @@ class _PerformanceMetric extends StatelessWidget {
           children: [
             Text(value, style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: color)),
             const SizedBox(height: 4),
-            Text(label, style: const TextStyle(fontSize: 11, color: AppColors.textSecondary, height: 1.3)),
+            Text(label, style: TextStyle(fontSize: 11, color: AppColors.textSecondary, height: 1.3)),
           ],
         ),
       ),
@@ -1352,10 +1405,10 @@ class _AboutSectionCardState extends State<_AboutSectionCard> {
                 Container(
                   width: 40, height: 40,
                   decoration: BoxDecoration(color: AppColors.primaryLight, borderRadius: BorderRadius.circular(12)),
-                  child: const Icon(Icons.person_rounded, color: AppColors.primary, size: 20),
+                  child: Icon(Icons.person_rounded, color: AppColors.primary, size: 20),
                 ),
                 const SizedBox(width: 12),
-                const Expanded(
+                Expanded(
                   child: Text('About', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
                 ),
                 GestureDetector(
@@ -1364,7 +1417,7 @@ class _AboutSectionCardState extends State<_AboutSectionCard> {
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(color: AppColors.primaryLight, borderRadius: BorderRadius.circular(8)),
                     child: Text(hasAnyData ? 'Edit' : 'Add',
-                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.primary)),
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.primary)),
                   ),
                 ),
               ],
@@ -1375,7 +1428,7 @@ class _AboutSectionCardState extends State<_AboutSectionCard> {
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
               child: Column(
                 children: [
-                  const Text(
+                  Text(
                     'Add your bio, headline and content categories to attract more brands',
                     textAlign: TextAlign.center,
                     style: TextStyle(fontSize: 13, color: AppColors.textSecondary, height: 1.4),
@@ -1394,7 +1447,7 @@ class _AboutSectionCardState extends State<_AboutSectionCard> {
             ),
           ] else ...[
             const SizedBox(height: 14),
-            const Divider(height: 1, color: AppColors.divider),
+            Divider(height: 1, color: AppColors.divider),
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
               child: Column(
@@ -1402,7 +1455,7 @@ class _AboutSectionCardState extends State<_AboutSectionCard> {
                 children: [
                   if (hasHeadline) ...[
                     Text(p.headline!,
-                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary, height: 1.4)),
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary, height: 1.4)),
                     const SizedBox(height: 10),
                   ],
                   if (hasBio) ...[
@@ -1410,7 +1463,7 @@ class _AboutSectionCardState extends State<_AboutSectionCard> {
                       onTap: () => setState(() => _expanded = !_expanded),
                       child: Text(
                         p.bio!,
-                        style: const TextStyle(fontSize: 13, color: AppColors.textSecondary, height: 1.5),
+                        style: TextStyle(fontSize: 13, color: AppColors.textSecondary, height: 1.5),
                         maxLines: _expanded ? null : 3,
                         overflow: _expanded ? null : TextOverflow.ellipsis,
                       ),
@@ -1422,14 +1475,14 @@ class _AboutSectionCardState extends State<_AboutSectionCard> {
                           padding: const EdgeInsets.only(top: 4),
                           child: Text(
                             _expanded ? 'Show less' : 'Read more',
-                            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.primary),
+                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.primary),
                           ),
                         ),
                       ),
                     const SizedBox(height: 12),
                   ],
                   if (hasCategories) ...[
-                    const Text('Content Categories',
+                    Text('Content Categories',
                         style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.textHint)),
                     const SizedBox(height: 6),
                     Wrap(
@@ -1492,10 +1545,10 @@ class _RateCardSectionCard extends StatelessWidget {
                 Container(
                   width: 40, height: 40,
                   decoration: BoxDecoration(color: AppColors.successLight, borderRadius: BorderRadius.circular(12)),
-                  child: const Icon(Icons.monetization_on_rounded, color: AppColors.success, size: 20),
+                  child: Icon(Icons.monetization_on_rounded, color: AppColors.success, size: 20),
                 ),
                 const SizedBox(width: 12),
-                const Expanded(
+                Expanded(
                   child: Text('Rate Card', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
                 ),
                 GestureDetector(
@@ -1504,14 +1557,14 @@ class _RateCardSectionCard extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(color: AppColors.primaryLight, borderRadius: BorderRadius.circular(8)),
                     child: Text(hasRateCard ? 'Edit' : 'Add',
-                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.primary)),
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.primary)),
                   ),
                 ),
               ],
             ),
           ),
           if (!hasRateCard) ...[
-            const Padding(
+            Padding(
               padding: EdgeInsets.fromLTRB(16, 16, 16, 16),
               child: Text(
                 'Add your rates for different deliverable types so brands can find the right fit',
@@ -1521,7 +1574,7 @@ class _RateCardSectionCard extends StatelessWidget {
             ),
           ] else ...[
             const SizedBox(height: 14),
-            const Divider(height: 1, color: AppColors.divider),
+            Divider(height: 1, color: AppColors.divider),
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
               child: Column(
@@ -1543,7 +1596,7 @@ class _RateCardSectionCard extends StatelessWidget {
                   ],
                   if (customPackages.isNotEmpty) ...[
                     const SizedBox(height: 14),
-                    const Text('Custom Packages',
+                    Text('Custom Packages',
                         style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.textHint)),
                     const SizedBox(height: 8),
                     ...customPackages.map((pkg) {
@@ -1559,9 +1612,9 @@ class _RateCardSectionCard extends StatelessWidget {
                           ),
                           child: Row(
                             children: [
-                              Expanded(child: Text(p['name'] ?? 'Package', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary))),
+                              Expanded(child: Text(p['name'] ?? 'Package', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary))),
                               if (p['price'] != null)
-                                Text('\u20b9${p['price']}', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.success)),
+                                Text('\u20b9${p['price']}', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.success)),
                             ],
                           ),
                         ),
@@ -1602,9 +1655,9 @@ class _RateChip extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Text(amount, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.success)),
+          Text(amount, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.success)),
           const SizedBox(height: 2),
-          Text(label, style: const TextStyle(fontSize: 10, color: AppColors.textSecondary)),
+          Text(label, style: TextStyle(fontSize: 10, color: AppColors.textSecondary)),
         ],
       ),
     );
@@ -1642,7 +1695,7 @@ class _AudienceDemographicsCard extends StatelessWidget {
                   child: const Icon(Icons.people_alt_rounded, color: Color(0xFF0EA5E9), size: 20),
                 ),
                 const SizedBox(width: 12),
-                const Expanded(
+                Expanded(
                   child: Text('Audience Demographics', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
                 ),
                 GestureDetector(
@@ -1651,14 +1704,14 @@ class _AudienceDemographicsCard extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(color: AppColors.primaryLight, borderRadius: BorderRadius.circular(8)),
                     child: Text(hasData ? 'Edit' : 'Add',
-                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.primary)),
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.primary)),
                   ),
                 ),
               ],
             ),
           ),
           if (!hasData) ...[
-            const Padding(
+            Padding(
               padding: EdgeInsets.fromLTRB(16, 16, 16, 16),
               child: Text(
                 'Add your audience demographics to help brands understand your reach',
@@ -1668,7 +1721,7 @@ class _AudienceDemographicsCard extends StatelessWidget {
             ),
           ] else ...[
             const SizedBox(height: 14),
-            const Divider(height: 1, color: AppColors.divider),
+            Divider(height: 1, color: AppColors.divider),
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
               child: Column(
@@ -1676,7 +1729,7 @@ class _AudienceDemographicsCard extends StatelessWidget {
                 children: [
                   // Age split
                   if (demo['age_split'] != null) ...[
-                    const Text('Age Distribution',
+                    Text('Age Distribution',
                         style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.textHint)),
                     const SizedBox(height: 8),
                     ..._buildAgeBars(demo['age_split'] as Map<String, dynamic>),
@@ -1684,7 +1737,7 @@ class _AudienceDemographicsCard extends StatelessWidget {
                   ],
                   // Gender split
                   if (demo['gender_split'] != null) ...[
-                    const Text('Gender Split',
+                    Text('Gender Split',
                         style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.textHint)),
                     const SizedBox(height: 8),
                     _buildGenderRow(demo['gender_split'] as Map<String, dynamic>),
@@ -1692,7 +1745,7 @@ class _AudienceDemographicsCard extends StatelessWidget {
                   ],
                   // Top cities
                   if (demo['top_cities'] != null && (demo['top_cities'] as String).isNotEmpty) ...[
-                    const Text('Top Cities',
+                    Text('Top Cities',
                         style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.textHint)),
                     const SizedBox(height: 6),
                     Wrap(
@@ -1706,7 +1759,7 @@ class _AudienceDemographicsCard extends StatelessWidget {
                   // Top countries
                   if (demo['top_countries'] != null && (demo['top_countries'] as String).isNotEmpty) ...[
                     const SizedBox(height: 10),
-                    const Text('Top Countries',
+                    Text('Top Countries',
                         style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.textHint)),
                     const SizedBox(height: 6),
                     Wrap(
@@ -1736,7 +1789,7 @@ class _AudienceDemographicsCard extends StatelessWidget {
         padding: const EdgeInsets.only(bottom: 6),
         child: Row(
           children: [
-            SizedBox(width: 44, child: Text(key, style: const TextStyle(fontSize: 11, color: AppColors.textSecondary))),
+            SizedBox(width: 44, child: Text(key, style: TextStyle(fontSize: 11, color: AppColors.textSecondary))),
             const SizedBox(width: 8),
             Expanded(
               child: ClipRRect(
@@ -1751,7 +1804,7 @@ class _AudienceDemographicsCard extends StatelessWidget {
             ),
             const SizedBox(width: 8),
             SizedBox(width: 36, child: Text('${pct.toStringAsFixed(0)}%',
-                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
                 textAlign: TextAlign.right)),
           ],
         ),
@@ -1794,7 +1847,7 @@ class _GenderStat extends StatelessWidget {
           children: [
             Text('${pct.toStringAsFixed(0)}%', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: color)),
             const SizedBox(height: 2),
-            Text(label, style: const TextStyle(fontSize: 10, color: AppColors.textSecondary)),
+            Text(label, style: TextStyle(fontSize: 10, color: AppColors.textSecondary)),
           ],
         ),
       ),
@@ -1831,10 +1884,10 @@ class _PastWorkCard extends StatelessWidget {
                 Container(
                   width: 40, height: 40,
                   decoration: BoxDecoration(color: AppColors.warningLight, borderRadius: BorderRadius.circular(12)),
-                  child: const Icon(Icons.work_history_rounded, color: AppColors.warning, size: 20),
+                  child: Icon(Icons.work_history_rounded, color: AppColors.warning, size: 20),
                 ),
                 const SizedBox(width: 12),
-                const Expanded(
+                Expanded(
                   child: Text('Past Work & Portfolio', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
                 ),
                 GestureDetector(
@@ -1843,14 +1896,14 @@ class _PastWorkCard extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(color: AppColors.primaryLight, borderRadius: BorderRadius.circular(8)),
                     child: Text(hasAny ? 'Edit' : 'Add Work',
-                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.primary)),
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.primary)),
                   ),
                 ),
               ],
             ),
           ),
           if (!hasAny) ...[
-            const Padding(
+            Padding(
               padding: EdgeInsets.fromLTRB(16, 16, 16, 16),
               child: Text(
                 'Showcase your past brand collaborations and portfolio to build credibility',
@@ -1860,7 +1913,7 @@ class _PastWorkCard extends StatelessWidget {
             ),
           ] else ...[
             const SizedBox(height: 14),
-            const Divider(height: 1, color: AppColors.divider),
+            Divider(height: 1, color: AppColors.divider),
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
               child: Column(
@@ -1873,12 +1926,12 @@ class _PastWorkCard extends StatelessWidget {
                         padding: const EdgeInsets.only(top: 8),
                         child: Text(
                           '+${profile.pastWork.length - 5} more',
-                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.primary),
+                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.primary),
                         ),
                       ),
                   ],
                   if (!hasPastWork && hasLegacyBrands) ...[
-                    const Text('Brand Collaborations',
+                    Text('Brand Collaborations',
                         style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.textHint)),
                     const SizedBox(height: 6),
                     Wrap(
@@ -1927,24 +1980,24 @@ class _PastWorkEntry extends StatelessWidget {
                 color: AppColors.warningLight,
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Icon(Icons.campaign_rounded, color: AppColors.warning, size: 18),
+              child: Icon(Icons.campaign_rounded, color: AppColors.warning, size: 18),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(brand, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+                  Text(brand, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
                   if (deliverable.isNotEmpty || platform.isNotEmpty)
                     Text(
                       [deliverable, platform].where((s) => s.isNotEmpty).join(' \u2022 '),
-                      style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                      style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
                     ),
                 ],
               ),
             ),
             if (date.isNotEmpty)
-              Text(date, style: const TextStyle(fontSize: 10, color: AppColors.textHint)),
+              Text(date, style: TextStyle(fontSize: 10, color: AppColors.textHint)),
           ],
         ),
       ),
@@ -1980,10 +2033,10 @@ class _CollaborationPrefsCard extends StatelessWidget {
                 Container(
                   width: 40, height: 40,
                   decoration: BoxDecoration(color: AppColors.secondaryLight, borderRadius: BorderRadius.circular(12)),
-                  child: const Icon(Icons.handshake_rounded, color: AppColors.secondary, size: 20),
+                  child: Icon(Icons.handshake_rounded, color: AppColors.secondary, size: 20),
                 ),
                 const SizedBox(width: 12),
-                const Expanded(
+                Expanded(
                   child: Text('Collaboration Preferences', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
                 ),
                 GestureDetector(
@@ -1992,14 +2045,14 @@ class _CollaborationPrefsCard extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(color: AppColors.primaryLight, borderRadius: BorderRadius.circular(8)),
                     child: Text(hasData ? 'Edit' : 'Add',
-                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.primary)),
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.primary)),
                   ),
                 ),
               ],
             ),
           ),
           if (!hasData) ...[
-            const Padding(
+            Padding(
               padding: EdgeInsets.fromLTRB(16, 16, 16, 16),
               child: Text(
                 'Set your collaboration preferences so brands know what you are open to',
@@ -2009,14 +2062,14 @@ class _CollaborationPrefsCard extends StatelessWidget {
             ),
           ] else ...[
             const SizedBox(height: 14),
-            const Divider(height: 1, color: AppColors.divider),
+            Divider(height: 1, color: AppColors.divider),
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   if (_hasNonEmpty(prefs, 'preferred_categories')) ...[
-                    const Text('Preferred Categories',
+                    Text('Preferred Categories',
                         style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.textHint)),
                     const SizedBox(height: 6),
                     Wrap(
@@ -2029,7 +2082,7 @@ class _CollaborationPrefsCard extends StatelessWidget {
                     const SizedBox(height: 12),
                   ],
                   if (_hasNonEmpty(prefs, 'content_types')) ...[
-                    const Text('Content Types Open To',
+                    Text('Content Types Open To',
                         style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.textHint)),
                     const SizedBox(height: 6),
                     Wrap(
@@ -2142,15 +2195,15 @@ class _SocialLinksCard extends StatelessWidget {
                 Container(
                   width: 40, height: 40,
                   decoration: BoxDecoration(color: AppColors.primaryLight, borderRadius: BorderRadius.circular(12)),
-                  child: const Icon(Icons.link_rounded, color: AppColors.primary, size: 20),
+                  child: Icon(Icons.link_rounded, color: AppColors.primary, size: 20),
                 ),
                 const SizedBox(width: 12),
-                const Text('Social Links', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                Text('Social Links', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
               ],
             ),
           ),
           const SizedBox(height: 10),
-          const Divider(height: 1, color: AppColors.divider),
+          Divider(height: 1, color: AppColors.divider),
           ...entries.map((entry) {
             final url = links[entry.key]?.toString() ?? '';
             return InkWell(
@@ -2172,13 +2225,13 @@ class _SocialLinksCard extends StatelessWidget {
                         children: [
                           Text(
                             _linkLabel(entry.key),
-                            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
                           ),
-                          Text(url, style: const TextStyle(fontSize: 11, color: AppColors.textSecondary), maxLines: 1, overflow: TextOverflow.ellipsis),
+                          Text(url, style: TextStyle(fontSize: 11, color: AppColors.textSecondary), maxLines: 1, overflow: TextOverflow.ellipsis),
                         ],
                       ),
                     ),
-                    const Icon(Icons.open_in_new_rounded, size: 14, color: AppColors.textHint),
+                    Icon(Icons.open_in_new_rounded, size: 14, color: AppColors.textHint),
                   ],
                 ),
               ),
@@ -2296,7 +2349,7 @@ class _AccountRow extends StatelessWidget {
                     children: [
                       Text(
                         title,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.textPrimary,
                         ),
                       ),
@@ -2320,7 +2373,7 @@ class _AccountRow extends StatelessWidget {
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
-                          children: const [
+                          children: [
                             Icon(Icons.check_circle_rounded, size: 13, color: AppColors.success),
                             SizedBox(width: 4),
                             Text('Connected', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.success)),
@@ -2333,7 +2386,7 @@ class _AccountRow extends StatelessWidget {
                           color: AppColors.primaryLight,
                           borderRadius: BorderRadius.circular(20),
                         ),
-                        child: const Text(
+                        child: Text(
                           'Connect',
                           style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.primary),
                         ),
@@ -2343,7 +2396,7 @@ class _AccountRow extends StatelessWidget {
           ),
         ),
         if (showDivider)
-          const Divider(height: 1, indent: 16, endIndent: 16, color: AppColors.divider),
+          Divider(height: 1, indent: 16, endIndent: 16, color: AppColors.divider),
       ],
     );
   }
@@ -2381,8 +2434,10 @@ class _InfoChip extends StatelessWidget {
 class _Tag extends StatelessWidget {
   final String label;
   final Color color;
-  final Color textColor;
-  const _Tag({required this.label, this.color = const Color(0xFFF1F5F9), this.textColor = AppColors.textSecondary});
+  final Color? textColor;
+  _Tag({required this.label, this.color = const Color(0xFFF1F5F9), this.textColor});
+
+  Color get _resolvedText => textColor ?? AppColors.textSecondary;
 
   @override
   Widget build(BuildContext context) {
@@ -2392,7 +2447,7 @@ class _Tag extends StatelessWidget {
         color: color,
         borderRadius: BorderRadius.circular(20),
       ),
-      child: Text(label, style: TextStyle(fontSize: 12, color: textColor)),
+      child: Text(label, style: TextStyle(fontSize: 12, color: _resolvedText)),
     );
   }
 }
@@ -2470,15 +2525,15 @@ class _EmptyBankAccount extends StatelessWidget {
             color: AppColors.primaryLight,
             shape: BoxShape.circle,
           ),
-          child: const Icon(Icons.account_balance_rounded, color: AppColors.primary, size: 24),
+          child: Icon(Icons.account_balance_rounded, color: AppColors.primary, size: 24),
         ),
         const SizedBox(height: 12),
-        const Text(
+        Text(
           'No bank account added',
           style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
         ),
         const SizedBox(height: 4),
-        const Text(
+        Text(
           'Add your bank account to receive payments from brands',
           textAlign: TextAlign.center,
           style: TextStyle(fontSize: 12, color: AppColors.textSecondary, height: 1.4),
@@ -2534,10 +2589,10 @@ class _BankAccountInfo extends StatelessWidget {
                 children: [
                   Text(
                     name,
-                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
                   ),
                   if (bank.isNotEmpty)
-                    Text(bank, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                    Text(bank, style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
                 ],
               ),
             ),
@@ -2549,7 +2604,7 @@ class _BankAccountInfo extends StatelessWidget {
                   color: AppColors.primaryLight,
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Text('Edit', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.primary)),
+                child: Text('Edit', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.primary)),
               ),
             ),
           ],
@@ -2594,7 +2649,7 @@ class _BankDetailRow extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: const TextStyle(fontSize: 12, color: AppColors.textHint)),
+        Text(label, style: TextStyle(fontSize: 12, color: AppColors.textHint)),
         Text(value, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: valueColor ?? AppColors.textPrimary)),
       ],
     );
@@ -2676,7 +2731,7 @@ class _AddBankAccountSheetState extends State<_AddBankAccountSheet> {
     return Padding(
       padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
       child: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
         ),
@@ -2692,12 +2747,12 @@ class _AddBankAccountSheetState extends State<_AddBankAccountSheet> {
               ),
             ),
             const SizedBox(height: 20),
-            const Text(
+            Text(
               'Bank Account Details',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
             ),
             const SizedBox(height: 6),
-            const Text(
+            Text(
               'Your bank account details are securely stored and used to transfer payments.',
               style: TextStyle(fontSize: 12, color: AppColors.textSecondary, height: 1.4),
             ),
@@ -2734,13 +2789,13 @@ class _AddBankAccountSheetState extends State<_AddBankAccountSheet> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
+        Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
         const SizedBox(height: 6),
         TextField(
           controller: ctrl,
           keyboardType: keyboardType,
           textCapitalization: textCapitalization,
-          style: const TextStyle(fontSize: 14, color: AppColors.textPrimary),
+          style: TextStyle(fontSize: 14, color: AppColors.textPrimary),
           decoration: InputDecoration(hintText: hint),
         ),
       ],
@@ -2764,6 +2819,7 @@ class _SettingsCard extends StatelessWidget {
       ),
       child: Column(
         children: [
+          const ThemeSettingsTile(),
           _SettingsRow(
             icon: Icons.notifications_rounded,
             iconColor: AppColors.primary,
@@ -2861,7 +2917,7 @@ class _SettingsRow extends StatelessWidget {
                       const SizedBox(height: 2),
                       Text(
                         subtitle,
-                        style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                        style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
                       ),
                     ],
                   ),
@@ -2876,7 +2932,7 @@ class _SettingsRow extends StatelessWidget {
           ),
         ),
         if (showDivider)
-          const Divider(height: 1, indent: 16, endIndent: 16, color: AppColors.divider),
+          Divider(height: 1, indent: 16, endIndent: 16, color: AppColors.divider),
       ],
     );
   }
@@ -2892,7 +2948,7 @@ class _SectionLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       label,
-      style: const TextStyle(
+      style: TextStyle(
         fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.textPrimary,
       ),
     );
@@ -3051,9 +3107,9 @@ class _EditAboutSheetState extends State<_EditAboutSheet> {
       initialDate: _dateOfBirth ?? DateTime(2000, 1, 1),
       firstDate: DateTime(1950),
       lastDate: DateTime.now(),
-      builder: (ctx, child) => Theme(
+        builder: (ctx, child) => Theme(
         data: Theme.of(ctx).copyWith(
-          colorScheme: const ColorScheme.dark(
+          colorScheme: ColorScheme.dark(
             primary: AppColors.primary,
             surface: AppColors.surface,
             onSurface: AppColors.textPrimary,
@@ -3071,7 +3127,7 @@ class _EditAboutSheetState extends State<_EditAboutSheet> {
       padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
       child: Container(
         constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.9),
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
         ),
@@ -3085,7 +3141,7 @@ class _EditAboutSheetState extends State<_EditAboutSheet> {
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Row(
                 children: [
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -3094,12 +3150,12 @@ class _EditAboutSheetState extends State<_EditAboutSheet> {
                       ],
                     ),
                   ),
-                  GestureDetector(onTap: () => Navigator.pop(context), child: const Icon(Icons.close_rounded, color: AppColors.textSecondary)),
+                  GestureDetector(onTap: () => Navigator.pop(context), child: Icon(Icons.close_rounded, color: AppColors.textSecondary)),
                 ],
               ),
             ),
             const SizedBox(height: 16),
-            const Divider(height: 1, color: AppColors.divider),
+            Divider(height: 1, color: AppColors.divider),
             Flexible(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
@@ -3114,7 +3170,7 @@ class _EditAboutSheetState extends State<_EditAboutSheet> {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Gender', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
+                        Text('Gender', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
                         const SizedBox(height: 6),
                         Container(
                           width: double.infinity,
@@ -3126,9 +3182,9 @@ class _EditAboutSheetState extends State<_EditAboutSheet> {
                           child: DropdownButtonHideUnderline(
                             child: DropdownButton<String>(
                               value: _gender.isEmpty ? null : _gender,
-                              hint: const Text('Select gender', style: TextStyle(fontSize: 14, color: AppColors.textHint)),
+                              hint: Text('Select gender', style: TextStyle(fontSize: 14, color: AppColors.textHint)),
                               dropdownColor: AppColors.surface,
-                              style: const TextStyle(fontSize: 14, color: AppColors.textPrimary),
+                              style: TextStyle(fontSize: 14, color: AppColors.textPrimary),
                               isExpanded: true,
                               items: const [
                                 DropdownMenuItem(value: 'male', child: Text('Male')),
@@ -3147,7 +3203,7 @@ class _EditAboutSheetState extends State<_EditAboutSheet> {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Date of Birth', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
+                        Text('Date of Birth', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
                         const SizedBox(height: 6),
                         GestureDetector(
                           onTap: _pickDate,
@@ -3228,7 +3284,7 @@ class _EditAboutSheetState extends State<_EditAboutSheet> {
       children: [
         Icon(icon, size: 16, color: AppColors.primary),
         const SizedBox(width: 8),
-        Text(label, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+        Text(label, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
       ],
     );
   }
@@ -3240,13 +3296,13 @@ class _EditAboutSheetState extends State<_EditAboutSheet> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
+        Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
         const SizedBox(height: 6),
         TextField(
           controller: ctrl,
           keyboardType: keyboardType,
           maxLines: maxLines,
-          style: const TextStyle(fontSize: 14, color: AppColors.textPrimary),
+          style: TextStyle(fontSize: 14, color: AppColors.textPrimary),
           decoration: InputDecoration(hintText: hint),
         ),
       ],
@@ -3352,7 +3408,7 @@ class _EditRateCardSheetState extends State<_EditRateCardSheet> {
       padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
       child: Container(
         constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.9),
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
         ),
@@ -3366,7 +3422,7 @@ class _EditRateCardSheetState extends State<_EditRateCardSheet> {
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Row(
                 children: [
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -3375,12 +3431,12 @@ class _EditRateCardSheetState extends State<_EditRateCardSheet> {
                       ],
                     ),
                   ),
-                  GestureDetector(onTap: () => Navigator.pop(context), child: const Icon(Icons.close_rounded, color: AppColors.textSecondary)),
+                  GestureDetector(onTap: () => Navigator.pop(context), child: Icon(Icons.close_rounded, color: AppColors.textSecondary)),
                 ],
               ),
             ),
             const SizedBox(height: 16),
-            const Divider(height: 1, color: AppColors.divider),
+            Divider(height: 1, color: AppColors.divider),
             Flexible(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
@@ -3421,9 +3477,9 @@ class _EditRateCardSheetState extends State<_EditRateCardSheet> {
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.swap_horiz_rounded, size: 18, color: AppColors.success),
+                          Icon(Icons.swap_horiz_rounded, size: 18, color: AppColors.success),
                           const SizedBox(width: 10),
-                          const Expanded(child: Text('Open to Barter', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary))),
+                          Expanded(child: Text('Open to Barter', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary))),
                           Switch(
                             value: _perBarter,
                             onChanged: (v) => setState(() => _perBarter = v),
@@ -3436,16 +3492,16 @@ class _EditRateCardSheetState extends State<_EditRateCardSheet> {
                     // Custom packages
                     Row(
                       children: [
-                        const Icon(Icons.inventory_2_rounded, size: 16, color: AppColors.primary),
+                        Icon(Icons.inventory_2_rounded, size: 16, color: AppColors.primary),
                         const SizedBox(width: 8),
-                        const Text('Custom Packages', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                        Text('Custom Packages', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
                         const Spacer(),
                         GestureDetector(
                           onTap: () => setState(() => _customPackages.add({'name': '', 'price': ''})),
                           child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                             decoration: BoxDecoration(color: AppColors.primaryLight, borderRadius: BorderRadius.circular(8)),
-                            child: const Text('+ Add', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.primary)),
+                            child: Text('+ Add', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.primary)),
                           ),
                         ),
                       ],
@@ -3467,7 +3523,7 @@ class _EditRateCardSheetState extends State<_EditRateCardSheet> {
                                 flex: 2,
                                 child: TextField(
                                   controller: TextEditingController(text: _customPackages[i]['name'] ?? ''),
-                                  style: const TextStyle(fontSize: 13, color: AppColors.textPrimary),
+                                  style: TextStyle(fontSize: 13, color: AppColors.textPrimary),
                                   decoration: const InputDecoration(hintText: 'Package name', isDense: true, border: InputBorder.none),
                                   onChanged: (v) => _customPackages[i]['name'] = v,
                                 ),
@@ -3477,14 +3533,14 @@ class _EditRateCardSheetState extends State<_EditRateCardSheet> {
                                 child: TextField(
                                   controller: TextEditingController(text: _customPackages[i]['price']?.toString() ?? ''),
                                   keyboardType: TextInputType.number,
-                                  style: const TextStyle(fontSize: 13, color: AppColors.textPrimary),
+                                  style: TextStyle(fontSize: 13, color: AppColors.textPrimary),
                                   decoration: const InputDecoration(hintText: '\u20b9 Price', isDense: true, border: InputBorder.none),
                                   onChanged: (v) => _customPackages[i]['price'] = v,
                                 ),
                               ),
                               GestureDetector(
                                 onTap: () => setState(() => _customPackages.removeAt(i)),
-                                child: const Padding(
+                                child: Padding(
                                   padding: EdgeInsets.only(left: 4),
                                   child: Icon(Icons.close_rounded, size: 18, color: AppColors.error),
                                 ),
@@ -3523,12 +3579,12 @@ class _EditRateCardSheetState extends State<_EditRateCardSheet> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
+        Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
         const SizedBox(height: 6),
         TextField(
           controller: ctrl,
           keyboardType: keyboardType,
-          style: const TextStyle(fontSize: 14, color: AppColors.textPrimary),
+          style: TextStyle(fontSize: 14, color: AppColors.textPrimary),
           decoration: InputDecoration(hintText: hint),
         ),
       ],
@@ -3610,7 +3666,7 @@ class _EditPastWorkSheetState extends State<_EditPastWorkSheet> {
       padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
       child: Container(
         constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.9),
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
         ),
@@ -3624,7 +3680,7 @@ class _EditPastWorkSheetState extends State<_EditPastWorkSheet> {
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Row(
                 children: [
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -3633,12 +3689,12 @@ class _EditPastWorkSheetState extends State<_EditPastWorkSheet> {
                       ],
                     ),
                   ),
-                  GestureDetector(onTap: () => Navigator.pop(context), child: const Icon(Icons.close_rounded, color: AppColors.textSecondary)),
+                  GestureDetector(onTap: () => Navigator.pop(context), child: Icon(Icons.close_rounded, color: AppColors.textSecondary)),
                 ],
               ),
             ),
             const SizedBox(height: 16),
-            const Divider(height: 1, color: AppColors.divider),
+            Divider(height: 1, color: AppColors.divider),
             Flexible(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
@@ -3649,11 +3705,11 @@ class _EditPastWorkSheetState extends State<_EditPastWorkSheet> {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Past Brands (comma-separated)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
+                        Text('Past Brands (comma-separated)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
                         const SizedBox(height: 6),
                         TextField(
                           controller: _pastBrandsCtrl,
-                          style: const TextStyle(fontSize: 14, color: AppColors.textPrimary),
+                          style: TextStyle(fontSize: 14, color: AppColors.textPrimary),
                           decoration: const InputDecoration(hintText: 'e.g. Nike, Myntra, boAt'),
                         ),
                       ],
@@ -3661,16 +3717,16 @@ class _EditPastWorkSheetState extends State<_EditPastWorkSheet> {
                     const SizedBox(height: 20),
                     Row(
                       children: [
-                        const Icon(Icons.work_history_rounded, size: 16, color: AppColors.primary),
+                        Icon(Icons.work_history_rounded, size: 16, color: AppColors.primary),
                         const SizedBox(width: 8),
-                        const Text('Structured Work Entries', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                        Text('Structured Work Entries', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
                         const Spacer(),
                         GestureDetector(
                           onTap: _addEntry,
                           child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                             decoration: BoxDecoration(color: AppColors.primaryLight, borderRadius: BorderRadius.circular(8)),
-                            child: const Text('+ Add Entry', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.primary)),
+                            child: Text('+ Add Entry', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.primary)),
                           ),
                         ),
                       ],
@@ -3715,18 +3771,18 @@ class _EditPastWorkSheetState extends State<_EditPastWorkSheet> {
         children: [
           Row(
             children: [
-              Text('Entry ${index + 1}', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+              Text('Entry ${index + 1}', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
               const Spacer(),
               GestureDetector(
                 onTap: () => setState(() => _entries.removeAt(index)),
-                child: const Icon(Icons.delete_outline_rounded, size: 18, color: AppColors.error),
+                child: Icon(Icons.delete_outline_rounded, size: 18, color: AppColors.error),
               ),
             ],
           ),
           const SizedBox(height: 10),
           TextField(
             controller: TextEditingController(text: entry['brand_name'] ?? ''),
-            style: const TextStyle(fontSize: 13, color: AppColors.textPrimary),
+            style: TextStyle(fontSize: 13, color: AppColors.textPrimary),
             decoration: const InputDecoration(hintText: 'Brand name', isDense: true),
             onChanged: (v) => entry['brand_name'] = v,
           ),
@@ -3740,9 +3796,9 @@ class _EditPastWorkSheetState extends State<_EditPastWorkSheet> {
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton<String>(
                       value: (entry['deliverable_type'] ?? '').toString().isEmpty ? null : entry['deliverable_type'],
-                      hint: const Text('Deliverable', style: TextStyle(fontSize: 12, color: AppColors.textHint)),
+                      hint: Text('Deliverable', style: TextStyle(fontSize: 12, color: AppColors.textHint)),
                       dropdownColor: AppColors.surface,
-                      style: const TextStyle(fontSize: 12, color: AppColors.textPrimary),
+                      style: TextStyle(fontSize: 12, color: AppColors.textPrimary),
                       isExpanded: true,
                       items: const [
                         DropdownMenuItem(value: 'Post', child: Text('Post')),
@@ -3768,9 +3824,9 @@ class _EditPastWorkSheetState extends State<_EditPastWorkSheet> {
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton<String>(
                       value: (entry['platform'] ?? '').toString().isEmpty ? null : entry['platform'],
-                      hint: const Text('Platform', style: TextStyle(fontSize: 12, color: AppColors.textHint)),
+                      hint: Text('Platform', style: TextStyle(fontSize: 12, color: AppColors.textHint)),
                       dropdownColor: AppColors.surface,
-                      style: const TextStyle(fontSize: 12, color: AppColors.textPrimary),
+                      style: TextStyle(fontSize: 12, color: AppColors.textPrimary),
                       isExpanded: true,
                       items: const [
                         DropdownMenuItem(value: 'Instagram', child: Text('Instagram')),
@@ -3789,14 +3845,14 @@ class _EditPastWorkSheetState extends State<_EditPastWorkSheet> {
           const SizedBox(height: 8),
           TextField(
             controller: TextEditingController(text: entry['date'] ?? ''),
-            style: const TextStyle(fontSize: 13, color: AppColors.textPrimary),
+            style: TextStyle(fontSize: 13, color: AppColors.textPrimary),
             decoration: const InputDecoration(hintText: 'Date (e.g. Jan 2025)', isDense: true),
             onChanged: (v) => entry['date'] = v,
           ),
           const SizedBox(height: 8),
           TextField(
             controller: TextEditingController(text: entry['url'] ?? ''),
-            style: const TextStyle(fontSize: 13, color: AppColors.textPrimary),
+            style: TextStyle(fontSize: 13, color: AppColors.textPrimary),
             decoration: const InputDecoration(hintText: 'URL (optional)', isDense: true),
             keyboardType: TextInputType.url,
             onChanged: (v) => entry['url'] = v,
@@ -3804,7 +3860,7 @@ class _EditPastWorkSheetState extends State<_EditPastWorkSheet> {
           const SizedBox(height: 8),
           TextField(
             controller: TextEditingController(text: entry['description'] ?? ''),
-            style: const TextStyle(fontSize: 13, color: AppColors.textPrimary),
+            style: TextStyle(fontSize: 13, color: AppColors.textPrimary),
             decoration: const InputDecoration(hintText: 'Description (optional)', isDense: true),
             maxLines: 2,
             onChanged: (v) => entry['description'] = v,
@@ -3897,7 +3953,7 @@ class _EditCollaborationPrefsSheetState extends State<_EditCollaborationPrefsShe
       padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
       child: Container(
         constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.9),
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
         ),
@@ -3911,7 +3967,7 @@ class _EditCollaborationPrefsSheetState extends State<_EditCollaborationPrefsShe
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Row(
                 children: [
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -3920,12 +3976,12 @@ class _EditCollaborationPrefsSheetState extends State<_EditCollaborationPrefsShe
                       ],
                     ),
                   ),
-                  GestureDetector(onTap: () => Navigator.pop(context), child: const Icon(Icons.close_rounded, color: AppColors.textSecondary)),
+                  GestureDetector(onTap: () => Navigator.pop(context), child: Icon(Icons.close_rounded, color: AppColors.textSecondary)),
                 ],
               ),
             ),
             const SizedBox(height: 16),
-            const Divider(height: 1, color: AppColors.divider),
+            Divider(height: 1, color: AppColors.divider),
             Flexible(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
@@ -3944,7 +4000,7 @@ class _EditCollaborationPrefsSheetState extends State<_EditCollaborationPrefsShe
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Availability Status', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
+                        Text('Availability Status', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
                         const SizedBox(height: 6),
                         Container(
                           width: double.infinity,
@@ -3957,7 +4013,7 @@ class _EditCollaborationPrefsSheetState extends State<_EditCollaborationPrefsShe
                             child: DropdownButton<String>(
                               value: _availabilityStatus,
                               dropdownColor: AppColors.surface,
-                              style: const TextStyle(fontSize: 14, color: AppColors.textPrimary),
+                              style: TextStyle(fontSize: 14, color: AppColors.textPrimary),
                               isExpanded: true,
                               items: const [
                                 DropdownMenuItem(value: 'available', child: Text('Available')),
@@ -4012,7 +4068,7 @@ class _EditCollaborationPrefsSheetState extends State<_EditCollaborationPrefsShe
         children: [
           Icon(icon, size: 18, color: value ? AppColors.success : AppColors.textHint),
           const SizedBox(width: 10),
-          Expanded(child: Text(label, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary))),
+          Expanded(child: Text(label, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary))),
           Switch(value: value, onChanged: onChanged, activeThumbColor: AppColors.success),
         ],
       ),
@@ -4025,12 +4081,12 @@ class _EditCollaborationPrefsSheetState extends State<_EditCollaborationPrefsShe
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
+        Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
         const SizedBox(height: 6),
         TextField(
           controller: ctrl,
           keyboardType: keyboardType,
-          style: const TextStyle(fontSize: 14, color: AppColors.textPrimary),
+          style: TextStyle(fontSize: 14, color: AppColors.textPrimary),
           decoration: InputDecoration(hintText: hint),
         ),
       ],
@@ -4138,7 +4194,7 @@ class _EditAudienceSheetState extends State<_EditAudienceSheet> {
       padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
       child: Container(
         constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.9),
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
         ),
@@ -4152,7 +4208,7 @@ class _EditAudienceSheetState extends State<_EditAudienceSheet> {
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Row(
                 children: [
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -4161,12 +4217,12 @@ class _EditAudienceSheetState extends State<_EditAudienceSheet> {
                       ],
                     ),
                   ),
-                  GestureDetector(onTap: () => Navigator.pop(context), child: const Icon(Icons.close_rounded, color: AppColors.textSecondary)),
+                  GestureDetector(onTap: () => Navigator.pop(context), child: Icon(Icons.close_rounded, color: AppColors.textSecondary)),
                 ],
               ),
             ),
             const SizedBox(height: 16),
-            const Divider(height: 1, color: AppColors.divider),
+            Divider(height: 1, color: AppColors.divider),
             Flexible(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
@@ -4230,7 +4286,7 @@ class _EditAudienceSheetState extends State<_EditAudienceSheet> {
       children: [
         Icon(icon, size: 16, color: AppColors.primary),
         const SizedBox(width: 8),
-        Text(label, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+        Text(label, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
       ],
     );
   }
@@ -4241,12 +4297,12 @@ class _EditAudienceSheetState extends State<_EditAudienceSheet> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
+        Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
         const SizedBox(height: 6),
         TextField(
           controller: ctrl,
           keyboardType: keyboardType,
-          style: const TextStyle(fontSize: 14, color: AppColors.textPrimary),
+          style: TextStyle(fontSize: 14, color: AppColors.textPrimary),
           decoration: InputDecoration(hintText: hint),
         ),
       ],
@@ -4305,7 +4361,7 @@ class _HelpSupportSheetState extends State<_HelpSupportSheet> {
       maxChildSize: 0.95,
       minChildSize: 0.5,
       builder: (_, controller) => Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
@@ -4323,19 +4379,19 @@ class _HelpSupportSheetState extends State<_HelpSupportSheet> {
                 controller: controller,
                 padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
                 children: [
-                  const Text(
+                  Text(
                     'Help & Support',
                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
                   ),
                   const SizedBox(height: 4),
-                  const Text(
+                  Text(
                     'Find answers or reach out to us',
                     style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
                   ),
                   const SizedBox(height: 24),
 
                   // FAQs
-                  const Text(
+                  Text(
                     'Frequently Asked Questions',
                     style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
                   ),
@@ -4383,7 +4439,7 @@ class _HelpSupportSheetState extends State<_HelpSupportSheet> {
                                 const SizedBox(height: 10),
                                 Text(
                                   faq.a,
-                                  style: const TextStyle(fontSize: 13, color: AppColors.textSecondary, height: 1.5),
+                                  style: TextStyle(fontSize: 13, color: AppColors.textSecondary, height: 1.5),
                                 ),
                               ],
                             ],
@@ -4396,7 +4452,7 @@ class _HelpSupportSheetState extends State<_HelpSupportSheet> {
                   const SizedBox(height: 24),
 
                   // Contact section
-                  const Text(
+                  Text(
                     'Still need help?',
                     style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
                   ),
@@ -4475,12 +4531,12 @@ class _ContactTile extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
-                  Text(subtitle, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                  Text(title, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+                  Text(subtitle, style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
                 ],
               ),
             ),
-            const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppColors.textHint),
+            Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppColors.textHint),
           ],
         ),
       ),
@@ -4496,7 +4552,7 @@ void _showAbout(BuildContext context) {
     backgroundColor: Colors.transparent,
     builder: (_) => Container(
       padding: const EdgeInsets.fromLTRB(20, 24, 20, 40),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -4517,23 +4573,23 @@ void _showAbout(BuildContext context) {
               gradient: AppColors.brandGradient,
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
-                BoxShadow(color: AppColors.primary.withValues(alpha: 0.3), blurRadius: 20, offset: const Offset(0, 8)),
+                BoxShadow(color: AppColors.primary.withValues(alpha: 0.3), blurRadius: 20, offset: Offset(0, 8)),
               ],
             ),
             child: const Icon(Icons.bolt_rounded, color: Colors.white, size: 38),
           ),
           const SizedBox(height: 16),
-          const Text(
+          Text(
             'Influenzer',
             style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
           ),
           const SizedBox(height: 4),
-          const Text(
+          Text(
             'Version 1.0.0',
             style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
           ),
           const SizedBox(height: 4),
-          const Text(
+          Text(
             'Where Brands Meet Creators',
             style: TextStyle(fontSize: 13, color: AppColors.textHint),
           ),
@@ -4562,7 +4618,7 @@ void _showAbout(BuildContext context) {
             ],
           ),
           const SizedBox(height: 20),
-          const Text(
+          Text(
             'Made with \u2764\uFE0F in India',
             style: TextStyle(fontSize: 12, color: AppColors.textHint),
           ),
@@ -4592,7 +4648,7 @@ class _AboutLink extends StatelessWidget {
         child: Center(
           child: Text(
             label,
-            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.primary),
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.primary),
           ),
         ),
       ),

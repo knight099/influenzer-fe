@@ -89,11 +89,11 @@ class _SubmitProposalScreenState extends ConsumerState<SubmitProposalScreen> {
               shape: BoxShape.circle,
               border: Border.all(color: AppColors.border),
             ),
-            child: const Icon(Icons.arrow_back_ios_rounded, size: 16, color: AppColors.textPrimary),
+            child: Icon(Icons.arrow_back_ios_rounded, size: 16, color: AppColors.textPrimary),
           ),
           onPressed: () => context.pop(),
         ),
-        title: const Text(
+        title: Text(
           'Submit Proposal',
           style: TextStyle(
             fontSize: 17,
@@ -146,7 +146,7 @@ class _SubmitProposalScreenState extends ConsumerState<SubmitProposalScreen> {
                               children: [
                                 Text(
                                   title,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 15,
                                     fontWeight: FontWeight.w700,
                                     color: AppColors.textPrimary,
@@ -158,11 +158,11 @@ class _SubmitProposalScreenState extends ConsumerState<SubmitProposalScreen> {
                                 const SizedBox(height: 4),
                                 Row(
                                   children: [
-                                    const Icon(Icons.business_rounded, size: 12, color: AppColors.textHint),
+                                    Icon(Icons.business_rounded, size: 12, color: AppColors.textHint),
                                     const SizedBox(width: 4),
                                     Text(
                                       brandName,
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontSize: 12,
                                         color: AppColors.textSecondary,
                                         fontWeight: FontWeight.w500,
@@ -227,7 +227,7 @@ class _SubmitProposalScreenState extends ConsumerState<SubmitProposalScreen> {
                     // Campaign brief summary (if available)
                     if (requirements.isNotEmpty) ...[
                       const SizedBox(height: 20),
-                      const Text(
+                      Text(
                         'Campaign Brief',
                         style: TextStyle(
                           fontSize: 13,
@@ -264,7 +264,7 @@ class _SubmitProposalScreenState extends ConsumerState<SubmitProposalScreen> {
                     const SizedBox(height: 28),
 
                     // Bid price field
-                    const Text(
+                    Text(
                       'YOUR BID',
                       style: TextStyle(
                         fontSize: 11,
@@ -289,7 +289,7 @@ class _SubmitProposalScreenState extends ConsumerState<SubmitProposalScreen> {
                               color: AppColors.primary.withValues(alpha: 0.08),
                               borderRadius: const BorderRadius.horizontal(left: Radius.circular(13)),
                             ),
-                            child: const Center(
+                            child: Center(
                               child: Text(
                                 '₹',
                                 style: TextStyle(
@@ -304,12 +304,12 @@ class _SubmitProposalScreenState extends ConsumerState<SubmitProposalScreen> {
                             child: TextFormField(
                               controller: _bidController,
                               keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.w700,
                                 color: AppColors.textPrimary,
                               ),
-                              decoration: const InputDecoration(
+                              decoration: InputDecoration(
                                 hintText: '0',
                                 hintStyle: TextStyle(color: AppColors.textHint, fontSize: 18),
                                 border: InputBorder.none,
@@ -329,13 +329,13 @@ class _SubmitProposalScreenState extends ConsumerState<SubmitProposalScreen> {
                     const SizedBox(height: 6),
                     Text(
                       'Campaign budget: ₹$budget',
-                      style: const TextStyle(fontSize: 12, color: AppColors.textHint),
+                      style: TextStyle(fontSize: 12, color: AppColors.textHint),
                     ),
 
                     const SizedBox(height: 24),
 
                     // Cover letter field
-                    const Text(
+                    Text(
                       'COVER LETTER',
                       style: TextStyle(
                         fontSize: 11,
@@ -355,12 +355,12 @@ class _SubmitProposalScreenState extends ConsumerState<SubmitProposalScreen> {
                         controller: _coverLetterController,
                         maxLines: 6,
                         minLines: 5,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 14,
                           color: AppColors.textPrimary,
                           height: 1.6,
                         ),
-                        decoration: const InputDecoration(
+                        decoration: InputDecoration(
                           hintText: 'Tell the brand why you\'re the perfect fit — your niche, content style, audience, and what makes your proposal stand out.',
                           hintStyle: TextStyle(
                             color: AppColors.textHint,
@@ -387,7 +387,7 @@ class _SubmitProposalScreenState extends ConsumerState<SubmitProposalScreen> {
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(color: AppColors.primary.withValues(alpha: 0.15)),
                       ),
-                      child: const Column(
+                      child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Row(
@@ -473,7 +473,7 @@ class _BrandInitial extends StatelessWidget {
     return Center(
       child: Text(
         name.isNotEmpty ? name[0].toUpperCase() : 'B',
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 20,
           fontWeight: FontWeight.w800,
           color: AppColors.primary,
@@ -501,7 +501,7 @@ class _BriefRow extends StatelessWidget {
             width: 90,
             child: Text(
               label,
-              style: const TextStyle(fontSize: 12, color: AppColors.textHint, fontWeight: FontWeight.w500),
+              style: TextStyle(fontSize: 12, color: AppColors.textHint, fontWeight: FontWeight.w500),
             ),
           ),
           Expanded(
@@ -531,7 +531,7 @@ class _TipRow extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Padding(
+          Padding(
             padding: EdgeInsets.only(top: 4),
             child: Icon(Icons.circle, size: 5, color: AppColors.primary),
           ),
@@ -539,7 +539,7 @@ class _TipRow extends StatelessWidget {
           Expanded(
             child: Text(
               text,
-              style: const TextStyle(fontSize: 12, color: AppColors.textSecondary, height: 1.5),
+              style: TextStyle(fontSize: 12, color: AppColors.textSecondary, height: 1.5),
             ),
           ),
         ],

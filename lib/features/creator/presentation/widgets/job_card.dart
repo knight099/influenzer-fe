@@ -121,7 +121,7 @@ class JobCard extends ConsumerWidget {
                       children: [
                         Text(
                           title,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary,
                             height: 1.3,
                           ),
@@ -147,12 +147,12 @@ class JobCard extends ConsumerWidget {
                           },
                           child: Row(
                             children: [
-                              const Icon(Icons.business_rounded, size: 13, color: AppColors.textHint),
+                              Icon(Icons.business_rounded, size: 13, color: AppColors.textHint),
                               const SizedBox(width: 4),
                               Flexible(
                                 child: Text(
                                   brandName,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 13, color: AppColors.textSecondary, fontWeight: FontWeight.w500,
                                   ),
                                   overflow: TextOverflow.ellipsis,
@@ -196,7 +196,7 @@ class JobCard extends ConsumerWidget {
                   description,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 13, color: AppColors.textSecondary, height: 1.55,
                   ),
                 ),
@@ -238,7 +238,7 @@ class JobCard extends ConsumerWidget {
                     children: [
                       Icon(Icons.touch_app_rounded, size: 12, color: AppColors.textHint),
                       const SizedBox(width: 3),
-                      const Text(
+                      Text(
                         'Tap for details',
                         style: TextStyle(fontSize: 11, color: AppColors.textHint),
                       ),
@@ -253,7 +253,7 @@ class JobCard extends ConsumerWidget {
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(color: AppColors.success.withValues(alpha: 0.3)),
                       ),
-                      child: const Row(
+                      child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(Icons.check_circle_rounded, size: 14, color: AppColors.success),
@@ -395,14 +395,14 @@ class JobCard extends ConsumerWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(title,
-                                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppColors.textPrimary, height: 1.3)),
+                                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppColors.textPrimary, height: 1.3)),
                               const SizedBox(height: 4),
                               Row(
                                 children: [
-                                  const Icon(Icons.business_rounded, size: 13, color: AppColors.textHint),
+                                  Icon(Icons.business_rounded, size: 13, color: AppColors.textHint),
                                   const SizedBox(width: 4),
                                   Text(brandName,
-                                    style: const TextStyle(fontSize: 13, color: AppColors.textSecondary, fontWeight: FontWeight.w500)),
+                                    style: TextStyle(fontSize: 13, color: AppColors.textSecondary, fontWeight: FontWeight.w500)),
                                 ],
                               ),
                             ],
@@ -437,7 +437,7 @@ class JobCard extends ConsumerWidget {
                       _SectionLabel('About this campaign'),
                       const SizedBox(height: 8),
                       Text(description,
-                        style: const TextStyle(fontSize: 14, color: AppColors.textSecondary, height: 1.65)),
+                        style: TextStyle(fontSize: 14, color: AppColors.textSecondary, height: 1.65)),
                       const SizedBox(height: 20),
                     ],
 
@@ -503,7 +503,7 @@ class JobCard extends ConsumerWidget {
                           borderRadius: BorderRadius.circular(18),
                           border: Border.all(color: AppColors.success.withValues(alpha: 0.3)),
                         ),
-                        child: const Row(
+                        child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Icon(Icons.check_circle_rounded, size: 18, color: AppColors.success),
@@ -584,7 +584,7 @@ class _SectionLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Text(text,
-      style: const TextStyle(
+      style: TextStyle(
         fontSize: 12, fontWeight: FontWeight.w700,
         color: AppColors.textHint, letterSpacing: 0.8,
       ));
@@ -608,7 +608,7 @@ class _BriefRow extends StatelessWidget {
           SizedBox(
             width: 100,
             child: Text(label,
-              style: const TextStyle(fontSize: 13, color: AppColors.textHint, fontWeight: FontWeight.w500)),
+              style: TextStyle(fontSize: 13, color: AppColors.textHint, fontWeight: FontWeight.w500)),
           ),
           Expanded(
             child: Text(value,

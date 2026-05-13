@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/widgets/theme_settings_tile.dart';
 import '../../auth/data/auth_repository.dart';
 import '../data/brand_profile_repository.dart';
 import '../../notifications/presentation/notifications_screen.dart';
@@ -24,11 +25,11 @@ class BrandProfileScreen extends ConsumerWidget {
             children: [
               Container(
                 width: 64, height: 64,
-                decoration: const BoxDecoration(color: AppColors.errorLight, shape: BoxShape.circle),
-                child: const Icon(Icons.error_outline_rounded, color: AppColors.error, size: 30),
+                decoration: BoxDecoration(color: AppColors.errorLight, shape: BoxShape.circle),
+                child: Icon(Icons.error_outline_rounded, color: AppColors.error, size: 30),
               ),
               const SizedBox(height: 16),
-              const Text(
+              Text(
                 'Failed to load profile',
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
               ),
@@ -161,7 +162,7 @@ class _BrandHero extends StatelessWidget {
         // Cover gradient
         Container(
           height: 160,
-          decoration: const BoxDecoration(gradient: AppColors.brandGradient),
+          decoration: BoxDecoration(gradient: AppColors.brandGradient),
           child: Stack(
             children: [
               Positioned(
@@ -274,7 +275,7 @@ class _BrandHero extends StatelessWidget {
 
               Text(
                 companyName,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.textPrimary,
                 ),
               ),
@@ -282,7 +283,7 @@ class _BrandHero extends StatelessWidget {
               if (profile.contactName != null)
                 Text(
                   profile.contactName!,
-                  style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                  style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
                 ),
               const SizedBox(height: 10),
 
@@ -292,7 +293,7 @@ class _BrandHero extends StatelessWidget {
                   color: AppColors.primaryLight,
                   borderRadius: BorderRadius.circular(20),
                 ),
-                child: const Text(
+                child: Text(
                   'BRAND',
                   style: TextStyle(
                     fontSize: 11, fontWeight: FontWeight.w700,
@@ -533,14 +534,14 @@ class _InfoRow extends StatelessWidget {
                     children: [
                       Text(
                         label,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 11, fontWeight: FontWeight.w500, color: AppColors.textSecondary,
                         ),
                       ),
                       const SizedBox(height: 2),
                       Text(
                         value,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.textPrimary,
                         ),
                       ),
@@ -553,14 +554,14 @@ class _InfoRow extends StatelessWidget {
                     color: AppColors.primaryLight,
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Icon(Icons.edit_rounded, size: 14, color: AppColors.primary),
+                  child: Icon(Icons.edit_rounded, size: 14, color: AppColors.primary),
                 ),
               ],
             ),
           ),
         ),
         if (showDivider)
-          const Divider(height: 1, indent: 16, endIndent: 16, color: AppColors.divider),
+          Divider(height: 1, indent: 16, endIndent: 16, color: AppColors.divider),
       ],
     );
   }
@@ -579,7 +580,7 @@ class _EditSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: EdgeInsets.fromLTRB(20, 24, 20, MediaQuery.of(context).viewInsets.bottom + 24),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -600,7 +601,7 @@ class _EditSheet extends StatelessWidget {
           const SizedBox(height: 20),
           Text(
             'Edit $field',
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
           ),
           const SizedBox(height: 16),
           TextField(
@@ -608,7 +609,7 @@ class _EditSheet extends StatelessWidget {
             autofocus: true,
             decoration: InputDecoration(
               hintText: 'Enter $field',
-              prefixIcon: const Icon(Icons.edit_rounded, size: 18, color: AppColors.textHint),
+              prefixIcon: Icon(Icons.edit_rounded, size: 18, color: AppColors.textHint),
             ),
           ),
           const SizedBox(height: 16),
@@ -652,7 +653,7 @@ class _RoleSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -667,7 +668,7 @@ class _RoleSheet extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 20),
-          const Text(
+          Text(
             'Select Your Role',
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
           ),
@@ -705,7 +706,7 @@ class _RoleSheet extends StatelessWidget {
                       ),
                     ),
                     if (isSelected)
-                      const Icon(Icons.check_circle_rounded, size: 18, color: AppColors.primary),
+                      Icon(Icons.check_circle_rounded, size: 18, color: AppColors.primary),
                   ],
                 ),
               ),
@@ -767,7 +768,7 @@ class _AboutCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: AppColors.primary.withOpacity(0.2)),
                   ),
-                  child: const Row(
+                  child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(Icons.edit_rounded, size: 14, color: AppColors.primary),
@@ -1115,7 +1116,7 @@ class _EditBrandDetailsSheetState extends State<_EditBrandDetailsSheet> {
       maxChildSize: 0.95,
       minChildSize: 0.5,
       builder: (_, scrollController) => Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
@@ -1129,7 +1130,7 @@ class _EditBrandDetailsSheetState extends State<_EditBrandDetailsSheet> {
               ),
             ),
             const SizedBox(height: 16),
-            const Padding(
+            Padding(
               padding: EdgeInsets.symmetric(horizontal: 20),
               child: Align(
                 alignment: Alignment.centerLeft,
@@ -1145,11 +1146,11 @@ class _EditBrandDetailsSheetState extends State<_EditBrandDetailsSheet> {
                 controller: scrollController,
                 padding: EdgeInsets.fromLTRB(20, 0, 20, MediaQuery.of(context).viewInsets.bottom + 24),
                 children: [
-                  const Text('About', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textHint, letterSpacing: 0.8)),
+                  Text('About', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textHint, letterSpacing: 0.8)),
                   const SizedBox(height: 10),
                   _field('Description', _descriptionCtrl, maxLines: 4),
 
-                  const Text('Details', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textHint, letterSpacing: 0.8)),
+                  Text('Details', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textHint, letterSpacing: 0.8)),
                   const SizedBox(height: 10),
                   _field('Industry', _industryCtrl),
                   _field('Founded Year', _foundedYearCtrl, keyboardType: TextInputType.number),
@@ -1158,7 +1159,7 @@ class _EditBrandDetailsSheetState extends State<_EditBrandDetailsSheet> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Company Size', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                        Text('Company Size', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
                         const SizedBox(height: 8),
                         Wrap(
                           spacing: 8,
@@ -1192,13 +1193,13 @@ class _EditBrandDetailsSheetState extends State<_EditBrandDetailsSheet> {
                   ),
                   _field('Headquarters', _headquartersCtrl),
 
-                  const Text('Social Links', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textHint, letterSpacing: 0.8)),
+                  Text('Social Links', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textHint, letterSpacing: 0.8)),
                   const SizedBox(height: 10),
                   _field('Instagram URL', _instagramCtrl, keyboardType: TextInputType.url),
                   _field('Twitter / X URL', _twitterCtrl, keyboardType: TextInputType.url),
                   _field('LinkedIn URL', _linkedinCtrl, keyboardType: TextInputType.url),
 
-                  const Text('Campaign Focus', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textHint, letterSpacing: 0.8)),
+                  Text('Campaign Focus', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textHint, letterSpacing: 0.8)),
                   const SizedBox(height: 10),
                   _field('Product Categories (comma-separated)', _productCategoriesCtrl),
                   _field('Target Audience', _targetAudienceCtrl, maxLines: 2),
@@ -1248,6 +1249,7 @@ class _SettingsCard extends StatelessWidget {
       ),
       child: Column(
         children: [
+          const ThemeSettingsTile(),
           _SettingsRow(
             icon: Icons.notifications_rounded,
             iconColor: AppColors.primary,
@@ -1353,7 +1355,7 @@ class _SettingsRow extends StatelessWidget {
                       const SizedBox(height: 2),
                       Text(
                         subtitle,
-                        style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                        style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
                       ),
                     ],
                   ),
@@ -1368,7 +1370,7 @@ class _SettingsRow extends StatelessWidget {
           ),
         ),
         if (showDivider)
-          const Divider(height: 1, indent: 16, endIndent: 16, color: AppColors.divider),
+          Divider(height: 1, indent: 16, endIndent: 16, color: AppColors.divider),
       ],
     );
   }
@@ -1384,7 +1386,7 @@ class _SectionLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       label,
-      style: const TextStyle(
+      style: TextStyle(
         fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.textPrimary,
       ),
     );
@@ -1442,7 +1444,7 @@ void _showPrivacy(BuildContext context) {
       maxChildSize: 0.92,
       minChildSize: 0.4,
       builder: (_, controller) => Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
@@ -1460,12 +1462,12 @@ void _showPrivacy(BuildContext context) {
                 controller: controller,
                 padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
                 children: [
-                  const Text(
+                  Text(
                     'Privacy & Data',
                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
                   ),
                   const SizedBox(height: 4),
-                  const Text(
+                  Text(
                     'How we handle your information',
                     style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
                   ),
@@ -1523,7 +1525,7 @@ void _showPrivacy(BuildContext context) {
                       },
                       icon: const Icon(Icons.delete_outline_rounded, size: 16),
                       label: const Text('Request Data Deletion'),
-                      style: OutlinedButton.styleFrom(foregroundColor: AppColors.error, side: const BorderSide(color: AppColors.error)),
+                      style: OutlinedButton.styleFrom(foregroundColor: AppColors.error, side: BorderSide(color: AppColors.error)),
                     ),
                   ),
                 ],
@@ -1576,12 +1578,12 @@ class _PrivacySection extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   body,
-                  style: const TextStyle(fontSize: 13, color: AppColors.textSecondary, height: 1.5),
+                  style: TextStyle(fontSize: 13, color: AppColors.textSecondary, height: 1.5),
                 ),
               ],
             ),
@@ -1643,7 +1645,7 @@ class _HelpSupportSheetState extends State<_HelpSupportSheet> {
       maxChildSize: 0.95,
       minChildSize: 0.5,
       builder: (_, controller) => Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
@@ -1661,17 +1663,17 @@ class _HelpSupportSheetState extends State<_HelpSupportSheet> {
                 controller: controller,
                 padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
                 children: [
-                  const Text(
+                  Text(
                     'Help & Support',
                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
                   ),
                   const SizedBox(height: 4),
-                  const Text(
+                  Text(
                     'Find answers or get in touch',
                     style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
                   ),
                   const SizedBox(height: 24),
-                  const Text(
+                  Text(
                     'Frequently Asked Questions',
                     style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
                   ),
@@ -1719,7 +1721,7 @@ class _HelpSupportSheetState extends State<_HelpSupportSheet> {
                                 const SizedBox(height: 10),
                                 Text(
                                   faq.a,
-                                  style: const TextStyle(fontSize: 13, color: AppColors.textSecondary, height: 1.5),
+                                  style: TextStyle(fontSize: 13, color: AppColors.textSecondary, height: 1.5),
                                 ),
                               ],
                             ],
@@ -1729,7 +1731,7 @@ class _HelpSupportSheetState extends State<_HelpSupportSheet> {
                     );
                   }),
                   const SizedBox(height: 24),
-                  const Text(
+                  Text(
                     'Still need help?',
                     style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
                   ),
@@ -1808,12 +1810,12 @@ class _ContactTile extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
-                  Text(subtitle, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                  Text(title, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+                  Text(subtitle, style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
                 ],
               ),
             ),
-            const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppColors.textHint),
+            Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppColors.textHint),
           ],
         ),
       ),
@@ -1829,7 +1831,7 @@ void _showAbout(BuildContext context) {
     backgroundColor: Colors.transparent,
     builder: (_) => Container(
       padding: const EdgeInsets.fromLTRB(20, 24, 20, 40),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -1849,23 +1851,23 @@ void _showAbout(BuildContext context) {
               gradient: AppColors.brandGradient,
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
-                BoxShadow(color: AppColors.primary.withOpacity(0.3), blurRadius: 20, offset: const Offset(0, 8)),
+                BoxShadow(color: AppColors.primary.withOpacity(0.3), blurRadius: 20, offset: Offset(0, 8)),
               ],
             ),
             child: const Icon(Icons.bolt_rounded, color: Colors.white, size: 38),
           ),
           const SizedBox(height: 16),
-          const Text(
+          Text(
             'Influenzer',
             style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
           ),
           const SizedBox(height: 4),
-          const Text(
+          Text(
             'Version 1.0.0',
             style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
           ),
           const SizedBox(height: 4),
-          const Text(
+          Text(
             'Where Brands Meet Creators',
             style: TextStyle(fontSize: 13, color: AppColors.textHint),
           ),
@@ -1894,7 +1896,7 @@ void _showAbout(BuildContext context) {
             ],
           ),
           const SizedBox(height: 20),
-          const Text(
+          Text(
             'Made with ❤️ in India',
             style: TextStyle(fontSize: 12, color: AppColors.textHint),
           ),
@@ -1924,7 +1926,7 @@ class _AboutLink extends StatelessWidget {
         child: Center(
           child: Text(
             label,
-            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.primary),
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.primary),
           ),
         ),
       ),

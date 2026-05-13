@@ -335,7 +335,7 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
                     style: const TextStyle(fontSize: 16),
                   ),
                   if (_typingUsers.isNotEmpty)
-                    const Text(
+                    Text(
                       'Typing...',
                       style: TextStyle(fontSize: 12, color: AppColors.primary, fontStyle: FontStyle.italic),
                     ),
@@ -429,7 +429,7 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
                             height: 20,
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
-                        : const Icon(Icons.send, color: AppColors.primary),
+                        : Icon(Icons.send, color: AppColors.primary),
                     onPressed: _isSending ? null : _sendMessage,
                   ),
                 ],
