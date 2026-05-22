@@ -24,7 +24,8 @@ class AuthTokenHolder {
 Dio dio(Ref ref) {
   final dio = Dio(
     BaseOptions(
-      baseUrl: 'https://api.getcolabb.com', // Production base URL
+      baseUrl: 'http://192.168.0.8:8080', // Host machine local IP
+      // baseUrl: 'https://api.getcolabb.com', // Production base URL
       // baseUrl: 'http://localhost:8080', // Development base URL
       connectTimeout: const Duration(seconds: 10),
       receiveTimeout: const Duration(seconds: 10),

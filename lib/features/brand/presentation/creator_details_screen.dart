@@ -1104,8 +1104,19 @@ class _CollaborationPrefsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final preferredCategories = prefs['preferred_categories'] as List<dynamic>?;
-    final contentTypes = prefs['content_types'] as List<dynamic>?;
+    final rawPreferredCategories = prefs['preferred_categories'];
+    final List<dynamic>? preferredCategories = rawPreferredCategories is List
+        ? rawPreferredCategories
+        : (rawPreferredCategories is String && rawPreferredCategories.isNotEmpty
+            ? rawPreferredCategories.split(',').map((e) => e.trim()).toList()
+            : null);
+
+    final rawContentTypes = prefs['content_types'];
+    final List<dynamic>? contentTypes = rawContentTypes is List
+        ? rawContentTypes
+        : (rawContentTypes is String && rawContentTypes.isNotEmpty
+            ? rawContentTypes.split(',').map((e) => e.trim()).toList()
+            : null);
     final barterOpen = prefs['barter_open'];
     final exclusivityOpen = prefs['exclusivity_open'];
 

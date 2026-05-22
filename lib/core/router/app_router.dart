@@ -19,12 +19,23 @@ import '../../features/chat/presentation/chat_room_screen.dart';
 import '../../features/wallet/presentation/payment_screen.dart';
 import '../../features/wallet/presentation/transaction_history_screen.dart';
 
+import '../../core/network/api_client.dart';
+
 part 'app_router.g.dart';
 
 @riverpod
 GoRouter goRouter(Ref ref) {
   return GoRouter(
     initialLocation: '/login',
+    redirect: (context, state) {
+      final token = AuthTokenHolder.token;
+      if (token != null && token.isNotEmpty) {
+        if (state.matchedLocation == '/login') {
+          return '/creator-dashboard';
+        }
+      }
+      return null;
+    },
     routes: [
       GoRoute(
         path: '/login',
