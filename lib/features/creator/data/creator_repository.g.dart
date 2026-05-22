@@ -147,3 +147,95 @@ final class SpotlightCreatorsProvider
 }
 
 String _$spotlightCreatorsHash() => r'21a01d2ed3c538c7d298fee7bb0472c1c508f9d4';
+
+@ProviderFor(aiSearchCreators)
+const aiSearchCreatorsProvider = AiSearchCreatorsFamily._();
+
+final class AiSearchCreatorsProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<dynamic>>,
+          List<dynamic>,
+          FutureOr<List<dynamic>>
+        >
+    with $FutureModifier<List<dynamic>>, $FutureProvider<List<dynamic>> {
+  const AiSearchCreatorsProvider._({
+    required AiSearchCreatorsFamily super.from,
+    required ({String query, String? platform, double? minBudget})
+    super.argument,
+  }) : super(
+         retry: null,
+         name: r'aiSearchCreatorsProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$aiSearchCreatorsHash();
+
+  @override
+  String toString() {
+    return r'aiSearchCreatorsProvider'
+        ''
+        '$argument';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<List<dynamic>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<List<dynamic>> create(Ref ref) {
+    final argument =
+        this.argument as ({String query, String? platform, double? minBudget});
+    return aiSearchCreators(
+      ref,
+      query: argument.query,
+      platform: argument.platform,
+      minBudget: argument.minBudget,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is AiSearchCreatorsProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$aiSearchCreatorsHash() => r'58851fd551908b4a22ff7990cbdb733d0b227f77';
+
+final class AiSearchCreatorsFamily extends $Family
+    with
+        $FunctionalFamilyOverride<
+          FutureOr<List<dynamic>>,
+          ({String query, String? platform, double? minBudget})
+        > {
+  const AiSearchCreatorsFamily._()
+    : super(
+        retry: null,
+        name: r'aiSearchCreatorsProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  AiSearchCreatorsProvider call({
+    required String query,
+    String? platform,
+    double? minBudget,
+  }) => AiSearchCreatorsProvider._(
+    argument: (query: query, platform: platform, minBudget: minBudget),
+    from: this,
+  );
+
+  @override
+  String toString() => r'aiSearchCreatorsProvider';
+}

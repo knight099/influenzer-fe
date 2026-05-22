@@ -66,7 +66,7 @@ class SocialLinkScreen extends ConsumerWidget {
                                 .connectSocial(
                               'instagram',
                               result!.code!,
-                              redirectUri: 'https://qrdba2mpab.ap-south-1.awsapprunner.com/callback/',
+                              redirectUri: 'https://api.getcolabb.com/callback/',
                             );
                             if (context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(

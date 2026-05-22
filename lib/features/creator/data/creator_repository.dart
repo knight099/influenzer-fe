@@ -25,6 +25,22 @@ Future<List<dynamic>> spotlightCreators(Ref ref) async {
   return repo.getSpotlight();
 }
 
+@riverpod
+Future<List<dynamic>> aiSearchCreators(
+  Ref ref, {
+  required String query,
+  String? platform,
+  double? minBudget,
+}) async {
+  if (query.isEmpty) return const [];
+  final repo = ref.watch(creatorRepositoryProvider);
+  return repo.searchCreatorsAI(
+    query: query,
+    platform: platform,
+    minBudget: minBudget,
+  );
+}
+
 class CreatorRepository {
   final Dio _dio;
 
@@ -34,6 +50,32 @@ class CreatorRepository {
   Future<List<dynamic>> searchCreators() async {
     final response = await _dio.get('/creators/search');
     return response.data as List<dynamic>;
+  }
+
+  /// POST /api/match/search - AI-powered semantic matching search
+  Future<List<dynamic>> searchCreatorsAI({
+    required String query,
+    String? platform,
+    double? minBudget,
+    int limit = 20,
+  }) async {
+    final response = await _dio.post('/api/match/search', data: {
+      'query': query,
+      if (platform != null && platform.isNotEmpty && platform != 'All') 'platform': platform,
+      if (minBudget != null && minBudget > 0) 'min_budget': minBudget,
+      'limit': limit,
+    });
+    final matches = response.data['matches'] as List<dynamic>? ?? [];
+    return matches.map((m) {
+      final map = Map<String, dynamic>.from(m as Map);
+      map['id'] = map['creator_id']; // For profile details screen compatibility
+      
+      final isYt = map['platform']?.toString().toLowerCase().contains('youtube') == true;
+      if (isYt) {
+        map['youtube_subscribers'] = map['instagram_followers'] ?? map['youtube_subscribers'];
+      }
+      return map;
+    }).toList();
   }
 
   /// GET /creators/:id - Get a specific creator by ID

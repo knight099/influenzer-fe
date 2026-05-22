@@ -89,11 +89,11 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "com.influesnzer" "\0"
+            VALUE "CompanyName", "com.getcolabb" "\0"
             VALUE "FileDescription", "influenzer_app" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
             VALUE "InternalName", "influenzer_app" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2025 com.influesnzer. All rights reserved." "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2025 com.getcolabb. All rights reserved." "\0"
             VALUE "OriginalFilename", "influenzer_app.exe" "\0"
             VALUE "ProductName", "influenzer_app" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"

@@ -17,17 +17,44 @@ class CreatorDetailsScreen extends ConsumerStatefulWidget {
 }
 
 class _CreatorDetailsScreenState extends ConsumerState<CreatorDetailsScreen> {
+  late Map<String, dynamic> _creator;
   Map<String, dynamic>? _analytics;
   bool _analyticsLoading = true;
 
   @override
   void initState() {
     super.initState();
+    _creator = Map<String, dynamic>.from(widget.creator);
     _loadAnalytics();
+    _loadFullProfile();
+  }
+
+  Future<void> _loadFullProfile() async {
+    final id = _creator['id']?.toString() ?? '';
+    if (id.isEmpty) return;
+
+    // Check if key detailed fields are missing to decide if we need to fetch
+    final isPartial = _creator['bio'] == null ||
+        _creator['rate_card'] == null ||
+        _creator['availability_status'] == null;
+
+    if (isPartial) {
+      try {
+        final data = await ref.read(creatorRepositoryProvider).getProfile(id);
+        if (mounted) {
+          setState(() {
+            _creator = {
+              ..._creator,
+              ...data,
+            };
+          });
+        }
+      } catch (_) {}
+    }
   }
 
   Future<void> _loadAnalytics() async {
-    final id = widget.creator['id']?.toString() ?? '';
+    final id = _creator['id']?.toString() ?? '';
     if (id.isEmpty) { setState(() => _analyticsLoading = false); return; }
     try {
       final data = await ref.read(creatorRepositoryProvider).getCreatorAnalytics(id);
@@ -39,7 +66,7 @@ class _CreatorDetailsScreenState extends ConsumerState<CreatorDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final creator = widget.creator;
+    final creator = _creator;
     final name = (creator['name']?.toString().isNotEmpty == true)
         ? creator['name'].toString() : 'Unknown Creator';
     final niche = (creator['niche']?.toString().trim().isNotEmpty == true)
@@ -507,7 +534,7 @@ class _CreatorDetailsScreenState extends ConsumerState<CreatorDetailsScreen> {
         child: Padding(
           padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
           child: ElevatedButton.icon(
-            onPressed: () => _showInviteSheet(context, widget.creator),
+            onPressed: () => _showInviteSheet(context, _creator),
             icon: const Icon(Icons.campaign_rounded, size: 18),
             label: const Text('Invite to Campaign'),
             style: ElevatedButton.styleFrom(

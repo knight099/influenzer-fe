@@ -18,7 +18,7 @@ class JobRepository {
   /// GET /jobs/feed - Get the job feed for creators
   Future<List<dynamic>> getFeed() async {
     final response = await _dio.get('/jobs/feed');
-    return response.data as List<dynamic>;
+    return (response.data as List<dynamic>?) ?? [];
   }
 
   /// POST /jobs/:jobId/apply - Apply to a specific job
@@ -29,7 +29,7 @@ class JobRepository {
   /// GET /jobs/my-applications - Get all applications submitted by the creator
   Future<List<dynamic>> myApplications() async {
     final response = await _dio.get('/jobs/my-applications');
-    return response.data as List<dynamic>;
+    return (response.data as List<dynamic>?) ?? [];
   }
 
   /// POST /upload/presigned - Get presigned URL for video upload

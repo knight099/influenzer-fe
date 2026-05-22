@@ -1,4 +1,4 @@
-package com.influesnzer.influenzer_app
+package com.getcolabb.app
 
 import io.flutter.embedding.android.FlutterActivity
 

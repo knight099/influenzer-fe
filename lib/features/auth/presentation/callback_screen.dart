@@ -33,7 +33,7 @@ class _CallbackScreenState extends ConsumerState<CallbackScreen> {
 
       // Use the correct redirect URI based on provider
       final redirectUri = provider == 'instagram'
-          ? 'https://qrdba2mpab.ap-south-1.awsapprunner.com/callback/'
+          ? 'https://api.getcolabb.com/callback/'
           : null; // YouTube native flow uses null → backend defaults to "postmessage"
 
       try {

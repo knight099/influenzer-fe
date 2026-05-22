@@ -144,6 +144,32 @@ class CreatorCard extends StatelessWidget {
                                 ),
                               ),
                             ],
+                            if (creator['match_score'] != null) ...[
+                              const SizedBox(width: 6),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  gradient: AppColors.brandGradient,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(Icons.auto_awesome_rounded,
+                                        size: 9, color: Colors.white),
+                                    const SizedBox(width: 2.5),
+                                    Text(
+                                      '${(toDouble(creator['match_score']) * 100).toStringAsFixed(0)}% Match',
+                                      style: const TextStyle(
+                                          fontSize: 9,
+                                          fontWeight: FontWeight.w800,
+                                          color: Colors.white),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ],
                         ),
                         const SizedBox(height: 3),

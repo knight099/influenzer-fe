@@ -63,6 +63,7 @@ class _CreatorSearchScreenState extends ConsumerState<CreatorSearchScreen> {
   _SortBy _sortBy = _SortBy.relevance;
   bool _verifiedOnly = false;
   bool _multiPlatformOnly = false;
+  bool _aiSearchActive = false;
 
   @override
   void initState() {
@@ -99,12 +100,14 @@ class _CreatorSearchScreenState extends ConsumerState<CreatorSearchScreen> {
         .map((e) => e.cast<String, dynamic>())
         .toList();
 
+    final bool useAiSearch = _aiSearchActive && _searchQuery.isNotEmpty;
     final filtered = list.where((c) {
       final name = c['name']?.toString().toLowerCase() ?? '';
       final niche = c['niche']?.toString().toLowerCase() ?? '';
       final city = c['city']?.toString().toLowerCase() ?? '';
 
-      final matchesSearch = _searchQuery.isEmpty ||
+      final matchesSearch = useAiSearch ||
+          _searchQuery.isEmpty ||
           name.contains(_searchQuery) ||
           niche.contains(_searchQuery) ||
           city.contains(_searchQuery);
@@ -296,7 +299,13 @@ class _CreatorSearchScreenState extends ConsumerState<CreatorSearchScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final creatorsAsync = ref.watch(cachedCreatorSearchProvider);
+    final bool useAiSearch = _aiSearchActive && _searchQuery.isNotEmpty;
+    final creatorsAsync = useAiSearch
+        ? ref.watch(aiSearchCreatorsProvider(
+            query: _searchQuery,
+            platform: _selectedFilter == 'All' ? null : _selectedFilter,
+          ))
+        : ref.watch(cachedCreatorSearchProvider);
     final activeAdv = _activeAdvancedFilterCount();
 
     return SafeArea(
@@ -366,6 +375,75 @@ class _CreatorSearchScreenState extends ConsumerState<CreatorSearchScreen> {
                                   size: 18, color: AppColors.textHint),
                             ),
                           ),
+                      ],
+                    ),
+                  ),
+
+                  // AI Semantic Match toggle
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 250),
+                    margin: const EdgeInsets.only(top: 12),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    decoration: BoxDecoration(
+                      gradient: _aiSearchActive
+                          ? LinearGradient(
+                              colors: [
+                                AppColors.primary.withOpacity(0.12),
+                                AppColors.secondary.withOpacity(0.06),
+                              ],
+                            )
+                          : null,
+                      color: _aiSearchActive ? null : AppColors.surface,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: _aiSearchActive
+                            ? AppColors.primary.withOpacity(0.4)
+                            : AppColors.border,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.auto_awesome_rounded,
+                          size: 16,
+                          color: _aiSearchActive ? AppColors.primary : AppColors.textHint,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'AI Semantic Match',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                  color: _aiSearchActive ? AppColors.primary : AppColors.textPrimary,
+                                ),
+                              ),
+                              const SizedBox(height: 1),
+                              Text(
+                                _aiSearchActive
+                                    ? 'Describe your campaign/target audience to match'
+                                    : 'Find creators using natural language and custom criteria',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Switch.adaptive(
+                          value: _aiSearchActive,
+                          activeColor: AppColors.primary,
+                          onChanged: (val) {
+                            setState(() {
+                              _aiSearchActive = val;
+                            });
+                          },
+                        ),
                       ],
                     ),
                   ),

@@ -76,7 +76,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with WidgetsBindi
         await ref.read(authControllerProvider.notifier).connectSocial(
           'instagram',
           result!.code!,
-          redirectUri: 'https://qrdba2mpab.ap-south-1.awsapprunner.com/callback/',
+          redirectUri: 'https://api.getcolabb.com/callback/',
         );
         await ref.read(userProfileRepositoryProvider).refreshStats();
         ref.invalidate(userProfileProvider);
@@ -188,7 +188,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with WidgetsBindi
               ),
 
             // YouTube card
-            if (profile.youtubeConnected)
+            if (profile.youtubeConnected) ...[
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
@@ -208,6 +208,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with WidgetsBindi
                   ),
                 ),
               ),
+              if (profile.youtubeAiAnalysis != null)
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                    child: _YouTubeAIInsightsCard(analysis: profile.youtubeAiAnalysis!),
+                  ),
+                ),
+            ],
 
             // Instagram card
             if (profile.instagramConnected)
@@ -4651,6 +4659,400 @@ class _AboutLink extends StatelessWidget {
             style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.primary),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _YouTubeAIInsightsCard extends StatelessWidget {
+  final YouTubeAIAnalysis analysis;
+  const _YouTubeAIInsightsCard({required this.analysis});
+
+  @override
+  Widget build(BuildContext context) {
+    final safetyColor = _getSafetyColor(analysis.brandSafetyRating);
+    final safetyBgColor = _getSafetyBgColor(analysis.brandSafetyRating);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.border),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header with AI gradient and sparkles
+          Container(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  AppColors.primary,
+                  AppColors.primaryVivid,
+                  AppColors.secondary,
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 20),
+                const SizedBox(width: 8),
+                const Text(
+                  'YouTube AI Brand Suitability',
+                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: Colors.white),
+                ),
+                const Spacer(),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Text(
+                    'Gemini AI',
+                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 10, color: Colors.white),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Niche & Content Style Row
+                Row(
+                  children: [
+                    if (analysis.channelNiche != null && analysis.channelNiche!.isNotEmpty)
+                      Expanded(
+                        child: _InsightInfoBlock(
+                          label: 'CHANNEL NICHE',
+                          value: analysis.channelNiche!,
+                          icon: Icons.category_rounded,
+                        ),
+                      ),
+                    if (analysis.channelNiche != null && analysis.channelNiche!.isNotEmpty)
+                      const SizedBox(width: 16),
+                    if (analysis.contentStyle != null && analysis.contentStyle!.isNotEmpty)
+                      Expanded(
+                        child: _InsightInfoBlock(
+                          label: 'CONTENT STYLE',
+                          value: analysis.contentStyle!,
+                          icon: Icons.palette_rounded,
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                const Divider(),
+                const SizedBox(height: 12),
+
+                // Reach consistency Score
+                if (analysis.estimatedReachScore != null) ...[
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Engagement Consistency',
+                        style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+                      ),
+                      Text(
+                        '${analysis.estimatedReachScore}%',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w900,
+                          fontSize: 16,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(6),
+                    child: LinearProgressIndicator(
+                      value: analysis.estimatedReachScore! / 100.0,
+                      minHeight: 8,
+                      backgroundColor: AppColors.primary.withValues(alpha: 0.1),
+                      valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                    ),
+                  ),
+                  if (analysis.estimatedReachDescription != null &&
+                      analysis.estimatedReachDescription!.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      analysis.estimatedReachDescription!,
+                      style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                    ),
+                  ],
+                  const SizedBox(height: 16),
+                  const Divider(),
+                  const SizedBox(height: 12),
+                ],
+
+                // Brand Safety Segment
+                Row(
+                  children: [
+                    const Text(
+                      'Brand Safety Index',
+                      style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+                    ),
+                    const Spacer(),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: safetyBgColor,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: safetyColor.withValues(alpha: 0.3)),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            _getSafetyIcon(analysis.brandSafetyRating),
+                            color: safetyColor,
+                            size: 14,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            analysis.brandSafetyRating ?? 'Unknown',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w800,
+                              fontSize: 11,
+                              color: safetyColor,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                if (analysis.brandSafetyReasons != null && analysis.brandSafetyReasons!.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    analysis.brandSafetyReasons!,
+                    style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                  ),
+                ],
+                const SizedBox(height: 16),
+                const Divider(),
+                const SizedBox(height: 12),
+
+                // Audience Interests Tag Cloud
+                if (analysis.audienceInterests.isNotEmpty) ...[
+                  const Text(
+                    'Audience Interests',
+                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: analysis.audienceInterests.map((interest) {
+                      return Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: AppColors.surfaceVariant,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: AppColors.border),
+                        ),
+                        child: Text(
+                          interest,
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 16),
+                  const Divider(),
+                  const SizedBox(height: 12),
+                ],
+
+                // Recommended Campaigns Tag Cloud
+                if (analysis.recommendedCampaignCategories.isNotEmpty) ...[
+                  const Text(
+                    'Best-Fit Campaign Verticals',
+                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: analysis.recommendedCampaignCategories.map((category) {
+                      return Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: AppColors.primaryLight,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
+                        ),
+                        child: Text(
+                          category,
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 16),
+                  const Divider(),
+                  const SizedBox(height: 12),
+                ],
+
+                // Key Insights Bullet List
+                if (analysis.keyInsightsForBrands.isNotEmpty) ...[
+                  const Text(
+                    'High-Impact Strategic Insights',
+                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                  ),
+                  const SizedBox(height: 8),
+                  ...analysis.keyInsightsForBrands.map((insight) {
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 6),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(
+                            Icons.check_circle_outline_rounded,
+                            color: AppColors.secondary,
+                            size: 16,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              insight,
+                              style: TextStyle(
+                                fontSize: 12,
+                                height: 1.3,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Color _getSafetyColor(String? rating) {
+    if (rating == null) return AppColors.textSecondary;
+    switch (rating.toLowerCase()) {
+      case 'safe':
+        return AppColors.success;
+      case 'moderate':
+        return AppColors.warning;
+      case 'caution':
+        return AppColors.error;
+      default:
+        return AppColors.textSecondary;
+    }
+  }
+
+  Color _getSafetyBgColor(String? rating) {
+    if (rating == null) return AppColors.surfaceVariant;
+    switch (rating.toLowerCase()) {
+      case 'safe':
+        return AppColors.successLight;
+      case 'moderate':
+        return AppColors.warningLight;
+      case 'caution':
+        return AppColors.errorLight;
+      default:
+        return AppColors.surfaceVariant;
+    }
+  }
+
+  IconData _getSafetyIcon(String? rating) {
+    if (rating == null) return Icons.help_outline_rounded;
+    switch (rating.toLowerCase()) {
+      case 'safe':
+        return Icons.verified_user_rounded;
+      case 'moderate':
+        return Icons.warning_amber_rounded;
+      case 'caution':
+        return Icons.gpp_maybe_rounded;
+      default:
+        return Icons.help_outline_rounded;
+    }
+  }
+}
+
+class _InsightInfoBlock extends StatelessWidget {
+  final String label;
+  final String value;
+  final IconData icon;
+
+  const _InsightInfoBlock({
+    required this.label,
+    required this.value,
+    required this.icon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceVariant,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: AppColors.primary, size: 20),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 9,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.textHint,
+                    letterSpacing: 0.8,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  value,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

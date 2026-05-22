@@ -30,8 +30,9 @@ class InstagramAuthWebView extends StatefulWidget {
 
   /// Convenience constructor that builds the Instagram OAuth URL.
   factory InstagramAuthWebView.instagram({Key? key}) {
-    const clientId = '816744758013078';
-    const redirectUri = 'https://qrdba2mpab.ap-south-1.awsapprunner.com/callback/';
+    // OLD app: const clientId = '816744758013078';
+    const clientId = '4234043196818678'; // getcolabb-IG
+    const redirectUri = 'https://api.getcolabb.com/callback/';
     const scope =
         'instagram_business_basic,instagram_business_manage_messages,'
         'instagram_business_manage_comments,instagram_business_content_publish,'

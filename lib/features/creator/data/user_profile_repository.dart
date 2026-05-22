@@ -33,6 +33,55 @@ class YouTubeStats {
   }
 }
 
+class YouTubeAIAnalysis {
+  final String? channelNiche;
+  final String? contentStyle;
+  final int? estimatedReachScore;
+  final String? estimatedReachDescription;
+  final List<String> audienceInterests;
+  final String? brandSafetyRating;
+  final String? brandSafetyReasons;
+  final List<String> recommendedCampaignCategories;
+  final List<String> keyInsightsForBrands;
+
+  YouTubeAIAnalysis({
+    this.channelNiche,
+    this.contentStyle,
+    this.estimatedReachScore,
+    this.estimatedReachDescription,
+    this.audienceInterests = const [],
+    this.brandSafetyRating,
+    this.brandSafetyReasons,
+    this.recommendedCampaignCategories = const [],
+    this.keyInsightsForBrands = const [],
+  });
+
+  factory YouTubeAIAnalysis.fromJson(Map<String, dynamic> json) {
+    return YouTubeAIAnalysis(
+      channelNiche: json['channel_niche'],
+      contentStyle: json['content_style'],
+      estimatedReachScore: json['estimated_reach_score'] != null 
+          ? (json['estimated_reach_score'] as num).toInt() 
+          : null,
+      estimatedReachDescription: json['estimated_reach_description'],
+      audienceInterests: (json['audience_interests'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          const [],
+      brandSafetyRating: json['brand_safety_rating'],
+      brandSafetyReasons: json['brand_safety_reasons'],
+      recommendedCampaignCategories: (json['recommended_campaign_categories'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          const [],
+      keyInsightsForBrands: (json['key_insights_for_brands'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          const [],
+    );
+  }
+}
+
 class InstagramStats {
   final String? username;
   final String? profilePictureUrl;
@@ -100,6 +149,7 @@ class UserProfile {
   final String? instagramUsername;
   final YouTubeStats? youtubeStats;
   final String? youtubeError;
+  final YouTubeAIAnalysis? youtubeAiAnalysis;
   final InstagramStats? instagramStats;
   final String? instagramError;
   final String subscriptionStatus;
@@ -162,6 +212,7 @@ class UserProfile {
     this.instagramUsername,
     this.youtubeStats,
     this.youtubeError,
+    this.youtubeAiAnalysis,
     this.instagramStats,
     this.instagramError,
     this.subscriptionStatus = 'INACTIVE',
@@ -225,6 +276,7 @@ class UserProfile {
     // Parse cached_stats
     YouTubeStats? ytStats;
     String? ytError;
+    YouTubeAIAnalysis? youtubeAiAnalysis;
     InstagramStats? igStats;
     String? igError;
     final cachedStats = json['cached_stats'] as Map<String, dynamic>?;
@@ -238,6 +290,9 @@ class UserProfile {
       }
       if (cachedStats['youtube_error'] != null) {
         ytError = cachedStats['youtube_error'].toString();
+      }
+      if (cachedStats['youtube_ai_analysis'] != null) {
+        youtubeAiAnalysis = YouTubeAIAnalysis.fromJson(cachedStats['youtube_ai_analysis'] as Map<String, dynamic>);
       }
       
       if (cachedStats['instagram'] != null) {
@@ -289,6 +344,7 @@ class UserProfile {
       instagramUsername: igUsername,
       youtubeStats: ytStats,
       youtubeError: ytError,
+      youtubeAiAnalysis: youtubeAiAnalysis,
       instagramStats: igStats,
       instagramError: igError,
       subscriptionStatus: subscriptionStatus,
